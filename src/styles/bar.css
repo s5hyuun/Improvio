@@ -51,7 +51,6 @@ body {
   border-right: 1px solid var(--sep-line) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  padding: 26px 18px !important; /* 기존 여백 유지 */
 }
 
 .brand-card {
@@ -63,7 +62,7 @@ body {
   background: #0f1b2a;
   border: 1px solid var(--border);
   border-radius: 18px;
-  padding: 18px;
+  padding: 20px;
 }
 .profile-name {
   font-size: 18px;
@@ -103,7 +102,8 @@ body {
 .nav {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  /* gap: 6px; */
+  margin: 10px 0 0;
 }
 .nav-item {
   display: flex;
@@ -111,7 +111,7 @@ body {
   gap: 12px;
   padding: 12px 12px;
   border-radius: 12px;
-  color: var(--muted);
+  color: #1D4ED8;
   text-decoration: none;
   font-weight: 600;
 }
@@ -125,8 +125,8 @@ body {
   height: 20px;
 }
 .nav-item:hover {
-  background: #0f2133;
-  color: #a9c7ff;
+  background-color: rgba(37, 99, 235, 0.08);
+  color: #2563EB;;
 }
 .nav-item.active {
   background: #eaf2ff;
@@ -136,7 +136,6 @@ body {
 /* section title */
 .section-title {
   margin: 6px 6px 0;
-  color: #aac6ff;
   font-weight: 700;
 }
 
@@ -146,6 +145,17 @@ body {
   flex: 1;
   min-height: 0; /* overflow 작동 핵심 */
 }
+
+.logo-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  
+}
+.logo-wrap {
+  padding: 0 0 12px;
+}
+
 .dept-list {
   list-style: none;
   margin: 10px 0 0;
@@ -171,7 +181,7 @@ body {
   gap: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  color: #98b8ea;
+  color: #1D4ED8;
   cursor: pointer;
 }
 .dept-item .ico {
@@ -183,12 +193,12 @@ body {
   height: 20px;
 }
 .dept-item:hover {
-  background: #0f2133;
-  color: #c7dcff;
+  background-color: rgba(37, 99, 235, 0.08);
+  color: #2563EB;
 }
 .dept-item.selected {
-  background: #0a45ff1a;
-  color: #e6f0ff;
+  background-color: #2563EB;
+  color: white;
 }
 
 /* ===== Main & Topbar ===== */
@@ -224,13 +234,13 @@ body {
 .topbar-title {
   font-size: 18px;
   font-weight: 800;
-  color: #a9c7ff;
+  color: #1E3A8A;
   white-space: nowrap;
 }
 .topbar .ico {
   width: 22px;
   height: 22px;
-  color: #ff7a33;
+  color: #60A5FA;
 }
 .topbar .ico svg {
   width: 22px;
@@ -413,7 +423,7 @@ body {
 .topbar-left .ico {
   width: 32px !important;
   height: 32px !important;
-  border-radius: 999px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   background: var(--accent);
