@@ -1,6 +1,6 @@
 .boardContainer {
   padding: 0;
-  background-color: #dbeafe;
+  background-color: #e6eef9;
   height: 100vh;
   flex: 1;
   padding: 30px;
@@ -14,6 +14,8 @@
 }
 .boardTitle p:first-child {
   font-size: 20px;
+  font-weight: 600;
+  color: #1e3a8a;
 }
 .boardTitle p:last-child {
   font-size: 14px;
@@ -29,18 +31,22 @@
 }
 
 .boardContents {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
   margin-top: 20px;
   width: 100%;
-  gap: 20px;
-  /* justify-content: flex-start; */
+  gap: 10px;
   box-sizing: border-box;
 }
 .boardColumn {
-  flex: 0 0 calc((100% - 40px) / 3);
   min-width: 0;
 }
-
+.boardColumn > div:first-child {
+  margin-bottom: 10px;
+  /* font-weight: 600; */
+  font-size: 18px;
+  color: #1e3a8a;
+}
 /* ========board Content =============== */
 
 .contentContainer {
@@ -51,6 +57,7 @@
   width: 100%;
   margin-bottom: 10px;
   cursor: pointer;
+  box-sizing: border-box;
 }
 .contentContainer h3 {
   margin: 10px 0;
@@ -59,11 +66,27 @@
   color: #3b82f6;
   font-size: 12px;
   display: flex;
-  margin-top: 10px;
+  margin-top: 6px;
+}
+.contentUser div {
+  display: flex;
+  align-items: center;
 }
 .contentUser i {
   margin-right: 3px;
 }
 .contentUser div:first-child {
-  margin-right: 6px;
+  margin-right: 10px;
+}
+.noContent {
+  display: flex;
+  justify-content: center;
+  color: #6b7280;
+  padding: 30px 0;
+}
+
+@media (max-width: 900px) {
+  .boardContents {
+    grid-template-columns: 1fr;
+  }
 }

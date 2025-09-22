@@ -21,16 +21,22 @@ function BoardPage() {
           <div className={styles.boardContents}>
             <div className={styles.boardColumn}>
               <div>Proposal</div>
-              <BoardContent />
+              <div className={styles.cardRow}>
+                <BoardContent />
+              </div>
             </div>
             <div className={styles.boardColumn}>
               <div>In Progress</div>
-              <BoardContent />
-              <BoardContent />
+              <div className={styles.cardRow}>
+                <BoardContent />
+                <BoardContent />
+              </div>
             </div>
             <div className={styles.boardColumn}>
               <div>Complete</div>
-              <BoardContent />
+              <div className={styles.cardRow}>
+                <div className={styles.noContent}>완료된 제안이 없습니다.</div>
+              </div>
             </div>
           </div>
         </div>
