@@ -11,21 +11,36 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// GET /api/suggestions?department=rd
+// GET /api/suggestions?department=rd,pm
 app.get("/api/suggestions", async (req, res) => {
   try {
-    const { department } = req.query; // query param 가져오기
+    let { department, status } = req.query;
     let query = `
       SELECT s.*, u.name AS user_name, d.department_name
       FROM Suggestion s
       JOIN User u ON s.user_id = u.user_id
       LEFT JOIN Department d ON s.department_id = d.department_id
     `;
+
+    const conditions = [];
     const params = [];
 
     if (department) {
-      query += " WHERE d.department_name = ?";
-      params.push(department);
+      // comma-separated string -> 배열
+      const deptArray = department.split(",");
+      conditions.push(
+        `d.department_name IN (${deptArray.map(() => "?").join(",")})`
+      );
+      params.push(...deptArray);
+    }
+
+    if (status) {
+      conditions.push("s.status = ?");
+      params.push(status);
+    }
+
+    if (conditions.length > 0) {
+      query += " WHERE " + conditions.join(" AND ");
     }
 
     const [rows] = await pool.query(query, params);
