@@ -1,9 +1,9 @@
 .boardContainer {
   padding: 0;
-  background-color: #bfdbfe;
+  background-color: #dbeafe;
   height: 100vh;
   flex: 1;
-  padding: 20px;
+  padding: 30px;
 }
 .boardTitle {
   display: flex;
@@ -26,4 +26,44 @@
   padding: 10px 14px;
   cursor: pointer;
   border-radius: 10px;
+}
+
+.boardContents {
+  display: flex;
+  margin-top: 20px;
+  width: 100%;
+  gap: 20px;
+  /* justify-content: flex-start; */
+  box-sizing: border-box;
+}
+.boardColumn {
+  flex: 0 0 calc((100% - 40px) / 3);
+  min-width: 0;
+}
+
+/* ========board Content =============== */
+
+.contentContainer {
+  background-color: white;
+  border-radius: 10px;
+  border: 2px solid #bfdbfe;
+  padding: 10px 14px;
+  width: 100%;
+  margin-bottom: 10px;
+  cursor: pointer;
+}
+.contentContainer h3 {
+  margin: 10px 0;
+}
+.contentUser {
+  color: #3b82f6;
+  font-size: 12px;
+  display: flex;
+  margin-top: 10px;
+}
+.contentUser i {
+  margin-right: 3px;
+}
+.contentUser div:first-child {
+  margin-right: 6px;
 }
