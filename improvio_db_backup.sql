@@ -91,7 +91,7 @@ CREATE TABLE `comment_like` (
   KEY `comment_id` (`comment_id`),
   CONSTRAINT `comment_like_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `user` (`user_id`) ON DELETE CASCADE,
   CONSTRAINT `comment_like_ibfk_2` FOREIGN KEY (`comment_id`) REFERENCES `comment` (`comment_id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -100,6 +100,7 @@ CREATE TABLE `comment_like` (
 
 LOCK TABLES `comment_like` WRITE;
 /*!40000 ALTER TABLE `comment_like` DISABLE KEYS */;
+INSERT INTO `comment_like` VALUES (1,1,1,'2025-09-22 06:38:10');
 /*!40000 ALTER TABLE `comment_like` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -267,4 +268,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2025-09-22 15:14:50
+-- Dump completed on 2025-09-22 16:22:00
