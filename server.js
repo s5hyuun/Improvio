@@ -89,6 +89,32 @@ app.post("/api/suggestions", async (req, res) => {
   }
 });
 
+// POST /api/suggestions/:id/status
+// This endpoint specifically updates the status of a suggestion.
+app.post("/api/suggestions/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ error: "Status is required." });
+    }
+
+    const [result] = await pool.query(
+      `UPDATE Suggestion SET status = ? WHERE suggestion_id = ?`,
+      [status, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Suggestion not found." });
+    }
+
+    res.json({ message: "Suggestion status updated successfully." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // GET /api/comments/:suggestion_id
 app.get("/api/comments/:suggestion_id", async (req, res) => {
   try {
@@ -222,6 +248,243 @@ app.get("/api/comments/:id/likes", async (req, res) => {
     );
 
     res.json({ comment_id: id, like_count: row.like_count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 회원가입
+app.post("/api/auth/register", async (req, res) => {
+  const { name, username, password, role, department_id } = req.body;
+
+  try {
+    // 중복 확인
+    const [existing] = await pool.query(
+      "SELECT * FROM User WHERE username = ?",
+      [username]
+    );
+    if (existing.length > 0) {
+      return res.status(400).json({ message: "이미 존재하는 아이디입니다." });
+    }
+
+    // 비밀번호 해싱
+    const hashed = await bcrypt.hash(password, 10);
+
+    await pool.query(
+      `INSERT INTO User (name, username, password, role, department_id) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [name, username, hashed, role || "employee", department_id || null]
+    );
+
+    res.json({ message: "회원가입 성공" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 개인정보 수정 (이름, 부서, role)
+app.put("/api/user/:id", async (req, res) => {
+  const { id } = req.params;
+  const { name, department_id, role } = req.body;
+
+  try {
+    await pool.query(
+      `UPDATE User 
+       SET name = ?, department_id = ?, role = ? 
+       WHERE user_id = ?`,
+      [name, department_id || null, role || "employee", id]
+    );
+
+    res.json({ message: "개인정보가 수정되었습니다." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/suggestions/:id
+// This endpoint updates the status and/or an urgent flag for a suggestion.
+app.put("/api/suggestions/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, is_urgent } = req.body;
+
+    // Build the query and parameters dynamically based on what's provided in the request body.
+    const updates = [];
+    const params = [];
+
+    if (status) {
+      updates.push("status = ?");
+      params.push(status);
+    }
+    if (typeof is_urgent === "boolean") {
+      updates.push("is_urgent = ?");
+      params.push(is_urgent);
+    }
+
+    if (updates.length === 0) {
+      return res.status(400).json({ error: "No fields to update." });
+    }
+
+    const query = `UPDATE Suggestion SET ${updates.join(
+      ", "
+    )} WHERE suggestion_id = ?`;
+    params.push(id);
+
+    const [result] = await pool.query(query, params);
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Suggestion not found." });
+    }
+
+    res.json({ message: "Suggestion updated successfully." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/suggestions/:id/votes
+// This endpoint gets the total score for a given suggestion based on user votes.
+app.get("/api/suggestions/:id/votes", async (req, res) => {
+  try {
+    const { id } = req.params; // suggestion_id
+    const [[row]] = await pool.query(
+      `SELECT SUM(score) AS total_score FROM Vote WHERE suggestion_id = ?`,
+      [id]
+    );
+
+    const totalScore = row.total_score || 0; // If no votes, the sum is null, so default to 0.
+
+    res.json({ suggestion_id: id, total_score: totalScore });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/suggestions/:id/details
+// This endpoint retrieves all details for a specific suggestion, including votes,
+// comments, and attachments, to populate the detailed view modal.
+app.get("/api/suggestions/:id/details", async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // 1. Get suggestion and performance data
+    const [suggestionRows] = await pool.query(
+      `
+      SELECT 
+        s.suggestion_id, s.title, s.description, s.status, s.created_at,
+        u.name AS user_name, d.department_name,
+        p.expected_reduction_rate, p.actual_reduction_rate,
+        p.expected_productivity, p.actual_productivity,
+        p.expected_cost_saving, p.actual_cost_saving
+      FROM Suggestion s
+      JOIN User u ON s.user_id = u.user_id
+      LEFT JOIN Department d ON s.department_id = d.department_id
+      LEFT JOIN Performance p ON s.suggestion_id = p.suggestion_id
+      WHERE s.suggestion_id = ?
+      `,
+      [id]
+    );
+
+    if (suggestionRows.length === 0) {
+      return res.status(404).json({ error: "Suggestion not found" });
+    }
+
+    const suggestion = suggestionRows[0];
+
+    // 2. Get total votes
+    const [[voteRow]] = await pool.query(
+      `SELECT SUM(score) AS total_score, COUNT(*) AS vote_count FROM Vote WHERE suggestion_id = ?`,
+      [id]
+    );
+
+    suggestion.total_score = voteRow.total_score || 0;
+    suggestion.vote_count = voteRow.vote_count || 0;
+
+    // 3. Get comments
+    const [commentRows] = await pool.query(
+      `
+      SELECT 
+        c.*, u.name AS user_name, COUNT(cl.comment_id) AS like_count
+      FROM Comment c
+      JOIN User u ON c.user_id = u.user_id
+      LEFT JOIN Comment_Like cl ON c.comment_id = cl.comment_id
+      WHERE c.suggestion_id = ?
+      GROUP BY c.comment_id
+      ORDER BY c.created_at ASC
+      `,
+      [id]
+    );
+    suggestion.comments = commentRows;
+
+    // 4. Get attachments
+    const [attachmentRows] = await pool.query(
+      `SELECT attachment_id, file_path FROM Attachment WHERE suggestion_id = ?`,
+      [id]
+    );
+    suggestion.attachments = attachmentRows;
+
+    res.json(suggestion);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// PUT /api/suggestions/:id/vote
+// This endpoint updates a user's vote on a suggestion.
+app.put("/api/suggestions/:id/vote", async (req, res) => {
+  try {
+    const { id } = req.params; // suggestion_id
+    const { user_id, score } = req.body;
+
+    const [result] = await pool.query(
+      `INSERT INTO Vote (user_id, suggestion_id, score)
+         VALUES (?, ?, ?)
+         ON DUPLICATE KEY UPDATE score = ?`,
+      [user_id, id, score, score]
+    );
+
+    res.json({ message: "Vote updated successfully." });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// POST /api/attachments
+// This endpoint handles saving attachment file paths to the database.
+// NOTE: A file upload middleware (e.g., multer) is required in a production environment
+// to handle the file upload itself and get the file_path.
+app.post("/api/attachments", async (req, res) => {
+  try {
+    const { suggestion_id, file_path } = req.body;
+
+    if (!suggestion_id || !file_path) {
+      return res
+        .status(400)
+        .json({ error: "Suggestion ID and file path are required." });
+    }
+
+    const [result] = await pool.query(
+      `INSERT INTO Attachment (suggestion_id, file_path) VALUES (?, ?)`,
+      [suggestion_id, file_path]
+    );
+
+    res.status(201).json({
+      attachment_id: result.insertId,
+      message: "Attachment added successfully.",
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/departments
+// This endpoint retrieves the full list of departments from the database.
+app.get("/api/departments", async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT department_id, department_name FROM Department`
+    );
+    res.json(rows);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
