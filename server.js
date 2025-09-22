@@ -40,7 +40,7 @@ app.get("/api/suggestions", async (req, res) => {
     }
 
     if (conditions.length > 0) {
-      query += " WHERE " + conditions.join(" AND ");
+      query += " WHERE " + conditions.join(" OR ");
     }
 
     const [rows] = await pool.query(query, params);
