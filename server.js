@@ -172,6 +172,61 @@ app.post("/api/performance", async (req, res) => {
   }
 });
 
+// POST /api/comments/:id/like (좋아요 추가)
+app.post("/api/comments/:id/like", async (req, res) => {
+  try {
+    const { id } = req.params; // comment_id
+    const { user_id } = req.body;
+
+    await pool.query(
+      `INSERT INTO Comment_Like (user_id, comment_id)
+       VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE created_at = CURRENT_TIMESTAMP`,
+      [user_id, id]
+    );
+
+    res.status(201).json({ message: "Liked" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// DELETE /api/comments/:id/like (좋아요 취소)
+app.delete("/api/comments/:id/like", async (req, res) => {
+  try {
+    const { id } = req.params; // comment_id
+    const { user_id } = req.body;
+
+    const [result] = await pool.query(
+      `DELETE FROM Comment_Like WHERE user_id = ? AND comment_id = ?`,
+      [user_id, id]
+    );
+
+    if (result.affectedRows === 0)
+      return res.status(404).json({ error: "Like not found" });
+
+    res.json({ message: "Unliked" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/comments/:id/likes (좋아요 개수)
+app.get("/api/comments/:id/likes", async (req, res) => {
+  try {
+    const { id } = req.params; // comment_id
+
+    const [[row]] = await pool.query(
+      `SELECT COUNT(*) AS like_count FROM Comment_Like WHERE comment_id = ?`,
+      [id]
+    );
+
+    res.json({ comment_id: id, like_count: row.like_count });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(5000, () => {
   console.log("http://localhost:5000");
 });
