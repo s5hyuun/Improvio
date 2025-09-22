@@ -205,6 +205,7 @@ body {
 .main {
   display: flex;
   flex-direction: column;
+  background-color: #e6eef9;
 }
 .topbar {
   position: static !important;
@@ -232,7 +233,6 @@ body {
 }
 .topbar-title {
   font-size: 18px;
-  font-weight: 800;
   color: #1E3A8A;
   white-space: nowrap;
 }
@@ -873,3 +873,5 @@ body {
 .profile-name {
   color: #1e3a8a !important;
 }
+
+
