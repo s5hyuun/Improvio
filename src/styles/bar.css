@@ -196,6 +196,7 @@ body {
   display: flex;
   flex-direction: column;
   min-width: 0;
+  height: 100vh;
 }
 .topbar {
   position: static !important;
