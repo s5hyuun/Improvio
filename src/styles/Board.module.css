@@ -3,4 +3,27 @@
   background-color: #bfdbfe;
   height: 100vh;
   flex: 1;
+  padding: 20px;
+}
+.boardTitle {
+  display: flex;
+  justify-content: space-between;
+}
+.boardTitle p {
+  margin: 0;
+}
+.boardTitle p:first-child {
+  font-size: 20px;
+}
+.boardTitle p:last-child {
+  font-size: 14px;
+  color: #2563eb;
+}
+.boardTitle button {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 10px 14px;
+  cursor: pointer;
+  border-radius: 10px;
 }

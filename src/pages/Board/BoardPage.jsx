@@ -9,7 +9,16 @@ function BoardPage() {
 
       <div className="main">
         <Header />
-        <div className={styles.boardContainer}>a</div>
+        <div className={styles.boardContainer}>
+          <div className={styles.boardTitle}>
+            <div>
+              <p>개선 제안 시스템</p>
+              <p>현장 직원들의 불편사항 및 개선 아이디어를 공유해주세요</p>
+            </div>
+            <button>+ 글쓰기</button>
+          </div>
+          <div></div>
+        </div>
       </div>
     </div>
   );
