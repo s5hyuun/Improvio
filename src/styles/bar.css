@@ -205,7 +205,6 @@ body {
 .main {
   display: flex;
   flex-direction: column;
-  min-width: 0;
 }
 .topbar {
   position: static !important;

@@ -14,7 +14,7 @@ export default function Manager() {
       <main className="main">
         <Header />
         <section className="content">
-          <div className="placeholder">관리자 대시보드 — 현재 부서: {dept}</div>
+          <div className="placeholder">관리자 페이지</div>
         </section>
       </main>
     </div>
