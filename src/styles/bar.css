@@ -367,7 +367,7 @@ body {
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  padding: 24px !important; /* 내용 여백은 유지 */
+  padding: 20px !important; 
   margin-top: 16px !important; /* 상단바와 간격 유지 */
 }
 .placeholder {
@@ -470,10 +470,6 @@ body {
 }
 .icon-btn[data-badge]:after {
   transform: translate(12px, -12px) !important;
-}
-
-.content {
-  margin-top: 20px !important;
 }
 
 /* =========================================
