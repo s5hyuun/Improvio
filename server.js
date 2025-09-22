@@ -11,42 +11,23 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// GET /api/suggestions?department=rd,pm
+// GET /api/suggestions
 app.get("/api/suggestions", async (req, res) => {
   try {
-    let { department, status } = req.query;
-    let query = `
-      SELECT s.*, u.name AS user_name, d.department_name
-      FROM Suggestion s
-      JOIN User u ON s.user_id = u.user_id
-      LEFT JOIN Department d ON s.department_id = d.department_id
-    `;
+    const [suggestions] = await pool.query(`
+      SELECT s.*,
+             u.name AS user_name,
+             (SELECT COUNT(*) FROM vote v WHERE v.suggestion_id = s.suggestion_id) AS vote_count,
+             (SELECT COUNT(*) FROM comment c WHERE c.suggestion_id = s.suggestion_id) AS comment_count
+      FROM suggestion s
+      LEFT JOIN user u ON s.user_id = u.user_id
+      ORDER BY s.created_at DESC
+    `);
 
-    const conditions = [];
-    const params = [];
-
-    if (department) {
-      // comma-separated string -> 배열
-      const deptArray = department.split(",");
-      conditions.push(
-        `d.department_name IN (${deptArray.map(() => "?").join(",")})`
-      );
-      params.push(...deptArray);
-    }
-
-    if (status) {
-      conditions.push("s.status = ?");
-      params.push(status);
-    }
-
-    if (conditions.length > 0) {
-      query += " WHERE " + conditions.join(" OR ");
-    }
-
-    const [rows] = await pool.query(query, params);
-    res.json(rows);
+    res.json(suggestions);
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: "Database error" });
   }
 });
 
