@@ -42,24 +42,26 @@ function BoardPage() {
               <div>Proposal</div>
               <div className={styles.cardRow}>
                 {proposals.length > 0 ? (
-                  proposals.map((s) => (
-                    <>
+                  <>
+                    {proposals.map((s) => (
                       <BoardContent
                         key={s.suggestion_id}
                         suggestion={s}
                         onClick={() => {
-                          setOpen(true);
+                          setOpen(s);
                         }}
                       />
-                      {open && (
-                        <BoardDetail
-                          onClose={() => {
-                            setOpen(false);
-                          }}
-                        />
-                      )}
-                    </>
-                  ))
+                    ))}
+
+                    {open && (
+                      <BoardDetail
+                        suggestion={open}
+                        onClose={() => {
+                          setOpen(false);
+                        }}
+                      />
+                    )}
+                  </>
                 ) : (
                   <div className={styles.noContent}>
                     등록된 제안이 없습니다.
