@@ -6,9 +6,9 @@ function BoardContent({ suggestion, onClick }) {
     description,
     created_at,
     user_name,
+    user_id,
     vote_count = 0,
     comment_count = 0,
-    status,
   } = suggestion;
 
   return (
@@ -18,7 +18,7 @@ function BoardContent({ suggestion, onClick }) {
 
       <div className={styles.contentUser}>
         <div>
-          <i className="fa-regular fa-user"></i> {user_name}
+          <i className="fa-regular fa-user"></i> 익명{user_id}
         </div>
         <div>
           <i className="fa-regular fa-calendar"></i>{" "}

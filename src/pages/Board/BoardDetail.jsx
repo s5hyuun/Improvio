@@ -36,6 +36,7 @@ function BoardDetail({ suggestion, onClose }) {
     vote_count,
     comments,
     status,
+    user_id,
   } = detail;
 
   return (
@@ -53,7 +54,7 @@ function BoardDetail({ suggestion, onClose }) {
               <div className={styles.detailTopIcons}>
                 <div>
                   <i className="fa-regular fa-user"></i>
-                  {user_name}
+                  익명{user_id}
                 </div>
                 <div>
                   <i className="fa-regular fa-calendar"></i>
