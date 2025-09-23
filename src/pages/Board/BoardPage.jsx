@@ -20,7 +20,7 @@ function BoardPage() {
   const inProgress = suggestions.filter((s) => s.status === "approved");
   const completed = suggestions.filter((s) => s.status === "completed");
 
-  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState(null);
 
   return (
     <div className="app">
@@ -48,16 +48,16 @@ function BoardPage() {
                         key={s.suggestion_id}
                         suggestion={s}
                         onClick={() => {
-                          setOpen(s);
+                          setSelected(s);
                         }}
                       />
                     ))}
 
-                    {open && (
+                    {selected && (
                       <BoardDetail
-                        suggestion={open}
+                        suggestion={selected}
                         onClose={() => {
-                          setOpen(false);
+                          setSelected(false);
                         }}
                       />
                     )}

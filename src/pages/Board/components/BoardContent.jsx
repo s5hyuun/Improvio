@@ -1,6 +1,6 @@
 import styles from "../../../styles/Board.module.css";
 
-function BoardContent({ suggestion }) {
+function BoardContent({ suggestion, onClick }) {
   const {
     title,
     description,
@@ -11,7 +11,7 @@ function BoardContent({ suggestion }) {
   } = suggestion;
 
   return (
-    <div className={styles.contentContainer}>
+    <div className={styles.contentContainer} onClick={onClick}>
       <h4>{title}</h4>
       <div className={styles.description}>{description}</div>
 
