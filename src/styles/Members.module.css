@@ -1,12 +1,9 @@
-/* Member.module.css */
-
 .placeholder {
   margin-bottom: 16px;
   color: #1E3A8A;
   font-weight: 700;
 }
 
-/* 탭 버튼 행 */
 .btn {
   display: flex;
   gap: 12px;
@@ -43,7 +40,6 @@
   flex-shrink: 0;
 }
 
-/* 상단 헤더/필터 */
 .headerRow {
   display: flex;
   justify-content: space-between;
@@ -99,7 +95,6 @@
   cursor: pointer;
 }
 
-/* 목록 패널 및 표 */
 .panel {
   background: #fff;
   border: 1px solid #DBEAFE;
@@ -135,7 +130,6 @@
   font-weight: 600;
 }
 
-/* 상태 배지 */
 .badge {
   display: inline-block;
   padding: 6px 10px;
@@ -154,7 +148,6 @@
   color: #111827;
 }
 
-/* 편집 버튼 */
 .iconGroup {
   display: flex;
   gap: 8px;
@@ -173,7 +166,6 @@
   border-color: #fecaca;
 }
 
-/* 플레이스홀더 */
 .sectionNote {
   margin-top: 16px;
   color: #6B7280;
