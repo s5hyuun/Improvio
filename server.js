@@ -504,6 +504,22 @@ app.get("/api/departments", async (req, res) => {
   }
 });
 
+app.get("/api/members", async (req, res) => {
+  try {
+    const [users] = await pool.query(`
+      SELECT u.user_id, u.name AS user_name, u.username, u.role,
+             u.join_date, u.status,
+             d.department_name, u.department_id
+      FROM User u
+      LEFT JOIN Department d ON u.department_id = d.department_id
+      ORDER BY u.user_id ASC
+    `);
+    res.json(users);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.listen(5000, () => {
   console.log("http://localhost:5000");
 });
