@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
-export default function Header() {
+export default function Header({ isLoggedIn, setIsLoggedIn }) {
   const [badge, setBadge] = useState(1);
   const [langOpen, setLangOpen] = useState(false);
   const [lang, setLang] = useState("한국어");
@@ -137,9 +138,25 @@ export default function Header() {
           )}
         </div>
 
-        <button className="btn btn-ghost" type="button">
-          로그아웃
-        </button>
+        {/* 👇 로그인 여부에 따라 버튼 토글 */}
+        {isLoggedIn ? (
+          <button
+            className="btn btn-ghost"
+            type="button"
+            onClick={() => setIsLoggedIn(false)}
+          >
+            로그아웃
+          </button>
+        ) : (
+          <>
+            <Link to="/login" className="btn btn-ghost">
+              로그인
+            </Link>
+            <Link to="/signup" className="btn btn-ghost">
+              회원가입
+            </Link>
+          </>
+        )}
 
         <button
           className="icon-btn"
