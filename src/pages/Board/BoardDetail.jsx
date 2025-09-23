@@ -5,6 +5,15 @@ import BoardComment from "./components/BoardComment";
 function BoardDetail({ suggestion, onClose }) {
   const [detail, setDetail] = useState(null);
 
+  //   esc 눌러도 닫히게 .....
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
   useEffect(() => {
     if (!suggestion) return;
     fetch(
@@ -30,7 +39,12 @@ function BoardDetail({ suggestion, onClose }) {
   } = detail;
 
   return (
-    <div className={styles.overlay}>
+    <div
+      className={styles.overlay}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+    >
       <div className={styles.modal}>
         <div className={styles.detailIPost}>
           <div className={styles.detailTop}>
