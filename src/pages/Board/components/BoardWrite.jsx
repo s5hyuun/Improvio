@@ -21,34 +21,38 @@ function BoardWrite({ onClose, onSubmit }) {
       }}
     >
       <div className={styles.modal}>
-        <h3>새 제안 작성</h3>
-        <div className={styles.detailTopIcons}>
+        <div className={styles.writeTop}>
           <div>
-            <i className="fa-regular fa-user"></i>
-            익명101
+            <h3>새 제안 작성</h3>
+            <div className={styles.writeTopIcons}>
+              <div>
+                <i className="fa-regular fa-user"></i>
+                익명101
+              </div>
+              <div>
+                <i className="fa-regular fa-building"></i>
+                부서자리
+              </div>
+              <div>
+                <i className="fa-regular fa-calendar"></i>
+                2025-09-25
+              </div>
+            </div>
           </div>
-          <div>
-            <i className="fa-regular fa-calendar"></i>
-            2025-09-25
-          </div>
-          <div>
-            <i className="fa-regular fa-building"></i>
-            부서자리
-          </div>
+          <button onClick={onClose}>❌</button>
         </div>
-        <div className={styles.formRow}>
-          <label>제목</label>
+        <div className={styles.writeTitle}>
+          <div>개선 제안 제목</div>
           <input value={title} onChange={(e) => setTitle(e.target.value)} />
         </div>
-        <div className={styles.formRow}>
-          <label>내용</label>
+        <div className={styles.writeContent}>
+          <div>개선 제안 상세</div>
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
-        <div className={styles.modalActions}>
-          <button onClick={onClose}>취소</button>
+        <div className={styles.writeSubmit}>
           <button
             onClick={() => onSubmit({ title, description })}
             disabled={!title || !description}

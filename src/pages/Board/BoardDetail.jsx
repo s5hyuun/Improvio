@@ -56,13 +56,14 @@ function BoardDetail({ suggestion, onClose }) {
                   <i className="fa-regular fa-user"></i>
                   익명{user_id}
                 </div>
-                <div>
-                  <i className="fa-regular fa-calendar"></i>
-                  {new Date(created_at).toLocaleDateString()}
-                </div>
+
                 <div>
                   <i className="fa-regular fa-building"></i>
                   {department_name}
+                </div>
+                <div>
+                  <i className="fa-regular fa-calendar"></i>
+                  {new Date(created_at).toLocaleDateString()}
                 </div>
               </div>
             </div>
@@ -110,6 +111,10 @@ function BoardDetail({ suggestion, onClose }) {
           {comments.map((c) => (
             <BoardComment key={c.comment_id} comment={c} />
           ))}
+          <form className={styles.detailCommentInput}>
+            <input type="text" placeholder="Add Comment ..." />
+            <input type="submit" />
+          </form>
         </div>
       </div>
     </div>
