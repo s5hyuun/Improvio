@@ -416,15 +416,19 @@ app.get("/api/suggestions/:id/details", async (req, res) => {
     // 3. Get comments
     const [commentRows] = await pool.query(
       `
-      SELECT 
-        c.*, u.name AS user_name, COUNT(cl.comment_id) AS like_count
-      FROM Comment c
-      JOIN User u ON c.user_id = u.user_id
-      LEFT JOIN Comment_Like cl ON c.comment_id = cl.comment_id
-      WHERE c.suggestion_id = ?
-      GROUP BY c.comment_id
-      ORDER BY c.created_at ASC
-      `,
+  SELECT 
+    c.*, 
+    u.name AS user_name, 
+    d.department_name,
+    COUNT(cl.comment_id) AS like_count
+  FROM Comment c
+  JOIN User u ON c.user_id = u.user_id
+  LEFT JOIN Department d ON u.department_id = d.department_id
+  LEFT JOIN Comment_Like cl ON c.comment_id = cl.comment_id
+  WHERE c.suggestion_id = ?
+  GROUP BY c.comment_id
+  ORDER BY c.created_at ASC
+  `,
       [id]
     );
     suggestion.comments = commentRows;
