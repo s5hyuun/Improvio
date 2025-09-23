@@ -143,7 +143,10 @@ function BoardWrite({ onClose, onSubmit }) {
               fileInputRef.current?.click()
             }
           >
-            <p>여기에 파일을 드래그하거나 클릭해서 선택하세요(최대 3개)</p>
+            <p>
+              여기에 파일을 드래그하거나 클릭해서 선택하세요.
+              <span>(최대 3개)</span>
+            </p>
           </div>
 
           {/* 파일 리스트 */}

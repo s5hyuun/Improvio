@@ -1,4 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+const STORAGE_DEPT_KEY = "selected_dept";
 
 export default function Sidebar() {
   const departments = [
@@ -14,11 +16,37 @@ export default function Sidebar() {
     { id: "safety", label: "안전", icon: "shield" },
   ];
 
-  const [selected, setSelected] = useState("rd");
+  const [selected, setSelected] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_DEPT_KEY);
+      const found = departments.find((d) => d.label === saved);
+      return found ? found.id : "rd";
+    } catch {
+      return "rd";
+    }
+  });
+
+  useEffect(() => {
+    const current = departments.find((d) => d.id === selected);
+    const label = current?.label ?? "";
+    try {
+      localStorage.setItem(STORAGE_DEPT_KEY, label);
+    } catch {}
+    window.dispatchEvent(
+      new CustomEvent("dept:changed", { detail: { dept: label } })
+    );
+  }, [selected]);
 
   return (
     <aside className="sidebar">
       <div className="sidebar-inner">
+        <div className="logo-wrap">
+          <img
+            src="src/assets/logo.png"
+            alt="Company Logo"
+            className="logo-img"
+          />
+        </div>
 
         <section className="profile">
           <div className="profile-name">username</div>
@@ -90,7 +118,12 @@ function icon(name) {
             stroke="currentColor"
             strokeWidth="2"
           />
-          <path d="M14 3v6h6" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path
+            d="M14 3v6h6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
         </svg>
       );
     case "chat":

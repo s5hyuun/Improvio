@@ -1,5 +1,4 @@
 .boardContainer {
-  padding: 0;
   /* background-color: #e6eef9; */
   background-color: #f9f9f9;
   height: 100vh;
@@ -124,7 +123,12 @@ h3 {
   background: white;
   padding: 20px 20px 40px 20px;
   border-radius: 10px;
-  width: 40%;
+  /* width: 40%; */
+  width: min(530px, 92vw);
+  /* 내용 많을 때 스크롤 대비... */
+  max-height: 90vh;
+  overflow: auto;
+
   position: relative;
 }
 i {
@@ -305,36 +309,48 @@ i {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
-  color: #1e3a8a;
   font-weight: 600;
+}
+.writeTop h3 {
+  font-size: 22px;
 }
 .writeTopIcons {
   display: flex;
+}
+.writeTopIcons div:first-child {
+  background-color: #294199;
+  color: white;
+  padding: 9px 10px;
+  border-radius: 14px;
+}
+.writeTopIcons div:nth-child(2),
+.writeTopIcons div:last-child {
+  background-color: #f8f8f9;
+  padding: 9px 10px;
+  border-radius: 14px;
 }
 .writeTopIcons div {
   margin-right: 14px;
 }
 .writeTitle > div,
 .writeContent > div {
-  color: #1e3a8a;
+  font-size: 16px;
+  font-weight: bold;
+  margin-bottom: 4px;
 }
 .writeTitle > input,
 .writeContent > textarea,
 .dropzone {
-  background-color: #e6eef9;
   border: none;
   width: 100%;
-  border: 2px solid #bfdbfe;
+  border: 2px solid #eceff2;
   border-radius: 10px;
   margin: 6px 0 18px 0;
 }
-.writeTitle > input {
-  padding: 18px 15px;
-  font-size: 14px;
-}
+.writeTitle > input,
 .writeContent > textarea {
-  padding: 16px;
-  font-size: 14px;
+  padding: 18px 15px;
+  font-size: 16px;
 }
 .writeSubmit > button {
   position: absolute;
@@ -358,7 +374,6 @@ i {
   border-radius: 12px;
   padding: 16px;
   text-align: center;
-  background-color: #f9fbff;
   color: #64748b;
   box-shadow: none;
   transition: 0.15s ease;
@@ -372,13 +387,18 @@ i {
   border: 2px dashed #3b82f6;
   background-color: #eef4ff;
 }
-
+.dropzone span {
+  color: #9ca3af;
+}
 .fileList {
+  max-height: 160px;
+  overflow-y: auto;
   margin-top: 8px;
   display: grid;
   gap: 6px;
   width: 100%;
   padding-left: 0;
+  list-style: none;
 }
 
 .fileItem {
@@ -392,7 +412,7 @@ i {
   /* width: 100%; */
 }
 .fileItem button {
-  background-color: #3b82f6;
+  background-color: #374151;
   border: none;
   color: white;
   padding: 8px 14px;
