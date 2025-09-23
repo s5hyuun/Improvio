@@ -1,8 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/Members.module.css";
 
-const API = import.meta.env.VITE_API_BASE ?? "http://localhost:5174";
-
 export default function Member({ selectedDeptId = "all" }) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -14,7 +12,7 @@ export default function Member({ selectedDeptId = "all" }) {
       try {
         setLoading(true);
         setErr("");
-        const res = await fetch(`${API}/members`, { credentials: "include" });
+        const res = await fetch("http://localhost:5000/api/members", {});
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (alive) setMembers(Array.isArray(data) ? data : []);
@@ -32,13 +30,11 @@ export default function Member({ selectedDeptId = "all" }) {
 
   const filtered = useMemo(() => {
     if (!selectedDeptId || selectedDeptId === "all") return members;
-    return members.filter((m) => m.deptId === selectedDeptId);
+    return members.filter((m) => m.department_id === selectedDeptId);
   }, [members, selectedDeptId]);
 
   return (
     <div className={styles.wrap}>
-
-
       <div className={styles.card}>
         <div className={styles.tableHead}>
           <div>직원명</div>
@@ -58,19 +54,21 @@ export default function Member({ selectedDeptId = "all" }) {
         {!loading &&
           !err &&
           filtered.map((m) => (
-            <div key={m.id} className={styles.tableRow}>
-              <div className={styles.nameCell}>{m.name}</div>
-              <div className={styles.deptCell}>{m.deptName ?? m.deptId}</div>
-              <div className={styles.dateCell}>
-                {formatDate(m.hiredAt)}
+            <div key={m.user_id} className={styles.tableRow}>
+              <div className={styles.nameCell}>{m.user_name}</div>
+              <div className={styles.deptCell}>
+                {m.department_name ?? m.department_id}
               </div>
+              <div className={styles.dateCell}>{formatDate(m.join_date)}</div>
               <div className={styles.statusCell}>
                 <span
                   className={
-                    m.active ? styles.badgeActive : styles.badgeInactive
+                    m.status === "활성"
+                      ? styles.badgeActive
+                      : styles.badgeInactive
                   }
                 >
-                  {m.active ? "활성" : "비활성"}
+                  {m.status}
                 </span>
               </div>
             </div>
