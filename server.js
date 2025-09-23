@@ -384,7 +384,7 @@ app.get("/api/suggestions/:id/details", async (req, res) => {
     const [suggestionRows] = await pool.query(
       `
       SELECT 
-        s.suggestion_id, s.title, s.description, s.status, s.created_at,
+        s.suggestion_id, s.title, s.description, s.status, s.created_at, u.user_id,
         u.name AS user_name, d.department_name,
         p.expected_reduction_rate, p.actual_reduction_rate,
         p.expected_productivity, p.actual_productivity,
