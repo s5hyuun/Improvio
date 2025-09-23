@@ -1,20 +1,21 @@
 import styles from "../../../styles/Board.module.css";
-function BoardComment() {
+
+function BoardComment({ comment }) {
   return (
     <div className={styles.commentContainer}>
       <div className={styles.commentTop}>
         <div>
-          <i class="fa-regular fa-user"></i>
+          <i className="fa-regular fa-user"></i>
           <div>
-            <div>냉철한기획자642</div>
+            <div>익명{comment.user_id}</div>
             <div className={styles.dept}>부서</div>
           </div>
         </div>
-        <div>2025-09-19</div>
+        <div>{new Date(comment.created_at).toLocaleDateString()}</div>
       </div>
-      <div className={styles.commentContent}>댓글 내용</div>
+      <div className={styles.commentContent}>{comment.content}</div>
       <div className={styles.commentLike}>
-        <i class="fa-regular fa-thumbs-up"></i> <span>5</span>
+        <i className="fa-regular fa-thumbs-up"></i> <span>5</span>
         <span>답글</span>
       </div>
     </div>

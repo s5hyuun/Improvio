@@ -48,6 +48,12 @@
   padding: 20px;
   border-radius: 20px;
 }
+.boardColumn:first-child {
+  background-color: #ecebe9;
+}
+.boardColumn:last-child {
+  background-color: #e0f2e9;
+}
 .boardColumn > div:first-child {
   margin-bottom: 10px;
   font-weight: 600;
