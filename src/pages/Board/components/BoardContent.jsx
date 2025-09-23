@@ -8,6 +8,7 @@ function BoardContent({ suggestion, onClick }) {
     user_name,
     vote_count = 0,
     comment_count = 0,
+    status,
   } = suggestion;
 
   return (

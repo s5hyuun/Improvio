@@ -52,15 +52,6 @@ function BoardPage() {
                         }}
                       />
                     ))}
-
-                    {selected && (
-                      <BoardDetail
-                        suggestion={selected}
-                        onClose={() => {
-                          setSelected(false);
-                        }}
-                      />
-                    )}
                   </>
                 ) : (
                   <div className={styles.noContent}>
@@ -75,7 +66,13 @@ function BoardPage() {
               <div className={styles.cardRow}>
                 {inProgress.length > 0 ? (
                   inProgress.map((s) => (
-                    <BoardContent key={s.suggestion_id} suggestion={s} />
+                    <BoardContent
+                      key={s.suggestion_id}
+                      suggestion={s}
+                      onClick={() => {
+                        setSelected(s);
+                      }}
+                    />
                   ))
                 ) : (
                   <div className={styles.noContent}>
@@ -90,7 +87,13 @@ function BoardPage() {
               <div className={styles.cardRow}>
                 {completed.length > 0 ? (
                   completed.map((s) => (
-                    <BoardContent key={s.suggestion_id} suggestion={s} />
+                    <BoardContent
+                      key={s.suggestion_id}
+                      suggestion={s}
+                      onClick={() => {
+                        setSelected(s);
+                      }}
+                    />
                   ))
                 ) : (
                   <div className={styles.noContent}>
@@ -102,6 +105,14 @@ function BoardPage() {
           </div>
         </div>
       </div>
+      {selected && (
+        <BoardDetail
+          suggestion={selected}
+          onClose={() => {
+            setSelected(false);
+          }}
+        />
+      )}
     </div>
   );
 }
