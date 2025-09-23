@@ -16,11 +16,18 @@ app.get("/api/suggestions", async (req, res) => {
   try {
     const [suggestions] = await pool.query(`
       SELECT s.*,
-             u.name AS user_name,
-             (SELECT COUNT(*) FROM vote v WHERE v.suggestion_id = s.suggestion_id) AS vote_count,
-             (SELECT COUNT(*) FROM comment c WHERE c.suggestion_id = s.suggestion_id) AS comment_count
-      FROM suggestion s
-      LEFT JOIN user u ON s.user_id = u.user_id
+             u.name AS user_name, d.department_name
+             -- 댓글 수
+             (SELECT COUNT(*) 
+              FROM Comment c 
+              WHERE c.suggestion_id = s.suggestion_id) AS comment_count,
+             -- 좋아요 수 (댓글별 좋아요 합계)
+             (SELECT COUNT(*) 
+              FROM Comment_Like cl
+              JOIN Comment c2 ON cl.comment_id = c2.comment_id
+              WHERE c2.suggestion_id = s.suggestion_id) AS vote_count
+      FROM Suggestion s
+      LEFT JOIN User u ON s.user_id = u.user_id left join department d on s.department_id=d.department_id
       ORDER BY s.created_at DESC
     `);
 
@@ -269,6 +276,20 @@ app.post("/api/auth/register", async (req, res) => {
     );
 
     res.json({ message: "회원가입 성공" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/users", async (req, res) => {
+  try {
+    const [users] = await pool.query(`
+      SELECT u.user_id, u.name, u.username, u.role, d.department_name
+      FROM User u
+      LEFT JOIN Department d ON u.department_id = d.department_id
+      ORDER BY u.user_id ASC
+    `);
+    res.json(users);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
