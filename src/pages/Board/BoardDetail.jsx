@@ -67,7 +67,15 @@ function BoardDetail({ suggestion, onClose }) {
               </div>
             </div>
             <div>
-              <div className={styles.status}>
+              <div
+                className={
+                  status === "pending"
+                    ? styles.proposal
+                    : status === "approved"
+                    ? styles.inprogress
+                    : styles.complete
+                }
+              >
                 {status === "pending"
                   ? "Proposal"
                   : status === "approved"

@@ -15,7 +15,8 @@ function BoardComment({ comment }) {
       </div>
       <div className={styles.commentContent}>{comment.content}</div>
       <div className={styles.commentLike}>
-        <i className="fa-regular fa-thumbs-up"></i> <span>5</span>
+        <i className="fa-regular fa-thumbs-up"></i>{" "}
+        <span>{comment.like_count}</span>
         <span>답글</span>
       </div>
     </div>

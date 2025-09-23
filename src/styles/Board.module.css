@@ -153,12 +153,6 @@ i {
   margin-right: 14px;
 }
 
-.status {
-  background-color: #fef9c3;
-  padding: 5px 10px;
-  border-radius: 5px;
-  margin-right: 10px;
-}
 .detailTop button {
   border: none;
   background-color: white;
@@ -258,3 +252,22 @@ i {
   cursor: pointer;
 }
 /* ==================write================== */
+
+.proposal {
+  background-color: #ecebe9;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+.inprogress {
+  background-color: #e6eef9;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+.complete {
+  background-color: #e0f2e9;
+  padding: 5px 10px;
+  border-radius: 5px;
+  margin-right: 10px;
+}
