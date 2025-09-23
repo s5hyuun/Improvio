@@ -328,7 +328,7 @@ body {
 }
 .menu {
   position: absolute;
-  right: 10;
+  right: 0;
   top: calc(60% + 8px);
   min-width: 140px;
   background: #fff;

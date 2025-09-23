@@ -4,6 +4,7 @@ import Header from "../../components/Header";
 import styles from "../../styles/manager.module.css";
 import { SuggestionList, adaptFromDB } from "./Proposal";
 import Notice from "./Notice";
+import Member from "./Members";
 
 const API = "http://localhost:5000";
 const STORAGE_KEY = "proposal_items_cache_v1";
@@ -21,15 +22,14 @@ function loadFromStorage() {
 export default function Manager() {
   const [active, setActive] = useState("dashboard");
 
-  // 제안 데이터
+  const [currentDeptId, setCurrentDeptId] = useState("all");
+
   const [items, setItems] = useState([]);
   const [urgentItems, setUrgentItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // ✅ 활성 공지 개수(대시보드 카드가 이 값으로 갱신됨)
   const [activeNoticeCount, setActiveNoticeCount] = useState(0);
 
-  // 최초 활성 공지 개수 로드
   useEffect(() => {
     try {
       const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
@@ -38,7 +38,6 @@ export default function Manager() {
     } catch {}
   }, []);
 
-  // 공지 변경 이벤트 구독
   useEffect(() => {
     function onNoticeChanged(e) {
       const { activeCount, list } = e.detail || {};
@@ -51,8 +50,14 @@ export default function Manager() {
     window.addEventListener("notice:changed", onNoticeChanged);
     return () => window.removeEventListener("notice:changed", onNoticeChanged);
   }, []);
-
-  // 제안 불러오기
+  useEffect(() => {
+    const handler = (e) => {
+      const next = e?.detail?.id ?? "all";
+      setCurrentDeptId(next);
+    };
+    window.addEventListener("dept:changed", handler);
+    return () => window.removeEventListener("dept:changed", handler);
+  }, []);
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -89,8 +94,6 @@ export default function Manager() {
       mounted = false;
     };
   }, []);
-
-  // 긴급 제안 변경 브로드캐스트 반영
   useEffect(() => {
     function onUrgentChanged(e) {
       const { id, urgent, item } = e.detail || {};
@@ -127,7 +130,6 @@ export default function Manager() {
       })
     );
 
-    // 서버 연동은 선택적
     try {
       await fetch(`${API}/api/suggestions/${id}`, {
         method: "PUT",
@@ -137,12 +139,11 @@ export default function Manager() {
     } catch {}
   };
 
-  // 💡 대시보드 카드 데이터
   const stats = useMemo(() => {
     const totalEmployees = 5;
     const totalSuggestions = items.length;
     const urgentCount = urgentItems.length;
-    const activeNotices = activeNoticeCount; // ← 공지관리에서 실시간 반영
+    const activeNotices = activeNoticeCount;
 
     return [
       { label: "총 직원 수", value: totalEmployees },
@@ -171,15 +172,47 @@ export default function Manager() {
 
   return (
     <div className="app">
-      <Sidebar />
+      <Sidebar
+        selected={currentDeptId}
+        onSelectDept={(id) => setCurrentDeptId(id || "all")}
+      />
+
       <main className="main">
         <Header />
         <section className="content">
           <div className={styles.btn}>
-            <button type="button" className={`${styles.button} ${active === "dashboard" ? styles.active : ""}`} onClick={() => setActive("dashboard")} aria-pressed={active === "dashboard"}>관리자 대시보드</button>
-            <button type="button" className={`${styles.button} ${active === "employee" ? styles.active : ""}`} onClick={() => setActive("employee")} aria-pressed={active === "employee"}>직원 관리</button>
-            <button type="button" className={`${styles.button} ${active === "suggestion" ? styles.active : ""}`} onClick={() => setActive("suggestion")} aria-pressed={active === "suggestion"}>제안 관리</button>
-            <button type="button" className={`${styles.button} ${active === "notice" ? styles.active : ""}`} onClick={() => setActive("notice")} aria-pressed={active === "notice"}>공지 관리</button>
+            <button
+              type="button"
+              className={`${styles.button} ${active === "dashboard" ? styles.active : ""}`}
+              onClick={() => setActive("dashboard")}
+              aria-pressed={active === "dashboard"}
+            >
+              관리자 대시보드
+            </button>
+            <button
+              type="button"
+              className={`${styles.button} ${active === "employee" ? styles.active : ""}`}
+              onClick={() => setActive("employee")}
+              aria-pressed={active === "employee"}
+            >
+              직원 관리
+            </button>
+            <button
+              type="button"
+              className={`${styles.button} ${active === "suggestion" ? styles.active : ""}`}
+              onClick={() => setActive("suggestion")}
+              aria-pressed={active === "suggestion"}
+            >
+              제안 관리
+            </button>
+            <button
+              type="button"
+              className={`${styles.button} ${active === "notice" ? styles.active : ""}`}
+              onClick={() => setActive("notice")}
+              aria-pressed={active === "notice"}
+            >
+              공지 관리
+            </button>
           </div>
 
           {active === "dashboard" && (
@@ -197,10 +230,6 @@ export default function Manager() {
                 <div className={styles.urgentPanelHeader}>⚠ 긴급 제안</div>
 
                 {loading ? (
-                  <div className={styles.urgentCards}>
-                    <div className={styles.urgentCard} style={{ color: "#6b7280" }}>불러오는 중…</div>
-                  </div>
-                ) : urgentItems.length === 0 ? (
                   <div className={styles.urgentCards}>
                     <div className={styles.urgentCard} style={{ color: "#c2410c" }}>현재 긴급 제안이 없습니다.</div>
                   </div>
@@ -236,7 +265,9 @@ export default function Manager() {
 
           {active === "suggestion" && <SuggestionList />}
 
-          {active === "employee" && <div style={{ marginTop: 16 }}>직원 관리 준비중 ,,</div>}
+          {active === "employee" && (
+            <Member selectedDeptId={currentDeptId} />
+          )}
 
           {active === "notice" && <Notice />}
         </section>
