@@ -31,6 +31,17 @@ app.get("/api/suggestions", async (req, res) => {
   }
 });
 
+// 제안 개수 조회
+app.get("/api/suggestions/count", async (req, res) => {
+  try {
+    const [rows] = await pool.query("SELECT COUNT(*) AS count FROM suggestion");
+    res.json({ count: rows[0].count });
+  } catch (err) {
+    console.error("Error fetching suggestion count:", err);
+    res.status(500).json({ error: "Failed to fetch suggestion count" });
+  }
+});
+
 // GET /api/suggestions/:id
 app.get("/api/suggestions/:id", async (req, res) => {
   try {
