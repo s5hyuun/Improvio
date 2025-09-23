@@ -19,6 +19,9 @@ export default function Sidebar() {
   return (
     <aside className="sidebar">
       <div className="sidebar-inner">
+        <div className="logo-wrap">
+          <img src="src/assets/logo.png" alt="Company Logo" className="logo-img" />
+        </div>
 
         <section className="profile">
           <div className="profile-name">username</div>

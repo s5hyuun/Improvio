@@ -1,0 +1,180 @@
+/* Member.module.css */
+
+.placeholder {
+  margin-bottom: 16px;
+  color: #1E3A8A;
+  font-weight: 700;
+}
+
+/* 탭 버튼 행 */
+.btn {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.button {
+  display: inline-flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 15px;
+  background: transparent;
+  color: #2563EB;
+  border: 1px solid #93C5FD;
+  transition: background .2s ease, color .2s ease, border-color .2s ease;
+  cursor: pointer;
+}
+
+.button:not(.active):hover {
+  background: #DBEAFE;
+}
+
+.active {
+  background: #2563EB;
+  color: #fff;
+  border-color: #BFDBFE;
+}
+
+.icon {
+  width: 1em;
+  height: 1em;
+  margin-right: 6px;
+  flex-shrink: 0;
+}
+
+/* 상단 헤더/필터 */
+.headerRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  margin-bottom: 12px;
+}
+
+.sectionTitle {
+  font-weight: 600;
+  color: #1F2937;
+}
+
+.filters {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.selectWrap {
+  position: relative;
+}
+
+.select {
+  appearance: none;
+  height: 40px;
+  padding: 0 44px 0 14px;
+  min-width: 140px;
+  border-radius: 12px;
+  border: 1px solid #93C5FD;
+  background: #fff;
+  color: #1E3A8A;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.selectCaret {
+  position: absolute;
+  right: 12px;
+  top: 10px;
+  color: #6B7280;
+  pointer-events: none;
+}
+
+.btnAdd {
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 12px;
+  border: 1px solid #111827;
+  background: #111827;
+  color: #fff;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* 목록 패널 및 표 */
+.panel {
+  background: #fff;
+  border: 1px solid #DBEAFE;
+  border-radius: 16px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.06);
+  overflow: hidden;
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.th {
+  text-align: left;
+  font-weight: 700;
+  color: #1F2937;
+  padding: 16px 20px;
+  border-bottom: 1px solid #E5E7EB;
+  font-size: 14px;
+}
+
+.td {
+  padding: 18px 20px;
+  border-bottom: 1px solid #E5E7EB;
+  color: #111827;
+  vertical-align: middle;
+}
+
+.tdStrong {
+  color: #1E3A8A;
+  font-weight: 600;
+}
+
+/* 상태 배지 */
+.badge {
+  display: inline-block;
+  padding: 6px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.badgeActive {
+  background: #111827;
+  color: #fff;
+}
+
+.badgeInactive {
+  background: #F3F4F6;
+  color: #111827;
+}
+
+/* 편집 버튼 */
+.iconGroup {
+  display: flex;
+  gap: 8px;
+}
+
+.iconBtn {
+  height: 36px;
+  width: 36px;
+  border-radius: 10px;
+  border: 1px solid #E5E7EB;
+  background: #fff;
+  cursor: pointer;
+}
+
+.iconDanger {
+  border-color: #fecaca;
+}
+
+/* 플레이스홀더 */
+.sectionNote {
+  margin-top: 16px;
+  color: #6B7280;
+}
