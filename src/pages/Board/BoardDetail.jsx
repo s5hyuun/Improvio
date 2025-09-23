@@ -52,7 +52,13 @@ function BoardDetail({ suggestion, onClose }) {
               </div>
             </div>
             <div>
-              <div className={styles.status}>{status}</div>
+              <div className={styles.status}>
+                {status === "pending"
+                  ? "Proposal"
+                  : status === "approved"
+                  ? "In progress"
+                  : "complete"}
+              </div>
               <button onClick={onClose}>❌</button>
             </div>
           </div>
@@ -68,7 +74,14 @@ function BoardDetail({ suggestion, onClose }) {
             {vote_count}
           </div>
           <div>
-            상태 변경 : <span>{status}</span>
+            상태 변경 :{" "}
+            <span>
+              {status === "pending"
+                ? "Proposal"
+                : status === "approved"
+                ? "In progress"
+                : "complete"}
+            </span>
           </div>
         </div>
 

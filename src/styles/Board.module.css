@@ -47,6 +47,7 @@
   /* height: 100vh; */
   padding: 20px;
   border-radius: 20px;
+  /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
 }
 .boardColumn:first-child {
   background-color: #ecebe9;
@@ -72,6 +73,9 @@
   margin-bottom: 10px;
   cursor: pointer;
   box-sizing: border-box;
+}
+.contentContainer:hover {
+  background-color: #fafafa;
 }
 .contentContainer h3 {
   margin: 10px 0;

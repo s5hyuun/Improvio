@@ -4,9 +4,12 @@ import Header from "../../components/Header";
 import styles from "../../styles/Board.module.css";
 import BoardContent from "./components/BoardContent";
 import BoardDetail from "./BoardDetail";
+import BoardWrite from "./components/BoardWrite";
 
 function BoardPage() {
   const [suggestions, setSuggestions] = useState([]);
+  const [selected, setSelected] = useState(null);
+  const [write, setWrite] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:5000/api/suggestions")
@@ -20,8 +23,6 @@ function BoardPage() {
   const inProgress = suggestions.filter((s) => s.status === "approved");
   const completed = suggestions.filter((s) => s.status === "completed");
 
-  const [selected, setSelected] = useState(null);
-
   return (
     <div className="app">
       <Sidebar />
@@ -34,7 +35,33 @@ function BoardPage() {
               <p>개선 제안 시스템</p>
               <p>현장 직원들의 불편사항 및 개선 아이디어를 공유해주세요</p>
             </div>
-            <button>+ 글쓰기</button>
+            <button
+              onClick={() => {
+                setWrite(true);
+              }}
+            >
+              + 글쓰기
+            </button>
+            {write && (
+              <BoardWrite
+                onClose={() => setWrite(false)}
+                onSubmit={async (form) => {
+                  // 예시: 글 저장 후 목록 재조회
+                  await fetch("http://localhost:5000/api/suggestions", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(form),
+                  });
+                  // 새로고침 없이 목록 갱신
+                  const res = await fetch(
+                    "http://localhost:5000/api/suggestions"
+                  );
+                  const data = await res.json();
+                  setSuggestions(data);
+                  setWrite(false);
+                }}
+              />
+            )}
           </div>
 
           <div className={styles.boardContents}>
