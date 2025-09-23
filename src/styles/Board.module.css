@@ -1,9 +1,12 @@
 .boardContainer {
   padding: 0;
-  background-color: #e6eef9;
+  /* background-color: #e6eef9; */
+  background-color: #f9f9f9;
   height: 100vh;
-  flex: 1;
+  /* flex: 1; */
   padding: 30px;
+  min-height: 0; /* flex item 스크롤 버그 방지 */
+  overflow-y: auto;
 }
 .boardTitle {
   display: flex;
@@ -40,13 +43,18 @@
 }
 .boardColumn {
   min-width: 0;
+  background-color: #e6eef9;
+  /* height: 100vh; */
+  padding: 20px;
+  border-radius: 20px;
 }
 .boardColumn > div:first-child {
   margin-bottom: 10px;
-  /* font-weight: 600; */
+  font-weight: 600;
   font-size: 18px;
   color: #1e3a8a;
 }
+
 /* ========board Content =============== */
 
 .contentContainer {
@@ -151,6 +159,15 @@ i {
   color: #1e3a8a;
   padding: 20px;
   border-radius: 10px;
+}
+.detailContent div:first-child {
+  margin-bottom: 14px;
+  font-size: 18px;
+}
+.detailContent div:last-child {
+  margin-bottom: 10px;
+  font-size: 15px;
+  color: black;
 }
 
 .detailMiddle {
