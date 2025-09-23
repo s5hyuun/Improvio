@@ -78,7 +78,7 @@
   background-color: #fafafa;
 }
 h3 {
-  margin: 12px 0;
+  margin: 0 0 12px 0;
   font-size: 16px;
 }
 .contentUser {
@@ -122,9 +122,10 @@ h3 {
 
 .modal {
   background: white;
-  padding: 20px;
+  padding: 20px 20px 40px 20px;
   border-radius: 10px;
-  width: 50%;
+  width: 40%;
+  position: relative;
 }
 i {
   margin-right: 5px;
@@ -304,10 +305,97 @@ i {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 24px;
+  color: #1e3a8a;
+  font-weight: 600;
 }
 .writeTopIcons {
   display: flex;
 }
 .writeTopIcons div {
   margin-right: 14px;
+}
+.writeTitle > div,
+.writeContent > div {
+  color: #1e3a8a;
+}
+.writeTitle > input,
+.writeContent > textarea,
+.dropzone {
+  background-color: #e6eef9;
+  border: none;
+  width: 100%;
+  border: 2px solid #bfdbfe;
+  border-radius: 10px;
+  margin: 6px 0 18px 0;
+}
+.writeTitle > input {
+  padding: 18px 15px;
+  font-size: 14px;
+}
+.writeContent > textarea {
+  padding: 16px;
+  font-size: 14px;
+}
+.writeSubmit > button {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  margin-top: 20px;
+  background-color: #1e3a8a;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+/* =============file =========================*/
+.hiddenFileInput {
+  display: none;
+}
+
+.dropzone {
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  background-color: #f9fbff;
+  color: #64748b;
+  box-shadow: none;
+  transition: 0.15s ease;
+  cursor: pointer;
+}
+.dropzone:hover {
+  border: 2px dashed #9ca3af;
+  background-color: #f3f8ff;
+}
+.dropzoneActive {
+  border: 2px dashed #3b82f6;
+  background-color: #eef4ff;
+}
+
+.fileList {
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding-left: 0;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f9f9f9;
+  /* width: 100%; */
+}
+.fileItem button {
+  background-color: #3b82f6;
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
 }
