@@ -22,10 +22,7 @@ app.get("/api/suggestions", async (req, res) => {
               FROM Comment c 
               WHERE c.suggestion_id = s.suggestion_id) AS comment_count,
              -- 좋아요 수 (댓글별 좋아요 합계)
-             (SELECT COUNT(*) 
-              FROM Comment_Like cl
-              JOIN Comment c2 ON cl.comment_id = c2.comment_id
-              WHERE c2.suggestion_id = s.suggestion_id) AS vote_count
+             (SELECT count(*) FROM Vote WHERE suggestion_id = s.suggestion_id) AS vote_count
       FROM Suggestion s
       LEFT JOIN User u ON s.user_id = u.user_id left join department d on s.department_id=d.department_id
       ORDER BY s.created_at DESC
