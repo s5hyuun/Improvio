@@ -8,7 +8,7 @@ function BoardComment({ comment }) {
           <i className="fa-regular fa-user"></i>
           <div>
             <div>익명{comment.user_id}</div>
-            <div className={styles.dept}>부서</div>
+            <div className={styles.dept}>{comment.department_name}</div>
           </div>
         </div>
         <div>{new Date(comment.created_at).toLocaleDateString()}</div>

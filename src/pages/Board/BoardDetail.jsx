@@ -89,14 +89,8 @@ function BoardDetail({ suggestion, onClose }) {
             {vote_count}
           </div>
           <div>
-            상태 변경 :{" "}
-            <span>
-              {status === "pending"
-                ? "Proposal"
-                : status === "approved"
-                ? "In progress"
-                : "complete"}
-            </span>
+            <i class="fa-regular fa-thumbs-down"></i>
+            1,294
           </div>
         </div>
 

@@ -78,7 +78,8 @@
   background-color: #fafafa;
 }
 .contentContainer h3 {
-  margin: 10px 0;
+  margin: 12px 0;
+  font-size: 16px;
 }
 .contentUser {
   color: #3b82f6;
@@ -181,16 +182,23 @@ i {
 }
 
 .detailMiddle {
-  margin: 20px 0;
-  border-top: 1px solid #bfdbfe;
+  margin: 0 0 20px 0;
+  /* border-top: 1px solid #bfdbfe; */
   border-bottom: 1px solid #bfdbfe;
   display: flex;
   padding: 20px 0;
-  justify-content: space-between;
+  justify-content: center;
   color: #1e3a8a;
 }
-.detailMiddle div:first-child {
+.detailMiddle > div:first-child {
+  margin-right: 15px;
+}
+.detailMiddle > div:last-child {
+  margin-left: 15px;
+}
+.detailMiddle > div {
   font-weight: 600;
+  cursor: pointer;
 }
 .detailMiddle span {
   border: 2px solid #bfdbfe;
@@ -213,6 +221,7 @@ i {
   justify-content: space-between;
   color: #1e3a8a;
   align-items: center;
+  font-size: 14px;
 }
 .commentTop div:first-child {
   display: flex;
@@ -221,7 +230,7 @@ i {
 .commentTop div:first-child i {
   background-color: #2563eb;
   color: white;
-  padding: 10px;
+  padding: 5px;
   border-radius: 50px;
 }
 .commentTop .dept {
@@ -229,8 +238,8 @@ i {
   font-size: 14px;
 }
 .commentContent {
-  padding: 20px 0;
-  margin: 10px 0;
+  padding: 10px 0;
+  margin: 5px 0;
   color: #1e3a8a;
 }
 .commentLike {
@@ -248,3 +257,4 @@ i {
   margin-right: 10px;
   cursor: pointer;
 }
+/* ==================write================== */
