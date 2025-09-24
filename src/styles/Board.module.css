@@ -48,7 +48,7 @@
 .boardColumn {
   min-width: 0;
   background-color: #e6eef9;
-  padding: 20px 5px 20px 0;
+  padding: 20px 5px 20px 5px;
   border-radius: 20px;
   display: flex;
   flex-direction: column;
