@@ -3,7 +3,7 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import styles from "../../styles/Proposal.module.css";
 
-const API = "http://localhost:5000";
+const API = "http://localhost";
 
 const DB_STATUS = ["pending", "approved", "completed"];
 const statusLabel = {
