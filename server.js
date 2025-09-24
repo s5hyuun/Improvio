@@ -469,9 +469,15 @@ app.get("/api/suggestions/:id/details", async (req, res) => {
       `SELECT SUM(score) AS total_score, COUNT(*) AS vote_count FROM Vote WHERE suggestion_id = ?`,
       [id]
     );
-
     suggestion.total_score = voteRow.total_score || 0;
     suggestion.vote_count = voteRow.vote_count || 0;
+
+    // 싫어요 개수 가져오기
+    const [[dislikeRow]] = await pool.query(
+      `SELECT COUNT(*) AS dislike_count FROM Dislike WHERE suggestion_id = ?`,
+      [id]
+    );
+    suggestion.dislike_count = dislikeRow.dislike_count || 0;
 
     // 3. Get comments
     const [commentRows] = await pool.query(
@@ -609,6 +615,7 @@ app.post("/api/alerts", async (req, res) => {
   res.status(201).json({ alert_id: result.insertId });
 });
 
+// PUT /api/alerts/:id
 app.put("/api/alerts/:id", async (req, res) => {
   const { id } = req.params;
   const { title, content, is_urgent, active } = req.body;
@@ -622,6 +629,69 @@ app.put("/api/alerts/:id", async (req, res) => {
     return res.status(404).json({ error: "Alert not found" });
 
   res.json({ message: "Alert updated successfully" });
+});
+
+// 좋아요 클릭
+app.post("/api/suggestions/:id/vote", async (req, res) => {
+  try {
+    const { id } = req.params; // suggestion_id
+    const { user_id } = req.body;
+
+    const [result] = await pool.query(
+      `INSERT INTO Vote (user_id, suggestion_id) VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE created_at = CURRENT_TIMESTAMP`,
+      [user_id, id]
+    );
+
+    res.json({ message: "Liked" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 싫어요 클릭
+app.post("/api/suggestions/:id/dislike", async (req, res) => {
+  try {
+    const { id } = req.params; // suggestion_id
+    const { user_id } = req.body;
+
+    const [result] = await pool.query(
+      `INSERT INTO Dislike (user_id, suggestion_id) VALUES (?, ?)
+       ON DUPLICATE KEY UPDATE created_at = CURRENT_TIMESTAMP`,
+      [user_id, id]
+    );
+
+    res.json({ message: "Disliked" });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+// POST /api/dislike
+app.post("/api/dislike", async (req, res) => {
+  try {
+    const { user_id, suggestion_id } = req.body;
+
+    // 이미 눌렀으면 중복 방지
+    const [existing] = await pool.query(
+      `SELECT * FROM Dislike WHERE user_id = ? AND suggestion_id = ?`,
+      [user_id, suggestion_id]
+    );
+
+    if (existing.length > 0) {
+      return res
+        .status(400)
+        .json({ message: "이미 싫어요를 누른 항목입니다." });
+    }
+
+    const [result] = await pool.query(
+      `INSERT INTO Dislike (user_id, suggestion_id) VALUES (?, ?)`,
+      [user_id, suggestion_id]
+    );
+
+    res.status(201).json({ dislike_id: result.insertId });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
 });
 
 app.listen(5000, () => {
