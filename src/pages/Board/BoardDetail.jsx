@@ -8,7 +8,8 @@ function BoardDetail({ suggestion, onClose }) {
   const [dislikeCount, setDislikeCount] = useState(0);
   const [voted, setVoted] = useState(false); // 내가 좋아요 눌렀는지
   const [disliked, setDisliked] = useState(false); // 내가 싫어요 눌렀는지
-
+  const [newComment, setNewComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
   const user_id = 1; // 실제 로그인한 user_id로 바꿔야 함
 
   // ESC 눌러도 닫히게
@@ -98,6 +99,37 @@ function BoardDetail({ suggestion, onClose }) {
     }
   };
 
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+
+    setSubmitting(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: newComment,
+          user_id, // 로그인한 user_id
+          suggestion_id: suggestion.suggestion_id,
+        }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setNewComment(""); // 입력창 초기화
+        fetchDetail(); // 댓글 목록 새로고침
+      } else {
+        alert(data.error || "댓글 작성 실패");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("서버 오류");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div
       className={styles.overlay}
@@ -172,9 +204,18 @@ function BoardDetail({ suggestion, onClose }) {
           {comments.map((c) => (
             <BoardComment key={c.comment_id} comment={c} />
           ))}
-          <form className={styles.detailCommentInput}>
-            <input type="text" placeholder="Add Comment ..." />
-            <input type="submit" />
+          <form
+            className={styles.detailCommentInput}
+            onSubmit={handleCommentSubmit}
+          >
+            <input
+              type="text"
+              placeholder="Add Comment ..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              disabled={submitting}
+            />
+            <input type="submit"></input>
           </form>
         </div>
       </div>
