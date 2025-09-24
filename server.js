@@ -11,7 +11,7 @@ import fs from "fs";
 const SECRET_KEY = "secret_key";
 
 const app = express();
-app.use(cors());
+app.use(cors({}));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 const uploadDir = "uploads";
