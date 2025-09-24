@@ -4,18 +4,14 @@ import BoardComment from "./components/BoardComment";
 
 function BoardDetail({ suggestion, onClose }) {
   const [detail, setDetail] = useState(null);
-  const [dislikes, setDislikes] = useState(0);
+  const [voteCount, setVoteCount] = useState(0);
+  const [dislikeCount, setDislikeCount] = useState(0);
+  const [voted, setVoted] = useState(false); // 내가 좋아요 눌렀는지
+  const [disliked, setDisliked] = useState(false); // 내가 싫어요 눌렀는지
 
   const user_id = 1; // 실제 로그인한 user_id로 바꿔야 함
 
   // ESC 눌러도 닫히게
-  useEffect(() => {
-    const onKeyDown = (e) => {
-      if (e.key === "Escape") onClose?.();
-    };
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, [onClose]);
   useEffect(() => {
     if (!suggestion) return;
     fetch(
@@ -24,10 +20,13 @@ function BoardDetail({ suggestion, onClose }) {
       .then((res) => res.json())
       .then((data) => {
         setDetail(data);
+        setVoteCount(data.vote_count || 0);
+        setDislikeCount(data.dislike_count || 0);
 
-        setDislikes(data.dislike_count || 0); // 여기서 싫어요 세팅
-      })
-      .catch((err) => console.error(err));
+        // user_id 1이 이미 좋아요/싫어요 눌렀는지 확인
+        setVoted(data.votes?.some((v) => v.user_id === 1) || false);
+        setDisliked(data.dislikes?.some((d) => d.user_id === 1) || false);
+      });
   }, [suggestion]);
 
   // 상세 데이터 가져오기
@@ -63,6 +62,7 @@ function BoardDetail({ suggestion, onClose }) {
   } = detail;
 
   // 좋아요 클릭
+  // 좋아요 토글
   const handleVote = async () => {
     try {
       await fetch(
@@ -70,16 +70,17 @@ function BoardDetail({ suggestion, onClose }) {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id, score: 1 }),
+          body: JSON.stringify({ user_id: 1 }), // 토글
         }
       );
-      fetchDetail(); // 새로고침
+      setVoted(!voted);
+      setVoteCount(voted ? voteCount - 1 : voteCount + 1);
     } catch (err) {
       console.error(err);
     }
   };
 
-  // 싫어요 클릭
+  // 싫어요 토글
   const handleDislike = async () => {
     try {
       await fetch(
@@ -87,16 +88,11 @@ function BoardDetail({ suggestion, onClose }) {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: 1 }), // 실제 로그인 유저 id로 교체
+          body: JSON.stringify({ user_id: 1 }),
         }
       );
-
-      // 업데이트 후 다시 조회
-      const res = await fetch(
-        `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/details`
-      );
-      const data = await res.json();
-      setDislikes(data.dislike_count || 0);
+      setDisliked(!disliked);
+      setDislikeCount(disliked ? dislikeCount - 1 : dislikeCount + 1);
     } catch (err) {
       console.error(err);
     }
@@ -151,11 +147,18 @@ function BoardDetail({ suggestion, onClose }) {
 
             <div className={styles.detailThumb}>
               <div onClick={handleVote} style={{ cursor: "pointer" }}>
-                <i className="fa-regular fa-thumbs-up"></i> {vote_count || 0}
+                <i
+                  className={`fa-regular fa-thumbs-up ${voted ? "active" : ""}`}
+                ></i>{" "}
+                {voteCount}{" "}
               </div>
               <div onClick={handleDislike} style={{ cursor: "pointer" }}>
-                <i className="fa-regular fa-thumbs-down"></i>{" "}
-                {dislike_count || 0}
+                <i
+                  className={`fa-regular fa-thumbs-down ${
+                    disliked ? "active" : ""
+                  }`}
+                ></i>{" "}
+                {dislikeCount}{" "}
               </div>
             </div>
           </div>
