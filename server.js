@@ -4,13 +4,76 @@ import bcrypt from "bcryptjs";
 import jwt from "jsonwebtoken";
 import pool from "./db.js";
 import cors from "cors";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
 const SECRET_KEY = "secret_key";
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+app.use("/uploads", express.static("uploads"));
+const uploadDir = "uploads";
+if (!fs.existsSync(uploadDir)) {
+  fs.mkdirSync(uploadDir);
+}
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + "-" + Math.round(Math.random() * 1e9);
+    cb(null, uniqueSuffix + path.extname(file.originalname));
+  },
+});
+const upload = multer({ storage });
 
+// POST /api/suggestions (제안 + 첨부파일)
+app.post("/api/suggestions", upload.array("files"), async (req, res) => {
+  try {
+    const { title, description, expected_effect, user_id, department_id } =
+      req.body;
+
+    // 1) Suggestion 저장
+    const [result] = await pool.query(
+      `
+      INSERT INTO Suggestion (title, description, expected_effect, user_id, department_id)
+      VALUES (?, ?, ?, ?, ?)
+      `,
+      [
+        title,
+        description,
+        expected_effect || null,
+        user_id || null,
+        department_id || null,
+      ]
+    );
+
+    const suggestionId = result.insertId;
+
+    // 2) 파일 있으면 Attachment 저장
+    if (req.files && req.files.length > 0) {
+      for (const file of req.files) {
+        await pool.query(
+          `INSERT INTO Attachment (suggestion_id, file_path) VALUES (?, ?)`,
+          [suggestionId, file.filename]
+        );
+      }
+    }
+
+    res.status(201).json({
+      suggestion_id: suggestionId,
+      message: "제안이 등록되었습니다.",
+    });
+  } catch (err) {
+    console.error("Error inserting suggestion:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// 업로드된 파일 제공
+app.use("/uploads", express.static("uploads"));
 // GET /api/suggestions
 app.get("/api/suggestions", async (req, res) => {
   try {
