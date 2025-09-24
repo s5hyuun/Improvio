@@ -609,7 +609,6 @@ app.post("/api/alerts", async (req, res) => {
   res.status(201).json({ alert_id: result.insertId });
 });
 
-// PUT /api/alerts/:id
 app.put("/api/alerts/:id", async (req, res) => {
   const { id } = req.params;
   const { title, content, is_urgent, active } = req.body;
