@@ -6,9 +6,12 @@ import { SuggestionList, adaptFromDB } from "./Proposal";
 import Notice from "./Notice";
 import Member from "./Members";
 
-const API = "http://localhost:5000";
+const API = "http://localhost:3000";
 const STORAGE_KEY = "proposal_items_cache_v1";
 const NOTICE_STORAGE_KEY = "notices_v1";
+
+// ✅ 직원 관리와 동기화용 키 (Members에서 쓰는 키에 맞춰주세요)
+const MEMBERS_STORAGE_KEY = "members_v1";
 
 function loadFromStorage() {
   try {
@@ -19,37 +22,102 @@ function loadFromStorage() {
   }
 }
 
+// ✅ 로컬스토리지의 직원 목록 길이 가져오기 (없으면 0)
+function getEmployeeCountFromStorage() {
+  try {
+    const raw = localStorage.getItem(MEMBERS_STORAGE_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return Array.isArray(arr) ? arr.length : 0;
+  } catch {
+    return 0;
+  }
+}
+
 export default function Manager() {
   const [active, setActive] = useState("dashboard");
-
   const [currentDeptId, setCurrentDeptId] = useState("all");
 
+  // ✅ 총 직원 수(대시보드 카드에 사용)
+  const [employeeCount, setEmployeeCount] = useState(0);
+
+  // 제안(긴급)
   const [items, setItems] = useState([]);
   const [urgentItems, setUrgentItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // 공지
   const [activeNoticeCount, setActiveNoticeCount] = useState(0);
+  const [urgentNotices, setUrgentNotices] = useState([]);
+
+  // ✅ 최초 로드 시 직원 수 동기화
+  useEffect(() => {
+    setEmployeeCount(getEmployeeCountFromStorage());
+  }, []);
+
+  // ✅ 직원 관리 화면에서 발생시키는 변경 이벤트들을 수신해 동기화
+  useEffect(() => {
+    const onMembersChanged = (e) => {
+      // e.detail: { list } 또는 { count } 둘 다 지원
+      const { list, count } = e.detail || {};
+      if (typeof count === "number") {
+        setEmployeeCount(count);
+      } else if (Array.isArray(list)) {
+        setEmployeeCount(list.length);
+      } else {
+        // 포맷을 모르면 저장소 재조회
+        setEmployeeCount(getEmployeeCountFromStorage());
+      }
+    };
+
+    // 가능한 이벤트 이름들(컴포넌트 구현에 따라 하나만 올 수도 있음)
+    window.addEventListener("members:changed", onMembersChanged);
+    window.addEventListener("member:changed", onMembersChanged);
+    window.addEventListener("employees:changed", onMembersChanged);
+
+    // 다른 탭/창에서 로컬스토리지가 바뀐 경우도 반영
+    const onStorage = (ev) => {
+      if (ev.key === MEMBERS_STORAGE_KEY) {
+        setEmployeeCount(getEmployeeCountFromStorage());
+      }
+    };
+    window.addEventListener("storage", onStorage);
+
+    return () => {
+      window.removeEventListener("members:changed", onMembersChanged);
+      window.removeEventListener("member:changed", onMembersChanged);
+      window.removeEventListener("employees:changed", onMembersChanged);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
       const list = raw ? JSON.parse(raw) : [];
       setActiveNoticeCount(list.filter((n) => n.active).length);
+      setUrgentNotices(list.filter((n) => n.active && n.urgent));
     } catch {}
   }, []);
 
   useEffect(() => {
     function onNoticeChanged(e) {
       const { activeCount, list } = e.detail || {};
-      if (typeof activeCount === "number") {
-        setActiveNoticeCount(activeCount);
-      } else if (Array.isArray(list)) {
+      if (Array.isArray(list)) {
         setActiveNoticeCount(list.filter((n) => n.active).length);
+        setUrgentNotices(list.filter((n) => n.active && n.urgent));
+      } else if (typeof activeCount === "number") {
+        setActiveNoticeCount(activeCount);
+        try {
+          const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
+          const l = raw ? JSON.parse(raw) : [];
+          setUrgentNotices(l.filter((n) => n.active && n.urgent));
+        } catch {}
       }
     }
     window.addEventListener("notice:changed", onNoticeChanged);
     return () => window.removeEventListener("notice:changed", onNoticeChanged);
   }, []);
+
   useEffect(() => {
     const handler = (e) => {
       const next = e?.detail?.id ?? "all";
@@ -58,6 +126,7 @@ export default function Manager() {
     window.addEventListener("dept:changed", handler);
     return () => window.removeEventListener("dept:changed", handler);
   }, []);
+
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -94,6 +163,7 @@ export default function Manager() {
       mounted = false;
     };
   }, []);
+
   useEffect(() => {
     function onUrgentChanged(e) {
       const { id, urgent, item } = e.detail || {};
@@ -139,8 +209,25 @@ export default function Manager() {
     } catch {}
   };
 
+  const unmarkNoticeUrgent = (n) => {
+    try {
+      const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
+      const list = raw ? JSON.parse(raw) : [];
+      const next = list.map((x) => (x.id === n.id ? { ...x, urgent: false } : x));
+      localStorage.setItem(NOTICE_STORAGE_KEY, JSON.stringify(next));
+      setUrgentNotices((prev) => prev.filter((x) => x.id !== n.id));
+      setActiveNoticeCount(next.filter((x) => x.active).length);
+      window.dispatchEvent(
+        new CustomEvent("notice:changed", {
+          detail: { list: next, activeCount: next.filter((x) => x.active).length },
+        })
+      );
+    } catch {}
+  };
+
+  // ✅ 총 직원 수를 employeeCount로 사용
   const stats = useMemo(() => {
-    const totalEmployees = 5;
+    const totalEmployees = employeeCount;
     const totalSuggestions = items.length;
     const urgentCount = urgentItems.length;
     const activeNotices = activeNoticeCount;
@@ -151,7 +238,7 @@ export default function Manager() {
       { label: "활성 공지", value: activeNotices },
       { label: "긴급 제안", value: urgentCount },
     ];
-  }, [items, urgentItems, activeNoticeCount]);
+  }, [employeeCount, items, urgentItems, activeNoticeCount]);
 
   const gridStyle = {
     display: "grid",
@@ -226,15 +313,20 @@ export default function Manager() {
                 ))}
               </div>
 
+              {/* ⚠ 긴급 제안 */}
               <div className={styles.urgentPanel} role="region" aria-label="긴급 제안">
                 <div className={styles.urgentPanelHeader}>⚠ 긴급 제안</div>
 
                 {loading ? (
                   <div className={styles.urgentCards}>
-                    <div className={styles.urgentCard} style={{ color: "#c2410c" }}>현재 긴급 제안이 없습니다.</div>
+                    <div className={styles.emptyText}>현재 긴급 제안이 없습니다.</div>
                   </div>
                 ) : (
-                  <div className={styles.urgentCards}>
+                  <div
+                    className={`${styles.urgentCards} ${
+                      urgentItems.length > 2 ? styles.urgentCardsScroll : ""
+                    }`}
+                  >
                     {urgentItems
                       .slice()
                       .sort((a, b) =>
@@ -257,17 +349,60 @@ export default function Manager() {
                           </button>
                         </div>
                       ))}
+                    {urgentItems.length === 0 && (
+                      <div className={styles.emptyText}>표시할 긴급 제안이 없습니다.</div>
+                    )}
                   </div>
                 )}
+              </div>
+
+              {/* ⚠ 긴급 공지 */}
+              <div className={styles.urgentPanel} role="region" aria-label="긴급 공지" style={{ marginTop: 16 }}>
+                <div className={styles.urgentPanelHeader}>⚠ 긴급 공지</div>
+
+                <div
+                  className={`${styles.urgentCards} ${
+                    urgentNotices.length > 2 ? styles.urgentCardsScroll : ""
+                  }`}
+                >
+                  {urgentNotices
+                    .slice()
+                    .sort((a, b) =>
+                      String(a.title || "").localeCompare(
+                        String(b.title || ""),
+                        "ko",
+                        { sensitivity: "base", numeric: true }
+                      )
+                    )
+                    .map((n) => (
+                      <div key={n.id} className={styles.urgentCard}>
+                        <div className={styles.urgentCardText}>
+                          <div className={styles.rowTitle}>{n.title || "제목"}</div>
+                          <div className={styles.rowMeta}>
+                            {(n.dept ?? "관리팀")} · {String(n.created_at).slice(0, 10)}
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          className={styles.urgentRowBtn}
+                          onClick={() => unmarkNoticeUrgent(n)}
+                          title="공지의 긴급 표시 해제"
+                        >
+                          긴급 해제
+                        </button>
+                      </div>
+                    ))}
+                  {urgentNotices.length === 0 && (
+                    <div className={styles.emptyText}>표시할 긴급 공지가 없습니다.</div>
+                  )}
+                </div>
               </div>
             </>
           )}
 
           {active === "suggestion" && <SuggestionList />}
 
-          {active === "employee" && (
-            <Member selectedDeptId={currentDeptId} />
-          )}
+          {active === "employee" && <Member selectedDeptId={currentDeptId} />}
 
           {active === "notice" && <Notice />}
         </section>

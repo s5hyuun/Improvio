@@ -1,14 +1,40 @@
+// Header.jsx
 import { useEffect, useRef, useState } from "react";
 
-export default function Header() {
-  // 알림 목록 데이터 > 확인용
-  const [notifs, setNotifs] = useState([
-    { id: 1, title: "새 제안이 등록되었습니다.", meta: "R&D · 방금 전", read: false },
-    { id: 2, title: "공지: 시스템 점검 안내", meta: "관리팀 · 1시간 전", read: false },
-  ]);
+const NOTIFS_STORAGE_KEY = "header_notifs_v1";
 
-  const unread = notifs.filter((n) => !n.read).length; 
-  const [notifOpen, setNotifOpen] = useState(false); 
+export default function Header() {
+  const [notifs, setNotifs] = useState(() => {
+    try {
+      const raw = localStorage.getItem(NOTIFS_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(NOTIFS_STORAGE_KEY, JSON.stringify(notifs));
+    } catch {}
+  }, [notifs]);
+
+  // 공지 → 헤더 알림 추가 이벤트
+  useEffect(() => {
+    const onAdd = (e) => {
+      const { id, title, meta } = e.detail || {};
+      if (!title) return;
+      setNotifs((prev) => [
+        { id: id ?? Date.now(), title, meta: meta ?? "", read: false },
+        ...prev,
+      ]);
+    };
+    window.addEventListener("header:notif:add", onAdd);
+    return () => window.removeEventListener("header:notif:add", onAdd);
+  }, []);
+
+  const unread = notifs.filter((n) => !n.read).length;
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const [langOpen, setLangOpen] = useState(false);
   const [lang, setLang] = useState("한국어");
@@ -39,8 +65,9 @@ export default function Header() {
   }, []);
 
   const hasBadge = unread > 0;
-  const bellColor = hasBadge ? "#EA580C" : undefined;  
-  const bellBtnStyle = hasBadge ? { borderColor: "#EA580C" } : undefined; 
+  const bellColor = hasBadge ? "#EA580C" : undefined;
+  const bellBtnStyle = hasBadge ? { borderColor: "#EA580C" } : undefined;
+
   const markAsRead = (id) =>
     setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   const markAllRead = () =>
@@ -49,17 +76,15 @@ export default function Header() {
     setNotifs((prev) => prev.filter((n) => n.id !== id));
   const clearAll = () => setNotifs([]);
 
+  // ▼ 액션 hover 표시를 위해 간단한 상태
+  const [hoverAct, setHoverAct] = useState(null); // 'read' | 'delete' | null
+
   return (
     <header className="topbar">
       <div className="topbar-left">
         <span className="ico shield">
           <svg viewBox="0 0 24 24">
-            <path
-              d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
+            <path d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z" fill="none" stroke="currentColor" strokeWidth="2" />
           </svg>
         </span>
         <strong className="topbar-title">관리자 페이지</strong>
@@ -76,80 +101,45 @@ export default function Header() {
           <input type="text" placeholder="검색" />
         </div>
 
+        {/* 알림 드롭다운 */}
         <div className="dropdown" ref={notifMenuRef}>
           <button
             className="icon-btn"
             aria-label="알림"
-            data-dot={hasBadge ? "" : undefined} 
-            style={bellBtnStyle}   
+            data-dot={hasBadge ? "" : undefined}
+            style={bellBtnStyle}
             onClick={() => setNotifOpen((v) => !v)}
           >
             <svg viewBox="0 0 24 24" style={{ color: bellColor }}>
-              <path
-                d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-              <path
-                d="M13.73 21a2 2 0 0 1-3.46 0"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
+              <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" fill="none" stroke="currentColor" strokeWidth="2" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" fill="none" stroke="currentColor" strokeWidth="2" />
             </svg>
           </button>
 
           {notifOpen && (
-            <ul
-              className="menu"
-              role="menu"
-              style={{ minWidth: 320, paddingTop: 8, paddingBottom: 8 }}
-            >
-              <li
-                role="presentation"
-                style={{
-                  fontWeight: 700,
-                  padding: "8px 12px",
-                  pointerEvents: "none",
-                  opacity: 0.9,
-                }}
-              >
+            <ul className="menu" role="menu" style={{ minWidth: 320, paddingTop: 8, paddingBottom: 8 }}>
+              <li role="presentation" style={{ fontWeight: 700, padding: "8px 12px", pointerEvents: "none", opacity: 0.9 }}>
                 알림
               </li>
 
               {notifs.length === 0 ? (
-                <li role="menuitem" style={{ padding: "12px" }}>
-                  새 알림이 없습니다.
-                </li>
+                <li role="menuitem" style={{ padding: "12px" }}>새 알림이 없습니다.</li>
               ) : (
                 notifs.map((n) => (
                   <li
                     key={n.id}
                     role="menuitem"
                     onClick={() => markAsRead(n.id)}
-                    style={{
-                      display: "grid",
-                      gap: 6,
-                      padding: "10px 12px",
-                      opacity: n.read ? 0.6 : 1,
-                    }}
+                    style={{ display: "grid", gap: 6, padding: "10px 12px", opacity: n.read ? 0.6 : 1 }}
                   >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 8,
-                      }}
-                    >
+                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                       <span style={{ fontWeight: 700 }}>{n.title}</span>
                       <button
                         type="button"
                         aria-label="알림 삭제"
                         title="삭제"
                         onClick={(e) => {
-                          e.stopPropagation(); 
+                          e.stopPropagation();
                           removeNotif(n.id);
                         }}
                         style={{
@@ -171,32 +161,74 @@ export default function Header() {
               )}
 
               {notifs.length > 0 && (
+                // ✔️ 가로 정렬 + li hover 비활성(둘 다 선택돼 보이는 현상 방지)
                 <li
                   role="presentation"
                   style={{
                     padding: "8px 12px",
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: 12,
+                    background: "transparent", // li:hover 배경 무력화
                   }}
                 >
-                  <button className="link-btn" type="button" onClick={markAllRead}>
-                    모두 읽음
-                  </button>
-                  <button
-                    className="link-btn"
-                    type="button"
-                    onClick={clearAll}
-                    style={{ color: "#ef4444" }}
-                  >
-                    모두 삭제
-                  </button>
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    {/* 세그먼트 컨트롤 느낌으로 */}
+                    <div
+                      role="group"
+                      aria-label="알림 일괄 액션"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: 10,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={markAllRead}
+                        onMouseEnter={() => setHoverAct("read")}
+                        onMouseLeave={() => setHoverAct(null)}
+                        className="link-btn"
+                        style={{
+                          border: "none",
+                          background: hoverAct === "read" ? "rgba(37,99,235,.08)" : "transparent",
+                          color: "#2563eb",
+                          padding: "8px 12px",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        모두 읽음
+                      </button>
+
+                      {/* 구분자 */}
+                      <span aria-hidden="true" style={{ width: 1, height: 18, background: "#e5e7eb" }} />
+
+                      <button
+                        type="button"
+                        onClick={clearAll} // ← 바로 삭제(팝업 없음)
+                        onMouseEnter={() => setHoverAct("delete")}
+                        onMouseLeave={() => setHoverAct(null)}
+                        className="link-btn"
+                        style={{
+                          border: "none",
+                          background: hoverAct === "delete" ? "rgba(239,68,68,.08)" : "transparent",
+                          color: "#ef4444",
+                          padding: "8px 12px",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        모두 삭제
+                      </button>
+                    </div>
+                  </div>
                 </li>
               )}
             </ul>
           )}
         </div>
 
+        {/* 언어 드롭다운 */}
         <div className="dropdown" ref={langMenuRef}>
           <button
             className="btn"
@@ -236,9 +268,6 @@ export default function Header() {
         </div>
 
         <button className="btn btn-ghost" type="button">로그아웃</button>
-
-      
-
       </div>
     </header>
   );

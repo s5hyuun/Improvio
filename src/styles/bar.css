@@ -105,7 +105,7 @@ body {
   gap: 12px;
   padding: 12px 12px;
   border-radius: 12px;
-  color: #1D4ED8;
+  color: #1d4ed8;
   text-decoration: none;
   font-weight: 600;
 }
@@ -120,7 +120,7 @@ body {
 }
 .nav-item:hover {
   background-color: rgba(37, 99, 235, 0.08);
-  color: #2563EB;;
+  color: #2563eb;
 }
 .nav-item.active {
   background: #eaf2ff;
@@ -141,7 +141,6 @@ body {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
-  
 }
 .logo-wrap {
   padding: 0 0 12px;
@@ -172,7 +171,7 @@ body {
   gap: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  color: #1D4ED8;
+  color: #1d4ed8;
   cursor: pointer;
 }
 .dept-item .ico {
@@ -185,10 +184,10 @@ body {
 }
 .dept-item:hover {
   background-color: rgba(37, 99, 235, 0.08);
-  color: #2563EB;
+  color: #2563eb;
 }
 .dept-item.selected {
-  background-color: #2563EB;
+  background-color: #2563eb;
   color: white;
 }
 
@@ -200,7 +199,7 @@ body {
 .topbar {
   position: static !important;
   background: transparent !important;
-  border: none !important; 
+  border: none !important;
   border-bottom: 1px solid var(--sep-line) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -223,13 +222,13 @@ body {
 }
 .topbar-title {
   font-size: 18px;
-  color: #1E3A8A;
+  color: #1e3a8a;
   white-space: nowrap;
 }
 .topbar .ico {
   width: 22px;
   height: 22px;
-  color: #60A5FA;
+  color: #60a5fa;
 }
 .topbar .ico svg {
   width: 22px;
@@ -351,8 +350,8 @@ body {
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  padding: 20px !important; 
-  margin-top: 16px !important; 
+  padding: 20px !important;
+  margin-top: 16px !important;
 }
 .placeholder {
   background: transparent !important;
@@ -405,7 +404,7 @@ body {
   border-radius: 8px;
   display: grid;
   place-items: center;
-  background: #EA580C;
+  background: #ea580c;
   color: #fff;
 }
 .topbar-left .ico svg {
@@ -446,7 +445,7 @@ body {
   width: 8px;
   height: 8px;
   border-radius: 9999px;
-  background: #FF2D2D;
+  background: #ff2d2d;
 }
 
 .icon-btn {
@@ -512,7 +511,7 @@ body {
 }
 
 .topbar-actions .search {
-  flex: 1 1 420px !important; 
+  flex: 1 1 420px !important;
   min-width: 240px !important;
 }
 
@@ -522,10 +521,10 @@ body {
 
 :root {
   --topbar-btn-h: 40px;
-  --topbar-btn-r: 12px; 
-  --topbar-btn-px: 14px; 
-  --topbar-gap: 12px; 
-  --topbar-group-gap: 16px; 
+  --topbar-btn-r: 12px;
+  --topbar-btn-px: 14px;
+  --topbar-gap: 12px;
+  --topbar-group-gap: 16px;
 }
 
 .topbar-actions {
@@ -560,9 +559,9 @@ body {
 }
 
 :root {
-  --icon-btn-size: 42px; 
-  --icon-btn-radius: 16px; 
-  --icon-btn-gap: 16px; 
+  --icon-btn-size: 42px;
+  --icon-btn-radius: 16px;
+  --icon-btn-gap: 16px;
 }
 .topbar-actions .icon-btn {
   width: var(--icon-btn-size) !important;
@@ -597,15 +596,15 @@ body {
 }
 
 :root {
-  --topbar-gap: 16px; 
+  --topbar-gap: 16px;
 }
 .topbar-actions .btn-accent + .icon-btn,
 .topbar-actions .btn + .icon-btn,
 .topbar-actions .dropdown + .icon-btn {
-  margin-left: 0 !important; 
+  margin-left: 0 !important;
 }
 .topbar-actions .icon-btn + .icon-btn {
-  margin-left: 0 !important; 
+  margin-left: 0 !important;
 }
 
 .dropdown {
@@ -646,8 +645,8 @@ body {
 }
 
 .topbar {
-  background: transparent !important; 
-  backdrop-filter: none !important; 
+  background: transparent !important;
+  backdrop-filter: none !important;
 }
 
 .topbar {
@@ -688,7 +687,7 @@ body {
 }
 .sidebar-inner {
   border-right: none !important;
-  height: calc(100vh - 48px) !important; 
+  height: calc(100vh - 48px) !important;
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
@@ -696,7 +695,7 @@ body {
 .dept-wrap {
   flex: 1 1 auto !important;
   min-height: 0 !important;
-  overflow: auto !important; 
+  overflow: auto !important;
   padding-right: 2px;
 }
 @media (max-width: 900px) {
@@ -711,7 +710,7 @@ body {
   }
   .main::before {
     display: none;
-  } 
+  }
   .topbar::after {
     left: 0;
     right: 0;
@@ -723,7 +722,7 @@ body {
   color: #fff !important;
 }
 .dept-item.selected:hover {
-  background: #2563eb !important; 
+  background: #2563eb !important;
 }
 
 .dept-item.selected .ico,
@@ -774,7 +773,7 @@ body {
 
 .brand-pill {
   background: url("public/logo.png") center / contain no-repeat !important;
-  width: 200px !important; 
+  width: 200px !important;
   height: 55px !important;
   text-indent: -9999px;
   overflow: hidden;
@@ -818,6 +817,30 @@ body {
   animation: refreshHalfTurn 0.26s linear;
 }
 @keyframes refreshHalfTurn {
-  from { transform: rotate(0deg); }
-  to   { transform: rotate(180deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(180deg);
+  }
+}
+/* Sidebar: keep only the custom .dept-list scrollbar */
+.sidebar {
+  overflow: hidden;
+}
+.sidebar-inner {
+  overflow: hidden !important;
+}
+.dept-wrap {
+  overflow: hidden !important; /* .dept-wrap, .sidebar 쪽 스크롤 숨김 */
+  scrollbar-width: none; /* Firefox 숨김 */
+}
+.dept-wrap::-webkit-scrollbar {
+  /* WebKit 숨김 */
+  width: 0 !important;
+  height: 0 !important;
+}
+.dept-list {
+  /* 커스텀 스크롤 컨테이너 */
+  overflow: auto !important; /* ✅ 이것만 스크롤 */
 }

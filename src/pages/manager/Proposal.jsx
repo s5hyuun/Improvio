@@ -13,7 +13,7 @@ const statusLabel = {
 };
 
 const STORAGE_KEY = "proposal_items_cache_v1";
-const STORAGE_DEPT_KEY = "selected_dept"; 
+const STORAGE_DEPT_KEY = "selected_dept";
 
 function loadFromStorage() {
   try {
@@ -103,12 +103,15 @@ export function SuggestionList() {
       });
     }
     window.addEventListener("suggestion:urgent", onUrgentChanged);
-    return () => window.removeEventListener("suggestion:urgent", onUrgentChanged);
+    return () =>
+      window.removeEventListener("suggestion:urgent", onUrgentChanged);
   }, []);
 
   const updateStatus = async (id, next) => {
     setItems((prev) => {
-      const updated = prev.map((x) => (x.id === id ? { ...x, status: next } : x));
+      const updated = prev.map((x) =>
+        x.id === id ? { ...x, status: next } : x
+      );
       saveToStorage(updated);
       return updated;
     });
@@ -123,7 +126,9 @@ export function SuggestionList() {
 
   const toggleUrgent = async (id, next) => {
     setItems((prev) => {
-      const updated = prev.map((x) => (x.id === id ? { ...x, urgent: next } : x));
+      const updated = prev.map((x) =>
+        x.id === id ? { ...x, urgent: next } : x
+      );
       const changed = updated.find((x) => x.id === id);
       saveToStorage(updated);
 
@@ -161,14 +166,12 @@ export function SuggestionList() {
       arr = arr.filter((x) => x.status === filter);
     }
 
-    return arr
-      .slice()
-      .sort((a, b) => {
-        if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
-        const da = new Date(a.created_at);
-        const db = new Date(b.created_at);
-        return db - da; 
-      });
+    return arr.slice().sort((a, b) => {
+      if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
+      const da = new Date(a.created_at);
+      const db = new Date(b.created_at);
+      return db - da;
+    });
   }, [items, filter, deptFilter]);
 
   if (loading) return <div className={styles.loading}>불러오는 중…</div>;
@@ -184,7 +187,10 @@ export function SuggestionList() {
           marginBottom: 10,
         }}
       >
-        <label htmlFor="statusFilter" style={{ fontSize: 14, color: "#475569" }}>
+        <label
+          htmlFor="statusFilter"
+          style={{ fontSize: 14, color: "#475569" }}
+        >
           필터:
         </label>
         <select
@@ -272,18 +278,54 @@ function SuggestionCard({ item, onChangeStatus, onToggleUrgent }) {
 
 function getFallback() {
   return [
-    { id: 1, title: "제목", body: "내용", dept: "R&D",   author: "익명 직원", created_at: "2024-01-15", priority: 85, status: "pending",   urgent: true  },
-    { id: 2, title: "제목", body: "내용", dept: "경영지원", author: "익명 직원", created_at: "2024-01-10", priority: 62, status: "approved",  urgent: false },
-    { id: 3, title: "제목", body: "내용", dept: "안전",   author: "익명 직원", created_at: "2023-12-20", priority: 92, status: "completed", urgent: false },
+    {
+      id: 1,
+      title: "제목",
+      body: "내용",
+      dept: "R&D",
+      author: "익명 직원",
+      created_at: "2024-01-15",
+      priority: 85,
+      status: "pending",
+      urgent: true,
+    },
+    {
+      id: 2,
+      title: "제목",
+      body: "내용",
+      dept: "경영지원",
+      author: "익명 직원",
+      created_at: "2024-01-10",
+      priority: 62,
+      status: "approved",
+      urgent: false,
+    },
+    {
+      id: 3,
+      title: "제목",
+      body: "내용",
+      dept: "안전",
+      author: "익명 직원",
+      created_at: "2023-12-20",
+      priority: 92,
+      status: "completed",
+      urgent: false,
+    },
   ];
 }
 
 export function adaptFromDB(row) {
   const id = row.id ?? row.suggestion_id ?? row.suggestionId;
   const body = row.body ?? row.description ?? "";
+
+  // dept 처리
   const dept = row.dept ?? row.department_name ?? null;
-  const author = row.author ?? row.name ?? null;
-  const created_at = row.created_at ?? row.createdAt ?? new Date().toISOString();
+
+  // author 처리: user_name 우선
+  const author = row.user_name ?? row.author ?? row.name ?? null;
+
+  const created_at =
+    row.created_at ?? row.createdAt ?? new Date().toISOString();
 
   const priority =
     typeof row.priority === "number"
@@ -308,7 +350,7 @@ export function adaptFromDB(row) {
     title: row.title ?? "(제목 없음)",
     body,
     dept,
-    author,
+    author, // 이제 user_name이 있으면 표시됨
     created_at,
     priority,
     status,

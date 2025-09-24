@@ -45,7 +45,6 @@
 }
 
 .card{
-  background: var(--panel, #ffffff);
   border:1px solid #bfdbfe;
   border-radius: var(--radius-lg, 16px);
   overflow:hidden;
@@ -60,7 +59,7 @@
   color: #1557bb;
   font-size:14px;
   font-weight:700;
-  background: #f9fbfd;
+  background: #a1c3ed;
 }
 
 .tableRow{
@@ -77,9 +76,9 @@
   background: #fdfdfd;
 }
 
-.nameCell{ font-weight:600; color: var(--text, #0b1220); }
-.deptCell{ color: var(--primary, #2d6cff); font-weight: 600; }
-.dateCell{ color: var(--text, #0b1220); }
+.nameCell{ color: black; }
+.deptCell{ color: black; }
+.dateCell{ color: black; }
 .colStatus, .statusCell{ text-align:right; }
 
 .badgeActive {
@@ -92,18 +91,28 @@
   font-size: 12px;
 }
 
+/* 비활성 배지: 요청 색상 #ffece6 로 변경 */
 .badgeInactive{
   display:inline-block;
   padding:6px 10px;
   border-radius:999px;
-  background: rgba(0,0,0,.07);
+  background: #ffece6;   /* ← 요구사항 반영 */
   color:#333;
   font-weight:700;
   font-size:12px;
 }
 
+/* 클릭 가능 표시 (추가) */
+.badgeClickable{
+  cursor: pointer;
+  user-select: none;
+}
+.badgeClickable:focus{
+  outline: 2px solid rgba(45,108,255,.35);
+  outline-offset: 2px;
+}
+
 .empty{
   padding:28px 20px;
-  color: var(--text-dim, #6b7a90);
   text-align:center;
 }

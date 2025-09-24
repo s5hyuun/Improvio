@@ -112,3 +112,31 @@
   font-size: 15px; 
   line-height: 1.25;
 }
+
+/* 긴급 카드 묶음 — 기본(스크롤 없음, 1열) */
+.urgentCards {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+  padding: 12px 12px 16px;
+}
+
+/* 2개 초과일 때만 적용할 스크롤 버전 */
+.urgentCardsScroll {
+  max-height: 190px;         /* 두 개 카드 + 간격 정도의 높이 */
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;      /* Firefox */
+  scrollbar-color: #cbd5e1 transparent;
+}
+.urgentCardsScroll::-webkit-scrollbar { width: 8px; }
+.urgentCardsScroll::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 8px;
+}
+
+.emptyText {
+  padding: 12px 14px;
+  color: #64748b;
+  font-size: 14px;
+}
