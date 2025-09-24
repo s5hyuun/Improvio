@@ -45,20 +45,25 @@ function BoardPage() {
             {write && (
               <BoardWrite
                 onClose={() => setWrite(false)}
-                onSubmit={async (form) => {
-                  // 예시: 글 저장 후 목록 재조회
-                  await fetch("http://localhost:5000/api/suggestions", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(form),
-                  });
-                  // 새로고침 없이 목록 갱신
-                  const res = await fetch(
-                    "http://localhost:5000/api/suggestions"
-                  );
-                  const data = await res.json();
-                  setSuggestions(data);
-                  setWrite(false);
+                onSubmit={async (formData) => {
+                  try {
+                    // FormData는 Content-Type 지정하지 않음!
+                    await fetch("http://localhost:5000/api/suggestions", {
+                      method: "POST",
+                      body: formData,
+                    });
+
+                    // 저장 후 목록 갱신
+                    const res = await fetch(
+                      "http://localhost:5000/api/suggestions"
+                    );
+                    const data = await res.json();
+                    setSuggestions(data);
+                    setWrite(false);
+                  } catch (err) {
+                    console.error(err);
+                    alert("저장 중 오류가 발생했습니다.");
+                  }
                 }}
               />
             )}

@@ -50,7 +50,7 @@ function BoardDetail({ suggestion, onClose }) {
         <div className={styles.detailIPost}>
           <div className={styles.detailTop}>
             <div>
-              <div>{title}</div>
+              <div className={styles.detailTopTitle}>{title}</div>
               <div className={styles.detailTopIcons}>
                 <div>
                   <i className="fa-regular fa-user"></i>
@@ -89,17 +89,16 @@ function BoardDetail({ suggestion, onClose }) {
           <div className={styles.detailContent}>
             <div>제안 내용</div>
             <div>{description}</div>
-          </div>
-        </div>
-
-        <div className={styles.detailMiddle}>
-          <div>
-            <i className="fa-regular fa-thumbs-up"></i>
-            {vote_count}
-          </div>
-          <div>
-            <i class="fa-regular fa-thumbs-down"></i>
-            1,294
+            <div className={styles.detailThumb}>
+              <div>
+                <i className="fa-regular fa-thumbs-up"></i>
+                {vote_count}
+              </div>
+              <div>
+                <i class="fa-regular fa-thumbs-down"></i>
+                1,294
+              </div>
+            </div>
           </div>
         </div>
 

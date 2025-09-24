@@ -6,7 +6,7 @@ function BoardComment({ comment }) {
       <div className={styles.commentTop}>
         <div>
           <i className="fa-regular fa-user"></i>
-          <div>
+          <div className={styles.commentTopUser}>
             <div>익명{comment.user_id}</div>
             <div className={styles.dept}>{comment.department_name}</div>
           </div>

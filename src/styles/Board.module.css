@@ -25,9 +25,11 @@
 }
 .boardTitle > button {
   background-color: #2563eb;
+  font-weight: bold;
+  font-size: 16px;
   color: white;
   border: none;
-  padding: 10px 14px;
+  padding: 12px 16px;
   cursor: pointer;
   border-radius: 10px;
 }
@@ -86,6 +88,9 @@ h3 {
   display: flex;
   margin-top: 6px;
 }
+.contentUser:last-child {
+  /* color: #1e3a8a; */
+}
 .contentUser div {
   display: flex;
   align-items: center;
@@ -121,7 +126,7 @@ h3 {
 
 .modal {
   background: white;
-  padding: 20px 20px 40px 20px;
+  padding: 26px 26px 40px 26px;
   border-radius: 10px;
   /* width: 40%; */
   width: min(530px, 92vw);
@@ -143,15 +148,17 @@ i {
 .detailTop > div:first-child {
   color: #1e3a8a;
 }
+.detailTopTitle {
+  font-size: 24px;
+  font-weight: bold;
+}
 .detailTop > div:last-child {
   display: flex;
-}
-.detailTop > div:first-child > div:first-child {
-  font-size: 24px;
 }
 .detailTopIcons {
   font-size: 14px;
   display: flex;
+  color: #2a3144;
   margin-top: 10px;
 }
 .detailTopIcons > div {
@@ -167,47 +174,49 @@ i {
 
 .detailContent {
   background-color: #eff6ff;
-  color: #1e3a8a;
   padding: 20px;
   border-radius: 10px;
+  margin-bottom: 20px;
 }
-.detailContent div:first-child {
+.detailContent > div:first-child {
+  color: #1e3a8a;
   margin-bottom: 14px;
   font-size: 18px;
 }
-.detailContent div:last-child {
-  margin-bottom: 10px;
-  font-size: 15px;
-  color: black;
-}
 
-.detailMiddle {
-  margin: 0 0 20px 0;
-  /* border-top: 1px solid #bfdbfe; */
-  border-bottom: 1px solid #bfdbfe;
+.detailThumb {
   display: flex;
-  padding: 20px 0;
   justify-content: center;
   color: #1e3a8a;
+  margin-top: 36px;
 }
-.detailMiddle > div:first-child {
+.detailThumb > div:first-child {
   margin-right: 15px;
 }
-.detailMiddle > div:last-child {
+.detailThumb > div:last-child {
   margin-left: 15px;
 }
-.detailMiddle > div {
-  font-weight: 600;
+.detailThumb div {
+  font-size: 18px;
+  /* font-weight: 600; */
+  color: black;
   cursor: pointer;
 }
-.detailMiddle span {
+.detailThumb span {
   border: 2px solid #bfdbfe;
   padding: 5px 10px;
   border-radius: 10px;
 }
+.detailComment {
+  border-top: 2px solid #eceff2;
+  padding-top: 20px;
+}
+.detailComment > div:first-child {
+  font-size: 18px;
+}
 .detailComment > div {
   margin-bottom: 20px;
-  color: #1e3a8a;
+  /* color: #1e3a8a; */
 }
 .detailCommentInput {
   position: relative;
@@ -220,26 +229,26 @@ i {
   height: 50px;
   padding: 0 20px;
   border-radius: 10px;
-  margin-bottom: 20px;
+  /* margin-bottom: 20px; */
   font-size: 16px;
 }
 .detailCommentInput input:last-child {
   background-color: #2563eb;
   color: white;
   border: none;
-  padding: 5px 10px;
-  border-radius: 5px;
+  padding: 8px 16px;
+  border-radius: 10px;
   cursor: pointer;
   position: absolute;
   right: 10px;
-  bottom: 30px;
+  bottom: 8px;
 }
 
 /* ======================comment============== */
 .commentContainer {
   background-color: #eff6ff;
   /* margin-bottom: 14px; */
-  padding: 10px;
+  padding: 18px;
   border-radius: 10px;
 }
 .commentTop {
@@ -258,6 +267,10 @@ i {
   color: white;
   padding: 7px;
   border-radius: 50px;
+  margin-right: 10px;
+}
+.commentTopUser div:first-child {
+  font-weight: bold;
 }
 .commentTop .dept {
   color: #3b82f6;
@@ -266,7 +279,6 @@ i {
 .commentContent {
   padding: 10px 0;
   margin: 5px 0;
-  color: #1e3a8a;
 }
 .commentLike {
   color: #2563eb;
@@ -287,19 +299,19 @@ i {
 
 .proposal {
   background-color: #ecebe9;
-  padding: 5px 10px;
+  padding: 8px 12px;
   border-radius: 5px;
   margin-right: 10px;
 }
 .inprogress {
   background-color: #e6eef9;
-  padding: 5px 10px;
+  padding: 8px 12px;
   border-radius: 5px;
   margin-right: 10px;
 }
 .complete {
   background-color: #e0f2e9;
-  padding: 5px 10px;
+  padding: 8px 12px;
   border-radius: 5px;
   margin-right: 10px;
 }
