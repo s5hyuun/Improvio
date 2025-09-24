@@ -2,15 +2,13 @@
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/Members.module.css";
 
-// 백엔드 주소: 개발 중엔 Vite 프록시(/api) 권장
-const API_BASE = ""; // ""로 두면 fetch("/api/...") 형태 사용
-// 프록시를 쓰지 않는다면 예) const API_BASE = "http://localhost:3000";
+const API_BASE = "";
 
 export default function Member({ selectedDeptId = "all" }) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const [saving, setSaving] = useState(new Set()); // 변경 중인 user_id 트래킹
+  const [saving, setSaving] = useState(new Set()); 
 
   useEffect(() => {
     let alive = true;
@@ -39,13 +37,11 @@ export default function Member({ selectedDeptId = "all" }) {
     return members.filter((m) => m.department_id === selectedDeptId);
   }, [members, selectedDeptId]);
 
-  // 상태 토글 (활성 <-> 비활성) - 낙관적 업데이트 + 실패 시 롤백
   const toggleStatus = async (m) => {
     const id = m.user_id;
-    const prev = m.status;                          // "활성" | "비활성"
+    const prev = m.status;    
     const next = prev === "활성" ? "비활성" : "활성";
 
-    // UI 낙관적 반영
     setMembers((prevList) =>
       prevList.map((x) => (x.user_id === id ? { ...x, status: next } : x))
     );
@@ -55,11 +51,10 @@ export default function Member({ selectedDeptId = "all" }) {
       const res = await fetch(`${API_BASE}/api/members/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: next }), // 서버는 "활성"/"비활성"을 그대로 받거나 boolean으로 매핑
+        body: JSON.stringify({ status: next }), 
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     } catch (e) {
-      // 실패 → 롤백
       setMembers((prevList) =>
         prevList.map((x) => (x.user_id === id ? { ...x, status: prev } : x))
       );

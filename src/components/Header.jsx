@@ -1,4 +1,3 @@
-// Header.jsx
 import { useEffect, useRef, useState } from "react";
 
 const NOTIFS_STORAGE_KEY = "header_notifs_v1";
@@ -19,7 +18,6 @@ export default function Header() {
     } catch {}
   }, [notifs]);
 
-  // 공지 → 헤더 알림 추가 이벤트
   useEffect(() => {
     const onAdd = (e) => {
       const { id, title, meta } = e.detail || {};
@@ -76,9 +74,7 @@ export default function Header() {
     setNotifs((prev) => prev.filter((n) => n.id !== id));
   const clearAll = () => setNotifs([]);
 
-  // ▼ 액션 hover 표시를 위해 간단한 상태
-  const [hoverAct, setHoverAct] = useState(null); // 'read' | 'delete' | null
-
+  const [hoverAct, setHoverAct] = useState(null); 
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -101,7 +97,6 @@ export default function Header() {
           <input type="text" placeholder="검색" />
         </div>
 
-        {/* 알림 드롭다운 */}
         <div className="dropdown" ref={notifMenuRef}>
           <button
             className="icon-btn"
@@ -161,16 +156,14 @@ export default function Header() {
               )}
 
               {notifs.length > 0 && (
-                // ✔️ 가로 정렬 + li hover 비활성(둘 다 선택돼 보이는 현상 방지)
                 <li
                   role="presentation"
                   style={{
                     padding: "8px 12px",
-                    background: "transparent", // li:hover 배경 무력화
+                    background: "transparent", 
                   }}
                 >
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    {/* 세그먼트 컨트롤 느낌으로 */}
                     <div
                       role="group"
                       aria-label="알림 일괄 액션"
@@ -200,12 +193,11 @@ export default function Header() {
                         모두 읽음
                       </button>
 
-                      {/* 구분자 */}
                       <span aria-hidden="true" style={{ width: 1, height: 18, background: "#e5e7eb" }} />
 
                       <button
                         type="button"
-                        onClick={clearAll} // ← 바로 삭제(팝업 없음)
+                        onClick={clearAll} 
                         onMouseEnter={() => setHoverAct("delete")}
                         onMouseLeave={() => setHoverAct(null)}
                         className="link-btn"
@@ -228,7 +220,6 @@ export default function Header() {
           )}
         </div>
 
-        {/* 언어 드롭다운 */}
         <div className="dropdown" ref={langMenuRef}>
           <button
             className="btn"

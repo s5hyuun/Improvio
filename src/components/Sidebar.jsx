@@ -1,4 +1,3 @@
-// Sidebar.jsx
 import { useEffect, useState } from "react";
 
 const STORAGE_DEPT_KEY = "selected_dept";
@@ -17,15 +16,11 @@ export default function Sidebar({ selected, onSelectDept }) {
     { id: "safety",       label: "안전",     icon: "shield" },
   ];
 
-  // ✅ 초기엔 아무 것도 선택되지 않도록 null
-  //    (저장소엔 id 또는 label이 있을 수 있어 둘 다 대응)
   const [internalSelected, setInternalSelected] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_DEPT_KEY);
       if (!saved) return null;
-      // id로 저장된 경우
       if (departments.some(d => d.id === saved)) return saved;
-      // 예전처럼 label로 저장된 경우
       const found = departments.find(d => d.label === saved);
       return found ? found.id : null;
     } catch {
@@ -34,23 +29,19 @@ export default function Sidebar({ selected, onSelectDept }) {
   });
 
   const isControlled = typeof selected !== "undefined";
-  // props로 'all'을 넘겨받으면 선택 해제 상태로 표시
   const currentSelected = isControlled
     ? (selected === "all" ? null : selected)
     : internalSelected;
 
-  // 선택 변경 → 저장 + 이벤트 방송
   useEffect(() => {
     const cur = currentSelected;
     const curLabel = departments.find(d => d.id === cur)?.label ?? "";
 
     try {
-      // 선택이 없으면 비워두기
       if (cur) localStorage.setItem(STORAGE_DEPT_KEY, cur);
       else localStorage.removeItem(STORAGE_DEPT_KEY);
     } catch {}
 
-    // 호환을 위해 id/label 둘 다 보냄. 선택 없으면 id='all'
     try {
       window.dispatchEvent(
         new CustomEvent("dept:changed", {
@@ -58,7 +49,6 @@ export default function Sidebar({ selected, onSelectDept }) {
         })
       );
     } catch {}
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentSelected]);
 
   const handleSelect = (id) => {

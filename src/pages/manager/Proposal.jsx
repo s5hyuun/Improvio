@@ -318,10 +318,8 @@ export function adaptFromDB(row) {
   const id = row.id ?? row.suggestion_id ?? row.suggestionId;
   const body = row.body ?? row.description ?? "";
 
-  // dept 처리
   const dept = row.dept ?? row.department_name ?? null;
 
-  // author 처리: user_name 우선
   const author = row.user_name ?? row.author ?? row.name ?? null;
 
   const created_at =

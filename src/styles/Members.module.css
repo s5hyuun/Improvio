@@ -91,18 +91,16 @@
   font-size: 12px;
 }
 
-/* 비활성 배지: 요청 색상 #ffece6 로 변경 */
 .badgeInactive{
   display:inline-block;
   padding:6px 10px;
   border-radius:999px;
-  background: #ffece6;   /* ← 요구사항 반영 */
+  background: #ffece6;  
   color:#333;
   font-weight:700;
   font-size:12px;
 }
 
-/* 클릭 가능 표시 (추가) */
 .badgeClickable{
   cursor: pointer;
   user-select: none;

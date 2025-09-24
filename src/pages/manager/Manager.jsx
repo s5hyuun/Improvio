@@ -10,7 +10,6 @@ const API = "http://localhost:3000";
 const STORAGE_KEY = "proposal_items_cache_v1";
 const NOTICE_STORAGE_KEY = "notices_v1";
 
-// ✅ 직원 관리와 동기화용 키 (Members에서 쓰는 키에 맞춰주세요)
 const MEMBERS_STORAGE_KEY = "members_v1";
 
 function loadFromStorage() {
@@ -22,7 +21,6 @@ function loadFromStorage() {
   }
 }
 
-// ✅ 로컬스토리지의 직원 목록 길이 가져오기 (없으면 0)
 function getEmployeeCountFromStorage() {
   try {
     const raw = localStorage.getItem(MEMBERS_STORAGE_KEY);
@@ -37,44 +35,35 @@ export default function Manager() {
   const [active, setActive] = useState("dashboard");
   const [currentDeptId, setCurrentDeptId] = useState("all");
 
-  // ✅ 총 직원 수(대시보드 카드에 사용)
   const [employeeCount, setEmployeeCount] = useState(0);
 
-  // 제안(긴급)
   const [items, setItems] = useState([]);
   const [urgentItems, setUrgentItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // 공지
   const [activeNoticeCount, setActiveNoticeCount] = useState(0);
   const [urgentNotices, setUrgentNotices] = useState([]);
 
-  // ✅ 최초 로드 시 직원 수 동기화
   useEffect(() => {
     setEmployeeCount(getEmployeeCountFromStorage());
   }, []);
 
-  // ✅ 직원 관리 화면에서 발생시키는 변경 이벤트들을 수신해 동기화
   useEffect(() => {
     const onMembersChanged = (e) => {
-      // e.detail: { list } 또는 { count } 둘 다 지원
       const { list, count } = e.detail || {};
       if (typeof count === "number") {
         setEmployeeCount(count);
       } else if (Array.isArray(list)) {
         setEmployeeCount(list.length);
       } else {
-        // 포맷을 모르면 저장소 재조회
         setEmployeeCount(getEmployeeCountFromStorage());
       }
     };
 
-    // 가능한 이벤트 이름들(컴포넌트 구현에 따라 하나만 올 수도 있음)
     window.addEventListener("members:changed", onMembersChanged);
     window.addEventListener("member:changed", onMembersChanged);
     window.addEventListener("employees:changed", onMembersChanged);
 
-    // 다른 탭/창에서 로컬스토리지가 바뀐 경우도 반영
     const onStorage = (ev) => {
       if (ev.key === MEMBERS_STORAGE_KEY) {
         setEmployeeCount(getEmployeeCountFromStorage());
@@ -225,7 +214,6 @@ export default function Manager() {
     } catch {}
   };
 
-  // ✅ 총 직원 수를 employeeCount로 사용
   const stats = useMemo(() => {
     const totalEmployees = employeeCount;
     const totalSuggestions = items.length;
@@ -313,7 +301,6 @@ export default function Manager() {
                 ))}
               </div>
 
-              {/* ⚠ 긴급 제안 */}
               <div className={styles.urgentPanel} role="region" aria-label="긴급 제안">
                 <div className={styles.urgentPanelHeader}>⚠ 긴급 제안</div>
 
@@ -356,7 +343,6 @@ export default function Manager() {
                 )}
               </div>
 
-              {/* ⚠ 긴급 공지 */}
               <div className={styles.urgentPanel} role="region" aria-label="긴급 공지" style={{ marginTop: 16 }}>
                 <div className={styles.urgentPanelHeader}>⚠ 긴급 공지</div>
 
