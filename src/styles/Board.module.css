@@ -1,11 +1,12 @@
 .boardContainer {
-  /* background-color: #e6eef9; */
   background-color: #f9f9f9;
-  height: 100vh;
-  /* flex: 1; */
+  /* height: 100vh; */
+  height: calc(100vh - 75.66px);
   padding: 30px;
-  min-height: 0; /* flex item 스크롤 버그 방지 */
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
 .boardTitle {
   display: flex;
@@ -37,18 +38,21 @@
 .boardContents {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  margin-top: 20px;
-  width: 100%;
   gap: 10px;
+  width: 100%;
+  margin-top: 20px;
   box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 .boardColumn {
   min-width: 0;
   background-color: #e6eef9;
-  /* height: 100vh; */
-  padding: 20px;
+  padding: 20px 5px 20px 0;
   border-radius: 20px;
-  /* box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 .boardColumn:first-child {
   background-color: #ecebe9;
@@ -61,6 +65,65 @@
   font-weight: 600;
   font-size: 18px;
   color: #1e3a8a;
+  flex: 0 0 auto;
+  padding-left: 20px;
+}
+
+/* ===== 컬럼 내부 스크롤 ===== */
+:root {
+  --sbw: 12px; /* scrollbar width 공통 변수 */
+}
+
+/* 컬럼 내부 스크롤: 항상 공간을 확보하고, 기본은 '보이지 않게' */
+.cardRow {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+
+  /* 내용 밀림 방지 */
+  scrollbar-gutter: stable both-edges; /* 지원 브라우저에서 gutter 예약 */
+  padding-right: var(--sbw); /* 미지원/OS별 오버레이 대비 여유 공간 확보 */
+
+  /* Firefox: 항상 얇게, 기본은 투명(보이지 않음) */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+/* WebKit(Chrome/Edge/Safari): 항상 같은 너비(=레이아웃 고정) */
+.cardRow::-webkit-scrollbar {
+  width: var(--sbw);
+  height: var(--sbw);
+}
+.cardRow::-webkit-scrollbar-track {
+  background: transparent;
+  /* 트랙은 hover 시에도 투명 유지 (원하면 살짝 tint 가능) */
+}
+
+/* 기본: thumb은 투명 -> 안 보이는 효과, 공간만 예약됨 */
+.cardRow::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0); /* 투명 */
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0);
+  /* 부드러운 등장용 트랜지션 */
+  transition: background-color 1s ease, border-color 1s ease, opacity 1s ease;
+}
+
+/* hover 시: 색만 서서히 등장 (레이아웃 변화 없음) */
+.cardRow:hover {
+  /* Firefox: 색만 지정 (애니메이션은 FF 제한) */
+  scrollbar-color: rgba(100, 116, 139, 0.6) transparent; /* thumb, track */
+}
+.cardRow:hover::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.45); /* slate-500 45% */
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* 상호작용 시 컬러 단계 업 */
+.cardRow::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* slate-400 */
+}
+.cardRow::-webkit-scrollbar-thumb:active {
+  background: #64748b; /* slate-500 */
 }
 
 /* ========board Content =============== */
@@ -87,9 +150,6 @@ h3 {
   font-size: 12px;
   display: flex;
   margin-top: 6px;
-}
-.contentUser:last-child {
-  /* color: #1e3a8a; */
 }
 .contentUser div {
   display: flex;
