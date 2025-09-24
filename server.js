@@ -666,6 +666,38 @@ app.post("/api/suggestions/:id/dislike", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+
+// PUT /api/suggestions/:id/dislike
+app.put("/api/suggestions/:id/dislike", async (req, res) => {
+  try {
+    const { id } = req.params; // suggestion_id
+    const { user_id } = req.body;
+
+    const [existing] = await pool.query(
+      `SELECT * FROM Dislike WHERE suggestion_id = ? AND user_id = ?`,
+      [id, user_id]
+    );
+
+    if (existing.length > 0) {
+      // 이미 싫어요 눌렀으면 취소
+      await pool.query(
+        `DELETE FROM Dislike WHERE suggestion_id = ? AND user_id = ?`,
+        [id, user_id]
+      );
+      return res.json({ message: "Dislike removed" });
+    } else {
+      // 새로 추가
+      await pool.query(
+        `INSERT INTO Dislike (user_id, suggestion_id) VALUES (?, ?)`,
+        [user_id, id]
+      );
+      return res.json({ message: "Dislike added" });
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // POST /api/dislike
 app.post("/api/dislike", async (req, res) => {
   try {
