@@ -582,6 +582,48 @@ app.get("/api/members", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+// GET /api/alerts
+app.get("/api/alerts", async (req, res) => {
+  const [alerts] = await pool.query(`
+    SELECT a.alert_id, a.title, a.content, a.is_urgent, a.active, a.created_at, u.name AS user_name
+    FROM Alert a
+    JOIN User u ON a.user_id = u.user_id
+    ORDER BY a.is_urgent DESC, a.created_at DESC
+  `);
+  res.json(alerts);
+});
+
+// POST /api/alerts
+app.post("/api/alerts", async (req, res) => {
+  const { user_id, title, content, is_urgent, active } = req.body;
+  const [result] = await pool.query(
+    `INSERT INTO Alert (user_id, title, content, is_urgent, active) VALUES (?, ?, ?, ?, ?)`,
+    [
+      user_id,
+      title,
+      content,
+      is_urgent ? 1 : 0,
+      active !== undefined ? (active ? 1 : 0) : 1,
+    ]
+  );
+  res.status(201).json({ alert_id: result.insertId });
+});
+
+// PUT /api/alerts/:id
+app.put("/api/alerts/:id", async (req, res) => {
+  const { id } = req.params;
+  const { title, content, is_urgent, active } = req.body;
+
+  const [result] = await pool.query(
+    `UPDATE Alert SET title = ?, content = ?, is_urgent = ?, active = ? WHERE alert_id = ?`,
+    [title, content, is_urgent ? 1 : 0, active ? 1 : 0, id]
+  );
+
+  if (result.affectedRows === 0)
+    return res.status(404).json({ error: "Alert not found" });
+
+  res.json({ message: "Alert updated successfully" });
+});
 
 app.listen(5000, () => {
   console.log("http://localhost:5000");
