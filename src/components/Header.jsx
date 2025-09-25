@@ -1,21 +1,36 @@
 import { useEffect, useRef, useState } from "react";
 
+const NOTIFS_STORAGE_KEY = "header_notifs_v1";
+
 export default function Header() {
-  // 알림 목록 데이터 > 확인용
-  const [notifs, setNotifs] = useState([
-    {
-      id: 1,
-      title: "새 제안이 등록되었습니다.",
-      meta: "R&D · 방금 전",
-      read: false,
-    },
-    {
-      id: 2,
-      title: "공지: 시스템 점검 안내",
-      meta: "관리팀 · 1시간 전",
-      read: false,
-    },
-  ]);
+  const [userDept, setUserDept] = useState("불러오는 중...");
+  const [notifs, setNotifs] = useState(() => {
+    try {
+      const raw = localStorage.getItem(NOTIFS_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(NOTIFS_STORAGE_KEY, JSON.stringify(notifs));
+    } catch {}
+  }, [notifs]);
+
+  useEffect(() => {
+    const onAdd = (e) => {
+      const { id, title, meta } = e.detail || {};
+      if (!title) return;
+      setNotifs((prev) => [
+        { id: id ?? Date.now(), title, meta: meta ?? "", read: false },
+        ...prev,
+      ]);
+    };
+    window.addEventListener("header:notif:add", onAdd);
+    return () => window.removeEventListener("header:notif:add", onAdd);
+  }, []);
 
   const unread = notifs.filter((n) => !n.read).length;
   const [notifOpen, setNotifOpen] = useState(false);
@@ -25,6 +40,21 @@ export default function Header() {
 
   const langMenuRef = useRef(null);
   const notifMenuRef = useRef(null);
+  useEffect(() => {
+    async function fetchUserDept() {
+      try {
+        const res = await fetch("http://localhost:5000/api/users");
+        const users = await res.json();
+        const user = users.find((u) => u.user_id === 1); // 하드코딩 user_id = 1
+        if (user) setUserDept(user.department_name || "부서 없음");
+        else setUserDept("부서 없음");
+      } catch (err) {
+        console.error(err);
+        setUserDept("불러오기 실패");
+      }
+    }
+    fetchUserDept();
+  }, []);
   useEffect(() => {
     function handleClick(e) {
       if (langMenuRef.current && !langMenuRef.current.contains(e.target)) {
@@ -51,6 +81,7 @@ export default function Header() {
   const hasBadge = unread > 0;
   const bellColor = hasBadge ? "#EA580C" : undefined;
   const bellBtnStyle = hasBadge ? { borderColor: "#EA580C" } : undefined;
+
   const markAsRead = (id) =>
     setNotifs((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
@@ -61,6 +92,7 @@ export default function Header() {
     setNotifs((prev) => prev.filter((n) => n.id !== id));
   const clearAll = () => setNotifs([]);
 
+  const [hoverAct, setHoverAct] = useState(null);
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -74,7 +106,7 @@ export default function Header() {
             />
           </svg>
         </span>
-        <strong className="topbar-title">관리자 페이지</strong>
+        <strong className="topbar-title">{userDept}</strong>
       </div>
 
       <div className="topbar-actions">
@@ -199,26 +231,69 @@ export default function Header() {
                   role="presentation"
                   style={{
                     padding: "8px 12px",
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: 12,
+                    background: "transparent",
                   }}
                 >
-                  <button
-                    className="link-btn"
-                    type="button"
-                    onClick={markAllRead}
-                  >
-                    모두 읽음
-                  </button>
-                  <button
-                    className="link-btn"
-                    type="button"
-                    onClick={clearAll}
-                    style={{ color: "#ef4444" }}
-                  >
-                    모두 삭제
-                  </button>
+                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                    <div
+                      role="group"
+                      aria-label="알림 일괄 액션"
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        border: "1px solid #e5e7eb",
+                        borderRadius: 10,
+                        overflow: "hidden",
+                      }}
+                    >
+                      <button
+                        type="button"
+                        onClick={markAllRead}
+                        onMouseEnter={() => setHoverAct("read")}
+                        onMouseLeave={() => setHoverAct(null)}
+                        className="link-btn"
+                        style={{
+                          border: "none",
+                          background:
+                            hoverAct === "read"
+                              ? "rgba(37,99,235,.08)"
+                              : "transparent",
+                          color: "#2563eb",
+                          padding: "8px 12px",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        모두 읽음
+                      </button>
+
+                      <span
+                        aria-hidden="true"
+                        style={{ width: 1, height: 18, background: "#e5e7eb" }}
+                      />
+
+                      <button
+                        type="button"
+                        onClick={clearAll}
+                        onMouseEnter={() => setHoverAct("delete")}
+                        onMouseLeave={() => setHoverAct(null)}
+                        className="link-btn"
+                        style={{
+                          border: "none",
+                          background:
+                            hoverAct === "delete"
+                              ? "rgba(239,68,68,.08)"
+                              : "transparent",
+                          color: "#ef4444",
+                          padding: "8px 12px",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                      >
+                        모두 삭제
+                      </button>
+                    </div>
+                  </div>
                 </li>
               )}
             </ul>

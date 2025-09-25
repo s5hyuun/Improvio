@@ -12,7 +12,7 @@ ul {
   list-style: none;
 }
 .commBoards {
-  flex: 0.9;
+  /* flex: 0.9; */
   padding: 20px;
 }
 .commBoards > div {

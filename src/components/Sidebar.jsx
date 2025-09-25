@@ -1,8 +1,13 @@
+// src/components/Sidebar.jsx
 import { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 
 const STORAGE_DEPT_KEY = "selected_dept";
 
 export default function Sidebar() {
+  const location = useLocation();
+  const isCommunity = location.pathname.startsWith("/community");
+
   const departments = [
     { id: "rd", label: "R&D", icon: "bulb" },
     { id: "globalSales", label: "해외영업", icon: "globe" },
@@ -26,7 +31,9 @@ export default function Sidebar() {
     }
   });
 
+  // 커뮤니티 화면이 아닐 때만 저장/브로드캐스트
   useEffect(() => {
+    if (isCommunity) return;
     const current = departments.find((d) => d.id === selected);
     const label = current?.label ?? "";
     try {
@@ -35,7 +42,9 @@ export default function Sidebar() {
     window.dispatchEvent(
       new CustomEvent("dept:changed", { detail: { dept: label } })
     );
-  }, [selected]);
+  }, [selected, isCommunity]);
+
+  const navCls = ({ isActive }) => `nav-item ${isActive ? "active" : ""}`;
 
   return (
     <aside className="sidebar">
@@ -59,19 +68,23 @@ export default function Sidebar() {
           </div>
         </section>
 
+        {/* 좌측 내비게이션 */}
         <nav className="nav">
-          <a className="nav-item" href="#">
+          <NavLink className={navCls} to="/main">
             <span className="ico">{icon("bars")}</span>
             <span>Main Chart</span>
-          </a>
-          <a className="nav-item" href="#">
+          </NavLink>
+
+          <NavLink className={navCls} to="/requirements">
             <span className="ico">{icon("doc")}</span>
             <span>Requirements</span>
-          </a>
-          <a className="nav-item" href="#">
+          </NavLink>
+
+          {/* ✅ Community 클릭 시 /community 로 이동 */}
+          <NavLink className={navCls} to="/community">
             <span className="ico">{icon("chat")}</span>
             <span>Community</span>
-          </a>
+          </NavLink>
         </nav>
 
         <div className="section-title">부서 선택</div>
@@ -81,8 +94,15 @@ export default function Sidebar() {
             {departments.map((d) => (
               <li
                 key={d.id}
-                className={`dept-item ${selected === d.id ? "selected" : ""}`}
-                onClick={() => setSelected(d.id)}
+                // 커뮤니티 화면에서는 선택 표시를 숨김
+                className={`dept-item ${
+                  !isCommunity && selected === d.id ? "selected" : ""
+                }`}
+                // 커뮤니티 화면에서는 클릭으로 선택 변경되지 않도록 무시
+                onClick={() => {
+                  if (!isCommunity) setSelected(d.id);
+                }}
+                aria-selected={!isCommunity && selected === d.id}
               >
                 <span className="ico">{icon(d.icon)}</span>
                 <span>{d.label}</span>
@@ -164,42 +184,20 @@ function icon(name) {
     case "globe":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <circle
-            cx="12"
-            cy="12"
-            r="9"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <path
-            d="M2 12h20M12 2a15 15 0 0 1 0 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M2 12h20M12 2a15 15 0 0 1 0 20" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "flag":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M12 2v6l5 3-5 3v8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M12 2v6l5 3-5 3v8" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "triangle":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M3 18l9-12 9 12H3z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M3 18l9-12 9 12H3z" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "sea":
@@ -216,34 +214,20 @@ function icon(name) {
     case "user":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22c0-5 4-8 9-8s9 3 9 8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22c0-5 4-8 9-8s9 3 9 8"
+            fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "list":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M3 6h18M3 12h18M3 18h18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "monitor":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M4 4h16v12H4z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M4 4h16v12H4z" fill="none" stroke="currentColor" strokeWidth="2" />
           <path d="M8 20h8" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
