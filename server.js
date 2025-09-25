@@ -581,6 +581,7 @@ app.get("/api/members", async (req, res) => {
              d.department_name, u.department_id
       FROM User u
       LEFT JOIN Department d ON u.department_id = d.department_id
+      where u.role="employee"
       ORDER BY u.user_id ASC
     `);
     res.json(users);
