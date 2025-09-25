@@ -721,6 +721,30 @@ app.post("/api/dislike", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+app.patch("/api/members/:id/status", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    if (!status) {
+      return res.status(400).json({ error: "Status is required." });
+    }
+
+    const [result] = await pool.query(
+      `UPDATE User SET status = ? WHERE user_id = ?`,
+      [status, id]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Member not found" });
+    }
+
+    res.json({ message: "Member status updated successfully." });
+  } catch (err) {
+    console.error("Error updating member status:", err);
+    res.status(500).json({ error: "Failed to update member status" });
+  }
+});
 
 app.listen(5000, () => {
   console.log("http://localhost:5000");
