@@ -37,7 +37,7 @@ export default function SignupStep5({ onComplete }) {
     setFormData((prev) => ({ ...prev, employeeId: onlyNums }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!/^\d+$/.test(formData.employeeId)) {
@@ -52,8 +52,31 @@ export default function SignupStep5({ onComplete }) {
       setConfirmPasswordError("");
     }
 
-    console.log("회원가입 정보:", formData);
-    onComplete();
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          username: formData.employeeId, // 사원번호를 username으로
+          password: formData.password,
+          role: "manager", // 관리자 가입이므로 admin
+          department_id: parseInt(formData.department, 10) || null,
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || "회원가입 실패");
+        return;
+      }
+
+      alert("회원가입 성공! 승인을 기다려주세요.");
+      onComplete(); // 다음 단계로 진행
+    } catch (err) {
+      console.error("회원가입 오류:", err);
+      alert("서버 오류가 발생했습니다.");
+    }
   };
 
   return (
@@ -165,20 +188,16 @@ export default function SignupStep5({ onComplete }) {
               required
             >
               <option value="">부서를 선택하세요</option>
-              <option value="basic-design">기본설계</option>
-              <option value="ship-design">조선설계</option>
-              <option value="offshore-design">해양설계</option>
-              <option value="process-management">공정관리</option>
-              <option value="purchasing">구매</option>
-              <option value="project-management">PM</option>
-              <option value="automation">자동화</option>
-              <option value="overseas-sales">해외영업</option>
-              <option value="management-support">경영지원</option>
-              <option value="qulity-planning-inspection">
-                품질관리/기획/검사
-              </option>
-              <option value="safety-environment-health">안전/환경/보건</option>
-              <option value="research-development">연구개발</option>
+              <option value="1">R&D</option>
+              <option value="2">해외영업</option>
+              <option value="3">기본설계</option>
+              <option value="4">미래사업개발</option>
+              <option value="5">조선설계</option>
+              <option value="6">해양설계</option>
+              <option value="7">PM</option>
+              <option value="8">구매</option>
+              <option value="9">경영지원</option>
+              <option value="10">안전</option>
             </select>
           </div>
 

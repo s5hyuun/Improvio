@@ -21,7 +21,7 @@ export default function Login() {
       const data = await response.json();
       if (data.success) {
         alert("로그인 성공!");
-        navigate("/dashboard");
+        navigate("/main");
       } else {
         alert(data.message || "로그인 실패");
       }
