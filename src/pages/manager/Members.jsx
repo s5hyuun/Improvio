@@ -1,14 +1,11 @@
-// Members.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/Members.module.css";
-
-const API_BASE = "";
 
 export default function Member({ selectedDeptId = "all" }) {
   const [members, setMembers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-  const [saving, setSaving] = useState(new Set()); 
+  const [saving, setSaving] = useState(new Set());
 
   useEffect(() => {
     let alive = true;
@@ -16,7 +13,7 @@ export default function Member({ selectedDeptId = "all" }) {
       try {
         setLoading(true);
         setErr("");
-        const res = await fetch(`${API_BASE}/api/members`);
+        const res = await fetch(`http://localhost:3000/api/members`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (alive) setMembers(Array.isArray(data) ? data : []);
@@ -39,7 +36,7 @@ export default function Member({ selectedDeptId = "all" }) {
 
   const toggleStatus = async (m) => {
     const id = m.user_id;
-    const prev = m.status;    
+    const prev = m.status;
     const next = prev === "활성" ? "비활성" : "활성";
 
     setMembers((prevList) =>
@@ -51,7 +48,7 @@ export default function Member({ selectedDeptId = "all" }) {
       const res = await fetch(`${API_BASE}/api/members/${id}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: next }), 
+        body: JSON.stringify({ status: next }),
       });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
     } catch (e) {
@@ -83,7 +80,9 @@ export default function Member({ selectedDeptId = "all" }) {
         {!!err && !loading && <div className={styles.empty}>{err}</div>}
 
         {!loading && !err && filtered.length === 0 && (
-          <div className={styles.empty}>선택된 조건에 해당하는 직원이 없습니다.</div>
+          <div className={styles.empty}>
+            선택된 조건에 해당하는 직원이 없습니다.
+          </div>
         )}
 
         {!loading &&

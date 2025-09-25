@@ -1,3 +1,4 @@
+/* Members.module.css */
 .wrap{
   padding: 24px;
 }
@@ -30,10 +31,7 @@
   font-weight:600;
 }
 
-.tabActive{
-  background: var(--primary, #2d6cff);
-  color:#fff;
-}
+.tabActive{ background: var(--primary, #2d6cff); color:#fff; }
 
 .tabMuted{
   padding:6px 12px;
@@ -72,40 +70,43 @@
   background: #fff;
 }
 
-.tableRow:nth-child(odd){
-  background: #fdfdfd;
-}
+.tableRow:nth-child(odd){ background: #fdfdfd; }
 
 .nameCell{ color: black; }
 .deptCell{ color: black; }
 .dateCell{ color: black; }
 .colStatus, .statusCell{ text-align:right; }
 
-.badgeActive {
-  display: inline-block;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: rgba(45,108,255,.12);
-  color: var(--primary, #2d6cff);
-  font-weight: 700;
-  font-size: 12px;
-}
-
-.badgeInactive{
+/* 버튼의 공통 스타일 (JSX의 statusBtn과 매칭) */
+.statusBtn{
   display:inline-block;
   padding:6px 10px;
   border-radius:999px;
-  background: #ffece6;  
-  color:#333;
+  border:none;
   font-weight:700;
   font-size:12px;
+  cursor:pointer;
+  user-select:none;
 }
 
-.badgeClickable{
-  cursor: pointer;
-  user-select: none;
+/* 활성/비활성 배지 색상 */
+.badgeActive{
+  background: rgba(45,108,255,.12);
+  color: var(--primary, #2d6cff);
 }
-.badgeClickable:focus{
+
+.badgeInactive{
+  background: #FFECE6;
+  color:#333;
+}
+
+/* 저장 중 비주얼 */
+.badgeLoading{
+  opacity:.6;
+  pointer-events:none;
+}
+
+.statusBtn:focus{
   outline: 2px solid rgba(45,108,255,.35);
   outline-offset: 2px;
 }
