@@ -746,6 +746,57 @@ app.patch("/api/members/:id/status", async (req, res) => {
     res.status(500).json({ error: "Failed to update member status" });
   }
 });
+// POST /api/login
+app.post("/api/login", async (req, res) => {
+  const { employeeId, password } = req.body; // 프론트에서 username 대신 employeeId 사용
+
+  try {
+    // 1. DB에서 해당 username 찾기
+    const [rows] = await pool.query("SELECT * FROM User WHERE username = ?", [
+      employeeId,
+    ]);
+
+    if (rows.length === 0) {
+      return res
+        .status(401)
+        .json({ success: false, message: "사용자를 찾을 수 없습니다." });
+    }
+
+    const user = rows[0];
+
+    // 2. 비밀번호 비교
+    const match = await bcrypt.compare(password, user.password);
+    if (!match) {
+      return res
+        .status(401)
+        .json({ success: false, message: "비밀번호가 일치하지 않습니다." });
+    }
+
+    // 3. 로그인 성공 시 JWT 발급(optional)
+    const token = jwt.sign(
+      { user_id: user.user_id, username: user.username, role: user.role },
+      SECRET_KEY,
+      { expiresIn: "1h" }
+    );
+
+    res.json({
+      success: true,
+      message: "로그인 성공",
+      user: {
+        user_id: user.user_id,
+        name: user.name,
+        username: user.username,
+        role: user.role,
+        department_id: user.department_id,
+        status: user.status,
+      },
+      token,
+    });
+  } catch (err) {
+    console.error("로그인 에러:", err);
+    res.status(500).json({ success: false, message: "서버 오류 발생" });
+  }
+});
 
 app.listen(5000, () => {
   console.log("http://localhost:5000");
