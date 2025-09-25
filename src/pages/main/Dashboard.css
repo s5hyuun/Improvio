@@ -1,0 +1,24 @@
+.dashboard-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  padding: 30px;
+  background-color: #eef5ff; /* 전체 배경 */
+}
+
+.card {
+  background-color: #ffffff;
+  border: 2px dashed #cce0ff;
+  border-radius: 10px;
+  height: 400px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+}
+
+.card-content {
+  font-size: 16px;
+  color: #333;
+  text-align: center;
+}

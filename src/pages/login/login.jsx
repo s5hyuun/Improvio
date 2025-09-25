@@ -1,8 +1,8 @@
-// src/pages/Login.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
+import styles from "../../styles/Login.module.css";
 
 export default function Login() {
   const [username, setUsername] = useState("");
@@ -16,13 +16,12 @@ export default function Login() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employeeId: username, password }),
-        // 서버에서 employeeId를 username으로 매핑하므로 그대로 사용
       });
 
       const data = await response.json();
       if (data.success) {
         alert("로그인 성공!");
-        navigate("/dashboard"); // 로그인 성공시 이동
+        navigate("/dashboard");
       } else {
         alert(data.message || "로그인 실패");
       }
@@ -38,51 +37,46 @@ export default function Login() {
 
   return (
     <div className="app">
-      {/* 사이드바 */}
       <Sidebar />
-
-      {/* 메인 영역 */}
       <main className="main">
-        {/* 헤더 */}
         <Header />
-
-        {/* 로그인 폼 영역 */}
-        <section className="content flex justify-center items-center min-h-screen bg-gray-100">
-          <div className="w-full max-w-md bg-white p-8 rounded-2xl shadow-md">
-            <h2 className="text-2xl font-bold text-center mb-6">로그인</h2>
-            <form onSubmit={handleLogin} className="space-y-4">
-              <input
-                type="text"
-                value={username}
-                onChange={(e) => setUsername(e.target.value)}
-                placeholder="아이디 입력"
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              />
-              <input
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="비밀번호 입력"
-                className="w-full px-3 py-2 border rounded-lg"
-                required
-              />
-              <button
-                type="submit"
-                className="w-full py-2 px-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                로그인
-              </button>
-            </form>
-
-            <div className="mt-4 text-center">
-              <button
-                onClick={handleSignup}
-                className="text-blue-600 hover:underline"
-              >
-                회원가입
-              </button>
+        <section className={styles.loginContainers}>
+          <div className={styles.loginCard}>
+            <div>
+              <h2 className={styles.loginTitle}>로그인</h2>
             </div>
+            <form onSubmit={handleLogin} className={styles.loginForm}>
+              <div className={styles.loginName}>
+                <div>아이디 입력</div>
+                <div>비밀번호 입력</div>
+              </div>
+              <div className={styles.loginInputs}>
+                <input
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  placeholder="아이디 입력"
+                  className={styles.input}
+                  required
+                />
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="비밀번호 입력"
+                  className={styles.input}
+                  required
+                />
+              </div>
+              <div className={styles.loginButtons}>
+                <button type="submit" className={styles.button}>
+                  로그인
+                </button>
+                <div className={styles.signup}>
+                  <button onClick={handleSignup}>회원가입</button>
+                </div>
+              </div>
+            </form>
           </div>
         </section>
       </main>

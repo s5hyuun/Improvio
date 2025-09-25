@@ -1,26 +1,31 @@
 import React, { useState } from "react";
 
-export default function SignupStep2() {
+export default function SignupStep5({ onComplete }) {
   const [formData, setFormData] = useState({
     name: "",
     employeeId: "",
     password: "",
+    confirmPassword: "",
     department: "",
   });
 
-  // 숫자만 입력 허용 + 안내문구 표시용 상태 추가
   const [employeeIdError, setEmployeeIdError] = useState("");
+  const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
-  // 기존 handleChange는 그대로 유지
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  const toggleShowPassword = () => setShowPassword((prev) => !prev);
+  const toggleShowConfirmPassword = () =>
+    setShowConfirmPassword((prev) => !prev);
+
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
   }
 
-  // 사원번호 전용 핸들러 (숫자 외 입력시 안내문구 띄움)
   const handleEmployeeIdChange = (e) => {
     const value = e.target.value;
-    // 숫자만 추출
     const onlyNums = value.replace(/[^0-9]/g, "");
 
     if (value !== onlyNums) {
@@ -40,8 +45,15 @@ export default function SignupStep2() {
       return;
     }
 
-    alert("가입 신청이 완료되었습니다! 🚀");
+    if (formData.password !== formData.confirmPassword) {
+      setConfirmPasswordError("비밀번호가 일치하지 않습니다.");
+      return;
+    } else {
+      setConfirmPasswordError("");
+    }
+
     console.log("회원가입 정보:", formData);
+    onComplete();
   };
 
   return (
@@ -49,7 +61,6 @@ export default function SignupStep2() {
       <div className="big-block">
         <h2 className="signup-title">회원 정보 입력</h2>
         <form className="space-y-4" onSubmit={handleSubmit}>
-          {/* 이름 */}
           <div>
             <label className="block mb-1 font-medium">이름</label>
             <input
@@ -63,7 +74,6 @@ export default function SignupStep2() {
             />
           </div>
 
-          {/* 사원번호 */}
           <div>
             <label className="block mb-1 font-medium">사원번호</label>
             <input
@@ -75,27 +85,76 @@ export default function SignupStep2() {
               placeholder="사원번호를 입력하세요"
               required
             />
-            {/* 안내 멘트 */}
             {employeeIdError && (
               <p className="text-red-600 mt-1 text-sm">{employeeIdError}</p>
             )}
           </div>
 
-          {/* 비밀번호 */}
           <div>
             <label className="block mb-1 font-medium">비밀번호</label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full border px-3 py-2 rounded-md"
-              placeholder="비밀번호를 입력하세요"
-              required
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded-md"
+                placeholder="비밀번호를 입력하세요"
+                required
+              />
+              <button
+                type="button"
+                onClick={toggleShowPassword}
+                className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+              >
+                <img
+                  src={
+                    showPassword
+                      ? "/public/close-eye.png"
+                      : "/public/open-eye.png"
+                  }
+                  alt="비밀번호 보기 토글"
+                  style={{ width: "15px", height: "15px" }}
+                />
+              </button>
+            </div>
           </div>
 
-          {/* 부서 선택 */}
+          <div>
+            <label className="block mb-1 font-medium">비밀번호 확인</label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                className="w-full border px-3 py-2 rounded-md"
+                placeholder="비밀번호를 다시 입력하세요"
+                required
+              />
+              <button
+                type="button"
+                onClick={toggleShowConfirmPassword}
+                className="absolute inset-y-0 right-3 flex items-center bg-white rounded px-2"
+              >
+                <img
+                  src={
+                    showConfirmPassword
+                      ? "/public/close-eye.png"
+                      : "/public/open-eye.png"
+                  }
+                  alt="비밀번호 확인 보기 토글"
+                  style={{ width: "15px", height: "15px" }}
+                />
+              </button>
+            </div>
+            {confirmPasswordError && (
+              <p className="text-red-600 mt-1 text-sm">
+                {confirmPasswordError}
+              </p>
+            )}
+          </div>
+
           <div>
             <label className="block mb-1 font-medium">부서 선택</label>
             <select
@@ -123,7 +182,6 @@ export default function SignupStep2() {
             </select>
           </div>
 
-          {/* 가입신청 버튼 */}
           <button
             type="submit"
             className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700"

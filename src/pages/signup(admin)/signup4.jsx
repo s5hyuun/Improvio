@@ -1,29 +1,27 @@
 import React, { useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
-import SignupStep2 from "./signup2"; // SignupStep2 컴포넌트 import
-import "./signup.css";
+import SignupStep5 from "./signup5";
+import SignupStep6 from "./signup6";
 
-export default function Signup() {
-  const [step, setStep] = useState(1); // 현재 단계 상태
+export default function Signup4() {
+  const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     terms: false,
     privacy: false,
   });
 
-  // 체크박스 값 변경
   const handleChange = (e) => {
     const { name, checked } = e.target;
     setFormData((prev) => ({ ...prev, [name]: checked }));
   };
 
-  // 다음 단계로 이동
   const handleNext = () => {
     if (!formData.terms || !formData.privacy) {
       alert("모든 약관에 동의해야 다음 단계로 진행할 수 있습니다.");
       return;
     }
-    setStep(2); // 2단계 화면으로 전환
+    setStep(2);
   };
 
   return (
@@ -34,7 +32,7 @@ export default function Signup() {
 
         {step === 1 && (
           <section className="content flex justify-center items-center min-h-screen bg-gray-100">
-            <h1 className="signup-title">회원가입</h1>
+            <h1 className="signup-title">회원가입(관리자용)</h1>
 
             <div className="big-block">
               <section className="signup-section">
@@ -82,7 +80,9 @@ export default function Signup() {
           </section>
         )}
 
-        {step === 2 && <SignupStep2 />}
+        {step === 2 && <SignupStep5 onComplete={() => setStep(3)} />}
+
+        {step === 3 && <SignupStep6 onComplete={() => setStep(4)} />}
       </main>
     </div>
   );
