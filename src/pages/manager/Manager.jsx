@@ -9,7 +9,6 @@ import Member from "./Members";
 const API = "http://localhost:5000";
 const STORAGE_KEY = "proposal_items_cache_v1";
 const NOTICE_STORAGE_KEY = "notices_v1";
-
 const MEMBERS_STORAGE_KEY = "members_v1";
 
 function loadFromStorage() {
@@ -32,11 +31,12 @@ function getEmployeeCountFromStorage() {
 }
 
 export default function Manager() {
-  const [active, setActive] = useState("dashboard");
+  const savedTab = localStorage.getItem("activeTab") || "dashboard";
+  const [active, setActive] = useState(savedTab);
   const [currentDeptId, setCurrentDeptId] = useState("all");
 
   const [employeeCount, setEmployeeCount] = useState(0);
-
+  const [members, setMembers] = useState([]);
   const [items, setItems] = useState([]);
   const [urgentItems, setUrgentItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -51,13 +51,9 @@ export default function Manager() {
   useEffect(() => {
     const onMembersChanged = (e) => {
       const { list, count } = e.detail || {};
-      if (typeof count === "number") {
-        setEmployeeCount(count);
-      } else if (Array.isArray(list)) {
-        setEmployeeCount(list.length);
-      } else {
-        setEmployeeCount(getEmployeeCountFromStorage());
-      }
+      if (typeof count === "number") setEmployeeCount(count);
+      else if (Array.isArray(list)) setEmployeeCount(list.length);
+      else setEmployeeCount(getEmployeeCountFromStorage());
     };
 
     window.addEventListener("members:changed", onMembersChanged);
@@ -86,10 +82,8 @@ export default function Manager() {
       setActiveNoticeCount(list.filter((n) => n.active).length);
       setUrgentNotices(list.filter((n) => n.active && n.urgent));
     } catch {}
-  }, []);
 
-  useEffect(() => {
-    function onNoticeChanged(e) {
+    const onNoticeChanged = (e) => {
       const { activeCount, list } = e.detail || {};
       if (Array.isArray(list)) {
         setActiveNoticeCount(list.filter((n) => n.active).length);
@@ -102,7 +96,7 @@ export default function Manager() {
           setUrgentNotices(l.filter((n) => n.active && n.urgent));
         } catch {}
       }
-    }
+    };
     window.addEventListener("notice:changed", onNoticeChanged);
     return () => window.removeEventListener("notice:changed", onNoticeChanged);
   }, []);
@@ -136,9 +130,39 @@ export default function Manager() {
           setUrgentItems(cached.filter((x) => x.urgent));
         } else {
           const fallback = [
-            { id: 1, title: "제목", body: "내용", dept: "R&D", author: "익명 직원", created_at: "2024-01-15", priority: 85, status: "pending", urgent: true },
-            { id: 2, title: "제목", body: "내용", dept: "경영지원", author: "익명 직원", created_at: "2024-01-10", priority: 62, status: "approved", urgent: false },
-            { id: 3, title: "제목", body: "내용", dept: "안전",   author: "익명 직원", created_at: "2023-12-20", priority: 92, status: "completed", urgent: false },
+            {
+              id: 1,
+              title: "제목",
+              body: "내용",
+              dept: "R&D",
+              author: "익명 직원",
+              created_at: "2024-01-15",
+              priority: 85,
+              status: "pending",
+              urgent: true,
+            },
+            {
+              id: 2,
+              title: "제목",
+              body: "내용",
+              dept: "경영지원",
+              author: "익명 직원",
+              created_at: "2024-01-10",
+              priority: 62,
+              status: "approved",
+              urgent: false,
+            },
+            {
+              id: 3,
+              title: "제목",
+              body: "내용",
+              dept: "안전",
+              author: "익명 직원",
+              created_at: "2023-12-20",
+              priority: 92,
+              status: "completed",
+              urgent: false,
+            },
           ];
           setItems(fallback);
           setUrgentItems(fallback.filter((x) => x.urgent));
@@ -154,7 +178,7 @@ export default function Manager() {
   }, []);
 
   useEffect(() => {
-    function onUrgentChanged(e) {
+    const onUrgentChanged = (e) => {
       const { id, urgent, item } = e.detail || {};
       if (!id) return;
 
@@ -166,11 +190,31 @@ export default function Manager() {
 
       setUrgentItems((prev) => {
         const others = prev.filter((x) => x.id !== id);
-        return urgent ? [...others, (item ?? { id, urgent: true })] : others;
+        return urgent ? [...others, item ?? { id, urgent: true }] : others;
       });
-    }
+    };
     window.addEventListener("suggestion:urgent", onUrgentChanged);
-    return () => window.removeEventListener("suggestion:urgent", onUrgentChanged);
+    return () =>
+      window.removeEventListener("suggestion:urgent", onUrgentChanged);
+  }, []);
+
+  useEffect(() => {
+    async function fetchMembers() {
+      try {
+        const res = await fetch(`${API}/api/members`);
+        const data = await res.json();
+        setMembers(data);
+        setEmployeeCount(data.length);
+        localStorage.setItem(MEMBERS_STORAGE_KEY, JSON.stringify(data));
+      } catch (err) {
+        console.error("Failed to fetch members:", err);
+        const raw = localStorage.getItem(MEMBERS_STORAGE_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        setMembers(arr);
+        setEmployeeCount(arr.length);
+      }
+    }
+    fetchMembers();
   }, []);
 
   const unmarkUrgent = async (u) => {
@@ -202,16 +246,31 @@ export default function Manager() {
     try {
       const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
       const list = raw ? JSON.parse(raw) : [];
-      const next = list.map((x) => (x.id === n.id ? { ...x, urgent: false } : x));
+      const next = list.map((x) =>
+        x.id === n.id ? { ...x, urgent: false } : x
+      );
       localStorage.setItem(NOTICE_STORAGE_KEY, JSON.stringify(next));
       setUrgentNotices((prev) => prev.filter((x) => x.id !== n.id));
       setActiveNoticeCount(next.filter((x) => x.active).length);
       window.dispatchEvent(
         new CustomEvent("notice:changed", {
-          detail: { list: next, activeCount: next.filter((x) => x.active).length },
+          detail: {
+            list: next,
+            activeCount: next.filter((x) => x.active).length,
+          },
         })
       );
     } catch {}
+  };
+
+  const handleClick = (tab) => {
+    if (active === tab) {
+      localStorage.setItem("activeTab", tab);
+      window.location.reload();
+    } else {
+      setActive(tab);
+      localStorage.setItem("activeTab", tab);
+    }
   };
 
   const stats = useMemo(() => {
@@ -221,7 +280,7 @@ export default function Manager() {
     const activeNotices = activeNoticeCount;
 
     return [
-      { label: "총 직원 수", value: totalEmployees },
+      { label: "총 직원 수", value: employeeCount },
       { label: "총 제안 수", value: totalSuggestions },
       { label: "활성 공지", value: activeNotices },
       { label: "긴급 제안", value: urgentCount },
@@ -242,7 +301,13 @@ export default function Manager() {
     boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
     border: "1px solid #e5e7eb",
   };
-  const valueStyle = { fontSize: "28px", fontWeight: 700, color: "#1e3a8a", marginBottom: "8px", lineHeight: 1.1 };
+  const valueStyle = {
+    fontSize: "28px",
+    fontWeight: 700,
+    color: "#1e3a8a",
+    marginBottom: "8px",
+    lineHeight: 1.1,
+  };
   const labelStyle = { fontSize: "14px", color: "#4b5563" };
 
   return (
@@ -258,32 +323,40 @@ export default function Manager() {
           <div className={styles.btn}>
             <button
               type="button"
-              className={`${styles.button} ${active === "dashboard" ? styles.active : ""}`}
-              onClick={() => setActive("dashboard")}
+              className={`${styles.button} ${
+                active === "dashboard" ? styles.active : ""
+              }`}
+              onClick={() => handleClick("dashboard")}
               aria-pressed={active === "dashboard"}
             >
               관리자 대시보드
             </button>
             <button
               type="button"
-              className={`${styles.button} ${active === "employee" ? styles.active : ""}`}
-              onClick={() => setActive("employee")}
+              className={`${styles.button} ${
+                active === "employee" ? styles.active : ""
+              }`}
+              onClick={() => handleClick("employee")}
               aria-pressed={active === "employee"}
             >
               직원 관리
             </button>
             <button
               type="button"
-              className={`${styles.button} ${active === "suggestion" ? styles.active : ""}`}
-              onClick={() => setActive("suggestion")}
+              className={`${styles.button} ${
+                active === "suggestion" ? styles.active : ""
+              }`}
+              onClick={() => handleClick("suggestion")}
               aria-pressed={active === "suggestion"}
             >
               제안 관리
             </button>
             <button
               type="button"
-              className={`${styles.button} ${active === "notice" ? styles.active : ""}`}
-              onClick={() => setActive("notice")}
+              className={`${styles.button} ${
+                active === "notice" ? styles.active : ""
+              }`}
+              onClick={() => handleClick("notice")}
               aria-pressed={active === "notice"}
             >
               공지 관리
@@ -294,19 +367,29 @@ export default function Manager() {
             <>
               <div style={gridStyle} aria-label="대시보드 통계">
                 {stats.map((s, i) => (
-                  <div key={i} style={cardStyle} role="status" aria-live="polite">
+                  <div
+                    key={i}
+                    style={cardStyle}
+                    role="status"
+                    aria-live="polite"
+                  >
                     <div style={valueStyle}>{s.value}</div>
                     <div style={labelStyle}>{s.label}</div>
                   </div>
                 ))}
               </div>
 
-              <div className={styles.urgentPanel} role="region" aria-label="긴급 제안">
+              <div
+                className={styles.urgentPanel}
+                role="region"
+                aria-label="긴급 제안"
+              >
                 <div className={styles.urgentPanelHeader}>⚠ 긴급 제안</div>
-
                 {loading ? (
                   <div className={styles.urgentCards}>
-                    <div className={styles.emptyText}>현재 긴급 제안이 없습니다.</div>
+                    <div className={styles.emptyText}>
+                      현재 긴급 제안이 없습니다.
+                    </div>
                   </div>
                 ) : (
                   <div
@@ -326,26 +409,39 @@ export default function Manager() {
                       .map((u) => (
                         <div key={u.id} className={styles.urgentCard}>
                           <div className={styles.urgentCardText}>
-                            <div className={styles.rowTitle}>{u.title || "제목"}</div>
+                            <div className={styles.rowTitle}>
+                              {u.title || "제목"}
+                            </div>
                             <div className={styles.rowMeta}>
-                              {(u.dept ?? "부서 미상")} · {String(u.created_at).slice(0, 10)}
+                              {u.dept ?? "부서 미상"} ·{" "}
+                              {String(u.created_at).slice(0, 10)}
                             </div>
                           </div>
-                          <button type="button" className={styles.urgentRowBtn} onClick={() => unmarkUrgent(u)}>
+                          <button
+                            type="button"
+                            className={styles.urgentRowBtn}
+                            onClick={() => unmarkUrgent(u)}
+                          >
                             긴급 해제
                           </button>
                         </div>
                       ))}
                     {urgentItems.length === 0 && (
-                      <div className={styles.emptyText}>표시할 긴급 제안이 없습니다.</div>
+                      <div className={styles.emptyText}>
+                        표시할 긴급 제안이 없습니다.
+                      </div>
                     )}
                   </div>
                 )}
               </div>
 
-              <div className={styles.urgentPanel} role="region" aria-label="긴급 공지" style={{ marginTop: 16 }}>
+              <div
+                className={styles.urgentPanel}
+                role="region"
+                aria-label="긴급 공지"
+                style={{ marginTop: 16 }}
+              >
                 <div className={styles.urgentPanelHeader}>⚠ 긴급 공지</div>
-
                 <div
                   className={`${styles.urgentCards} ${
                     urgentNotices.length > 2 ? styles.urgentCardsScroll : ""
@@ -363,23 +459,27 @@ export default function Manager() {
                     .map((n) => (
                       <div key={n.id} className={styles.urgentCard}>
                         <div className={styles.urgentCardText}>
-                          <div className={styles.rowTitle}>{n.title || "제목"}</div>
+                          <div className={styles.rowTitle}>
+                            {n.title || "제목"}
+                          </div>
                           <div className={styles.rowMeta}>
-                            {(n.dept ?? "관리팀")} · {String(n.created_at).slice(0, 10)}
+                            {n.dept ?? "관리팀"} ·{" "}
+                            {String(n.created_at).slice(0, 10)}
                           </div>
                         </div>
                         <button
                           type="button"
                           className={styles.urgentRowBtn}
                           onClick={() => unmarkNoticeUrgent(n)}
-                          title="공지의 긴급 표시 해제"
                         >
                           긴급 해제
                         </button>
                       </div>
                     ))}
                   {urgentNotices.length === 0 && (
-                    <div className={styles.emptyText}>표시할 긴급 공지가 없습니다.</div>
+                    <div className={styles.emptyText}>
+                      표시할 긴급 공지가 없습니다.
+                    </div>
                   )}
                 </div>
               </div>
@@ -387,9 +487,7 @@ export default function Manager() {
           )}
 
           {active === "suggestion" && <SuggestionList />}
-
           {active === "employee" && <Member selectedDeptId={currentDeptId} />}
-
           {active === "notice" && <Notice />}
         </section>
       </main>

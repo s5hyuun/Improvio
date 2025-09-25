@@ -1,4 +1,3 @@
-// Notice.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/Notice.module.css";
 
@@ -126,8 +125,6 @@ export default function Notice() {
       const next = [item, ...list];
       setList(next);
       broadcast(next);
-
-      // ✅ 새 공지 "게시" 시 헤더 알림으로 전달
       try {
         window.dispatchEvent(
           new CustomEvent("header:notif:add", {
@@ -145,7 +142,7 @@ export default function Notice() {
   };
 
   const toggleActive = (id) => {
-    const target = list.find((n) => n.id === id); // 이전 상태 확인용
+    const target = list.find((n) => n.id === id); 
     const willBeActive = target ? !target.active : false;
 
     const next = list.map((n) =>
@@ -154,7 +151,6 @@ export default function Notice() {
     setList(next);
     broadcast(next);
 
-    // ✅ "게시 재개"가 된 경우에도 알림 추가(원하실 때 사용)
     if (willBeActive && target) {
       try {
         window.dispatchEvent(

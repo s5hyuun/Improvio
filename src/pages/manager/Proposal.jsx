@@ -3,7 +3,7 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import styles from "../../styles/Proposal.module.css";
 
-const API = "http://localhost";
+const API = "http://localhost:5000";
 
 const DB_STATUS = ["pending", "approved", "completed"];
 const statusLabel = {
@@ -348,7 +348,7 @@ export function adaptFromDB(row) {
     title: row.title ?? "(제목 없음)",
     body,
     dept,
-    author, // 이제 user_name이 있으면 표시됨
+    author, 
     created_at,
     priority,
     status,
