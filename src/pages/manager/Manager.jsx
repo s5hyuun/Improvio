@@ -6,7 +6,7 @@ import { SuggestionList, adaptFromDB } from "./Proposal";
 import Notice from "./Notice";
 import Member from "./Members";
 
-const API = "http://localhost:3000";
+const API = "http://localhost:5000";
 const STORAGE_KEY = "proposal_items_cache_v1";
 const NOTICE_STORAGE_KEY = "notices_v1";
 

@@ -7,6 +7,8 @@ export default function Member({ selectedDeptId = "all" }) {
   const [err, setErr] = useState("");
   const [saving, setSaving] = useState(new Set());
 
+  const API_BASE="http://localhost:3000";
+
   useEffect(() => {
     let alive = true;
     (async () => {
