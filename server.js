@@ -7,6 +7,7 @@ import cors from "cors";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import mime from "mime"; // npm install mime
 
 const SECRET_KEY = "secret_key";
 
@@ -559,7 +560,17 @@ app.post("/api/attachments", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
+app.get("/api/attachments/:filename", (req, res) => {
+  const { filename } = req.params;
+  const filePath = path.join(__dirname, "uploads", filename);
 
+  if (!fs.existsSync(filePath)) return res.status(404).send("File not found");
+
+  // 확장자에 따라 Content-Type 설정
+  const type = mime.getType(filePath) || "application/octet-stream";
+  res.setHeader("Content-Type", type);
+  res.sendFile(filePath);
+});
 // GET /api/departments
 // This endpoint retrieves the full list of departments from the database.
 app.get("/api/departments", async (req, res) => {
