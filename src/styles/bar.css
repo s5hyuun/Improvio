@@ -824,7 +824,11 @@ body {
     transform: rotate(180deg);
   }
 }
+<<<<<<< HEAD
 
+=======
+/* Sidebar: keep only the custom .dept-list scrollbar */
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
 .sidebar {
   overflow: hidden;
 }
@@ -832,13 +836,27 @@ body {
   overflow: hidden !important;
 }
 .dept-wrap {
+<<<<<<< HEAD
   overflow: hidden !important;
   scrollbar-width: none; 
 }
 .dept-wrap::-webkit-scrollbar {
+=======
+  overflow: hidden !important; /* .dept-wrap, .sidebar 쪽 스크롤 숨김 */
+  scrollbar-width: none; /* Firefox 숨김 */
+}
+.dept-wrap::-webkit-scrollbar {
+  /* WebKit 숨김 */
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
   width: 0 !important;
   height: 0 !important;
 }
 .dept-list {
+<<<<<<< HEAD
   overflow: auto !important; 
 }
+=======
+  /* 커스텀 스크롤 컨테이너 */
+  overflow: auto !important; /* ✅ 이것만 스크롤 */
+}
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781

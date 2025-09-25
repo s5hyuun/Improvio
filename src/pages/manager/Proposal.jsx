@@ -3,7 +3,11 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import styles from "../../styles/Proposal.module.css";
 
+<<<<<<< HEAD
 const API = "http://localhost:5000";
+=======
+const API = "http://localhost";
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
 
 const DB_STATUS = ["pending", "approved", "completed"];
 const statusLabel = {
@@ -317,11 +321,16 @@ function getFallback() {
 export function adaptFromDB(row) {
   const id = row.id ?? row.suggestion_id ?? row.suggestionId;
   const body = row.body ?? row.description ?? "";
+<<<<<<< HEAD
 
   const dept = row.dept ?? row.department_name ?? null;
 
   const author = row.user_name ?? row.author ?? row.name ?? null;
 
+=======
+  const dept = row.dept ?? row.department_name ?? null;
+  const author = row.author ?? row.name ?? null;
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
   const created_at =
     row.created_at ?? row.createdAt ?? new Date().toISOString();
 
@@ -348,7 +357,11 @@ export function adaptFromDB(row) {
     title: row.title ?? "(제목 없음)",
     body,
     dept,
+<<<<<<< HEAD
     author, 
+=======
+    author,
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
     created_at,
     priority,
     status,

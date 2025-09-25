@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from "react";
 const NOTIFS_STORAGE_KEY = "header_notifs_v1";
 
 export default function Header() {
+<<<<<<< HEAD
   const [notifs, setNotifs] = useState(() => {
     try {
       const raw = localStorage.getItem(NOTIFS_STORAGE_KEY);
@@ -11,7 +12,32 @@ export default function Header() {
       return [];
     }
   });
+=======
+  // 알림 목록 데이터 > 확인용
+  const [notifs, setNotifs] = useState([
+    {
+      id: 1,
+      title: "새 제안이 등록되었습니다.",
+      meta: "R&D · 방금 전",
+      read: false,
+    },
+    {
+      id: 2,
+      title: "공지: 시스템 점검 안내",
+      meta: "관리팀 · 1시간 전",
+      read: false,
+    },
+  ]);
 
+  const unread = notifs.filter((n) => !n.read).length;
+  const [notifOpen, setNotifOpen] = useState(false);
+
+  const [langOpen, setLangOpen] = useState(false);
+  const [lang, setLang] = useState("한국어");
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
+
+  const langMenuRef = useRef(null);
+  const notifMenuRef = useRef(null);
   useEffect(() => {
     try {
       localStorage.setItem(NOTIFS_STORAGE_KEY, JSON.stringify(notifs));
@@ -65,16 +91,26 @@ export default function Header() {
   const hasBadge = unread > 0;
   const bellColor = hasBadge ? "#EA580C" : undefined;
   const bellBtnStyle = hasBadge ? { borderColor: "#EA580C" } : undefined;
+<<<<<<< HEAD
 
   const markAsRead = (id) =>
     setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+=======
+  const markAsRead = (id) =>
+    setNotifs((prev) =>
+      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
+    );
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
   const markAllRead = () =>
     setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
   const removeNotif = (id) =>
     setNotifs((prev) => prev.filter((n) => n.id !== id));
   const clearAll = () => setNotifs([]);
 
+<<<<<<< HEAD
   const [hoverAct, setHoverAct] = useState(null); 
+=======
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -106,28 +142,84 @@ export default function Header() {
             onClick={() => setNotifOpen((v) => !v)}
           >
             <svg viewBox="0 0 24 24" style={{ color: bellColor }}>
+<<<<<<< HEAD
               <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" fill="none" stroke="currentColor" strokeWidth="2" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" fill="none" stroke="currentColor" strokeWidth="2" />
+=======
+              <path
+                d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+              <path
+                d="M13.73 21a2 2 0 0 1-3.46 0"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              />
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
             </svg>
           </button>
 
           {notifOpen && (
+<<<<<<< HEAD
             <ul className="menu" role="menu" style={{ minWidth: 320, paddingTop: 8, paddingBottom: 8 }}>
               <li role="presentation" style={{ fontWeight: 700, padding: "8px 12px", pointerEvents: "none", opacity: 0.9 }}>
+=======
+            <ul
+              className="menu"
+              role="menu"
+              style={{ minWidth: 320, paddingTop: 8, paddingBottom: 8 }}
+            >
+              <li
+                role="presentation"
+                style={{
+                  fontWeight: 700,
+                  padding: "8px 12px",
+                  pointerEvents: "none",
+                  opacity: 0.9,
+                }}
+              >
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
                 알림
               </li>
 
               {notifs.length === 0 ? (
+<<<<<<< HEAD
                 <li role="menuitem" style={{ padding: "12px" }}>새 알림이 없습니다.</li>
+=======
+                <li role="menuitem" style={{ padding: "12px" }}>
+                  새 알림이 없습니다.
+                </li>
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
               ) : (
                 notifs.map((n) => (
                   <li
                     key={n.id}
                     role="menuitem"
                     onClick={() => markAsRead(n.id)}
+<<<<<<< HEAD
                     style={{ display: "grid", gap: 6, padding: "10px 12px", opacity: n.read ? 0.6 : 1 }}
                   >
                     <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+=======
+                    style={{
+                      display: "grid",
+                      gap: 6,
+                      padding: "10px 12px",
+                      opacity: n.read ? 0.6 : 1,
+                    }}
+                  >
+                    <div
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 8,
+                      }}
+                    >
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
                       <span style={{ fontWeight: 700 }}>{n.title}</span>
                       <button
                         type="button"
@@ -160,6 +252,7 @@ export default function Header() {
                   role="presentation"
                   style={{
                     padding: "8px 12px",
+<<<<<<< HEAD
                     background: "transparent", 
                   }}
                 >
@@ -214,6 +307,28 @@ export default function Header() {
                       </button>
                     </div>
                   </div>
+=======
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    gap: 12,
+                  }}
+                >
+                  <button
+                    className="link-btn"
+                    type="button"
+                    onClick={markAllRead}
+                  >
+                    모두 읽음
+                  </button>
+                  <button
+                    className="link-btn"
+                    type="button"
+                    onClick={clearAll}
+                    style={{ color: "#ef4444" }}
+                  >
+                    모두 삭제
+                  </button>
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
                 </li>
               )}
             </ul>
@@ -258,7 +373,13 @@ export default function Header() {
           )}
         </div>
 
+<<<<<<< HEAD
         <button className="btn btn-ghost" type="button">로그아웃</button>
+=======
+        <button className="btn btn-ghost" type="button">
+          로그아웃
+        </button>
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
       </div>
     </header>
   );

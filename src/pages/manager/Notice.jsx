@@ -44,8 +44,12 @@ export default function Notice() {
         {
           id: 1,
           title: "긴급: 생산라인 자동화 제안 검토 필요",
+<<<<<<< HEAD
           body:
             "높은 우선순위를 가진 생산라인 자동화 제안이 제출되었습니다. 관련 부서의 빠른 검토가 필요합니다.",
+=======
+          body: "높은 우선순위를 가진 생산라인 자동화 제안이 제출되었습니다. 관련 부서의 빠른 검토가 필요합니다.",
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
           urgent: true,
           active: true,
           created_at: "2024-01-15",
@@ -53,8 +57,12 @@ export default function Notice() {
         {
           id: 2,
           title: "월간 안전교육 일정 안내",
+<<<<<<< HEAD
           body:
             "이번 달 안전교육 일정을 안내드립니다. 모든 직원은 반드시 참석해주시기 바랍니다.",
+=======
+          body: "이번 달 안전교육 일정을 안내드립니다. 모든 직원은 반드시 참석해주시기 바랍니다.",
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
           urgent: false,
           active: true,
           created_at: "2024-01-10",
@@ -125,6 +133,7 @@ export default function Notice() {
       const next = [item, ...list];
       setList(next);
       broadcast(next);
+<<<<<<< HEAD
       try {
         window.dispatchEvent(
           new CustomEvent("header:notif:add", {
@@ -137,19 +146,25 @@ export default function Notice() {
         );
       } catch {}
 
+=======
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
       closeModal();
     }
   };
 
   const toggleActive = (id) => {
+<<<<<<< HEAD
     const target = list.find((n) => n.id === id); 
     const willBeActive = target ? !target.active : false;
 
+=======
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
     const next = list.map((n) =>
       n.id === id ? { ...n, active: !n.active } : n
     );
     setList(next);
     broadcast(next);
+<<<<<<< HEAD
 
     if (willBeActive && target) {
       try {
@@ -164,6 +179,8 @@ export default function Notice() {
         );
       } catch {}
     }
+=======
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
   };
 
   return (

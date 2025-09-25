@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/Members.module.css";
 
+<<<<<<< HEAD
 export default function Member({ selectedDeptId: initialDept = "all" }) {
   const [members, setMembers] = useState([]);
   const [selectedDeptId, setSelectedDeptId] = useState(initialDept);
@@ -22,6 +23,12 @@ export default function Member({ selectedDeptId: initialDept = "all" }) {
     ops: "경영지원",
     safety: "안전",
   };
+=======
+export default function Member({ selectedDeptId = "all" }) {
+  const [members, setMembers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
 
   useEffect(() => {
     let alive = true;
@@ -29,7 +36,11 @@ export default function Member({ selectedDeptId: initialDept = "all" }) {
       try {
         setLoading(true);
         setErr("");
+<<<<<<< HEAD
         const res = await fetch(`${API_BASE}/api/members`);
+=======
+        const res = await fetch("http://localhost:5000/api/members", {});
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (alive) setMembers(Array.isArray(data) ? data : []);
@@ -45,6 +56,7 @@ export default function Member({ selectedDeptId: initialDept = "all" }) {
     };
   }, []);
 
+<<<<<<< HEAD
   useEffect(() => {
     const handler = (e) => {
       setSelectedDeptId(e.detail.id);
@@ -94,6 +106,13 @@ export default function Member({ selectedDeptId: initialDept = "all" }) {
     }
   };
 
+=======
+  const filtered = useMemo(() => {
+    if (!selectedDeptId || selectedDeptId === "all") return members;
+    return members.filter((m) => m.department_id === selectedDeptId);
+  }, [members, selectedDeptId]);
+
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
   return (
     <div className={styles.wrap}>
       <div className={styles.card}>
@@ -105,7 +124,10 @@ export default function Member({ selectedDeptId: initialDept = "all" }) {
         </div>
 
         {loading && <div className={styles.empty}>불러오는 중…</div>}
+<<<<<<< HEAD
         {!!err && !loading && <div className={styles.empty}>{err}</div>}
+=======
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
 
         {!loading && !err && filtered.length === 0 && (
           <div className={styles.empty}>
@@ -115,6 +137,7 @@ export default function Member({ selectedDeptId: initialDept = "all" }) {
 
         {!loading &&
           !err &&
+<<<<<<< HEAD
           filtered.map((m) => {
             const isActive = m.status === "활성";
             const isSaving = saving.has(m.user_id);
@@ -145,6 +168,28 @@ export default function Member({ selectedDeptId: initialDept = "all" }) {
               </div>
             );
           })}
+=======
+          filtered.map((m) => (
+            <div key={m.user_id} className={styles.tableRow}>
+              <div className={styles.nameCell}>{m.user_name}</div>
+              <div className={styles.deptCell}>
+                {m.department_name ?? m.department_id}
+              </div>
+              <div className={styles.dateCell}>{formatDate(m.join_date)}</div>
+              <div className={styles.statusCell}>
+                <span
+                  className={
+                    m.status === "활성"
+                      ? styles.badgeActive
+                      : styles.badgeInactive
+                  }
+                >
+                  {m.status}
+                </span>
+              </div>
+            </div>
+          ))}
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
       </div>
     </div>
   );

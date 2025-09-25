@@ -1,4 +1,497 @@
-body {
-  padding: 0;
-  margin: 0;
+.boardContainer {
+  background-color: #f9f9f9;
+  /* height: 100vh; */
+  height: calc(100vh - 75.66px);
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
 }
+.boardTitle {
+  display: flex;
+  justify-content: space-between;
+}
+.boardTitle p {
+  margin: 0;
+<<<<<<< HEAD
+}
+=======
+}
+.boardTitle p:first-child {
+  font-size: 20px;
+  font-weight: 600;
+  color: #1e3a8a;
+}
+.boardTitle p:last-child {
+  font-size: 14px;
+  color: #2563eb;
+}
+.boardTitle > button {
+  background-color: #2563eb;
+  font-weight: bold;
+  font-size: 16px;
+  color: white;
+  border: none;
+  padding: 12px 16px;
+  cursor: pointer;
+  border-radius: 10px;
+}
+
+.boardContents {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  width: 100%;
+  margin-top: 20px;
+  box-sizing: border-box;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.boardColumn {
+  min-width: 0;
+  background-color: #e6eef9;
+  padding: 20px 5px 20px 5px;
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.boardColumn:first-child {
+  background-color: #ecebe9;
+}
+.boardColumn:last-child {
+  background-color: #e0f2e9;
+}
+.boardColumn > div:first-child {
+  margin-bottom: 10px;
+  font-weight: 600;
+  font-size: 18px;
+  color: #1e3a8a;
+  flex: 0 0 auto;
+  padding-left: 20px;
+}
+
+/* ===== 컬럼 내부 스크롤 ===== */
+:root {
+  --sbw: 12px; /* scrollbar width 공통 변수 */
+}
+
+/* 컬럼 내부 스크롤: 항상 공간을 확보하고, 기본은 '보이지 않게' */
+.cardRow {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+
+  /* 내용 밀림 방지 */
+  scrollbar-gutter: stable both-edges; /* 지원 브라우저에서 gutter 예약 */
+  padding-right: var(--sbw); /* 미지원/OS별 오버레이 대비 여유 공간 확보 */
+
+  /* Firefox: 항상 얇게, 기본은 투명(보이지 않음) */
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+/* WebKit(Chrome/Edge/Safari): 항상 같은 너비(=레이아웃 고정) */
+.cardRow::-webkit-scrollbar {
+  width: var(--sbw);
+  height: var(--sbw);
+}
+.cardRow::-webkit-scrollbar-track {
+  background: transparent;
+  /* 트랙은 hover 시에도 투명 유지 (원하면 살짝 tint 가능) */
+}
+
+/* 기본: thumb은 투명 -> 안 보이는 효과, 공간만 예약됨 */
+.cardRow::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0); /* 투명 */
+  border-radius: 8px;
+  border: 2px solid rgba(255, 255, 255, 0);
+  /* 부드러운 등장용 트랜지션 */
+  transition: background-color 1s ease, border-color 1s ease, opacity 1s ease;
+}
+
+/* hover 시: 색만 서서히 등장 (레이아웃 변화 없음) */
+.cardRow:hover {
+  /* Firefox: 색만 지정 (애니메이션은 FF 제한) */
+  scrollbar-color: rgba(100, 116, 139, 0.6) transparent; /* thumb, track */
+}
+.cardRow:hover::-webkit-scrollbar-thumb {
+  background: rgba(100, 116, 139, 0.45); /* slate-500 45% */
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+/* 상호작용 시 컬러 단계 업 */
+.cardRow::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8; /* slate-400 */
+}
+.cardRow::-webkit-scrollbar-thumb:active {
+  background: #64748b; /* slate-500 */
+}
+
+/* ========board Content =============== */
+
+.contentContainer {
+  background-color: white;
+  border-radius: 10px;
+  border: 2px solid #bfdbfe;
+  padding: 10px 14px;
+  width: 100%;
+  margin-bottom: 10px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+.contentContainer:hover {
+  background-color: #fafafa;
+}
+h3 {
+  margin: 0 0 12px 0;
+  font-size: 16px;
+}
+.contentUser {
+  color: #3b82f6;
+  font-size: 12px;
+  display: flex;
+  margin-top: 6px;
+}
+.contentUser div {
+  display: flex;
+  align-items: center;
+}
+.contentUser i {
+  margin-right: 3px;
+}
+.contentUser div:first-child {
+  margin-right: 10px;
+}
+.noContent {
+  display: flex;
+  justify-content: center;
+  color: #6b7280;
+  padding: 30px 0;
+}
+
+@media (max-width: 900px) {
+  .boardContents {
+    grid-template-columns: 1fr;
+  }
+}
+/* ===============detail============ */
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.modal {
+  background: white;
+  padding: 26px 26px 40px 26px;
+  border-radius: 10px;
+  /* width: 40%; */
+  width: min(530px, 92vw);
+  /* 내용 많을 때 스크롤 대비... */
+  max-height: 90vh;
+  overflow: auto;
+
+  position: relative;
+}
+i {
+  margin-right: 5px;
+}
+.detailTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+.detailTop > div:first-child {
+  color: #1e3a8a;
+}
+.detailTopTitle {
+  font-size: 24px;
+  font-weight: bold;
+}
+.detailTop > div:last-child {
+  display: flex;
+}
+.detailTopIcons {
+  font-size: 14px;
+  display: flex;
+  color: #2a3144;
+  margin-top: 10px;
+}
+.detailTopIcons > div {
+  margin-right: 14px;
+}
+
+.detailTop button,
+.writeTop button {
+  border: none;
+  background-color: white;
+  cursor: pointer;
+}
+
+.detailContent {
+  background-color: #eff6ff;
+  padding: 20px;
+  border-radius: 10px;
+  margin-bottom: 20px;
+}
+.detailContent > div:first-child {
+  color: #1e3a8a;
+  margin-bottom: 14px;
+  font-size: 18px;
+}
+
+.detailThumb {
+  display: flex;
+  justify-content: center;
+  color: #1e3a8a;
+  margin-top: 36px;
+}
+.detailThumb > div:first-child {
+  margin-right: 15px;
+}
+.detailThumb > div:last-child {
+  margin-left: 15px;
+}
+.detailThumb div {
+  font-size: 18px;
+  /* font-weight: 600; */
+  color: black;
+  cursor: pointer;
+}
+.detailThumb span {
+  border: 2px solid #bfdbfe;
+  padding: 5px 10px;
+  border-radius: 10px;
+}
+.detailComment {
+  border-top: 2px solid #eceff2;
+  padding-top: 20px;
+}
+.detailComment > div:first-child {
+  font-size: 18px;
+}
+.detailComment > div {
+  margin-bottom: 20px;
+  /* color: #1e3a8a; */
+}
+.detailCommentInput {
+  position: relative;
+}
+.detailCommentInput input:first-child {
+  color: #1e3a8a;
+  background-color: #f9fbff;
+  border: 1px solid #d6e2f3;
+  width: 100%;
+  height: 50px;
+  padding: 0 20px;
+  border-radius: 10px;
+  /* margin-bottom: 20px; */
+  font-size: 16px;
+}
+.detailCommentInput input:last-child {
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 10px;
+  cursor: pointer;
+  position: absolute;
+  right: 10px;
+  bottom: 8px;
+}
+
+/* ======================comment============== */
+.commentContainer {
+  background-color: #eff6ff;
+  /* margin-bottom: 14px; */
+  padding: 18px;
+  border-radius: 10px;
+}
+.commentTop {
+  display: flex;
+  justify-content: space-between;
+  color: #1e3a8a;
+  align-items: center;
+  font-size: 14px;
+}
+.commentTop div:first-child {
+  display: flex;
+  align-items: center;
+}
+.commentTop div:first-child i {
+  background-color: #2563eb;
+  color: white;
+  padding: 7px;
+  border-radius: 50px;
+  margin-right: 10px;
+}
+.commentTopUser div:first-child {
+  font-weight: bold;
+}
+.commentTop .dept {
+  color: #3b82f6;
+  font-size: 14px;
+}
+.commentContent {
+  padding: 10px 0;
+  margin: 5px 0;
+}
+.commentLike {
+  color: #2563eb;
+  font-size: 14px;
+}
+.commentLike i {
+  margin: 0;
+  cursor: pointer;
+}
+.commentLike span {
+  margin-right: 10px;
+}
+.commentLike span:last-child {
+  margin-right: 10px;
+  cursor: pointer;
+}
+/* =============== status color 변경================== */
+
+.proposal {
+  background-color: #ecebe9;
+  padding: 8px 12px;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+.inprogress {
+  background-color: #e6eef9;
+  padding: 8px 12px;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+.complete {
+  background-color: #e0f2e9;
+  padding: 8px 12px;
+  border-radius: 5px;
+  margin-right: 10px;
+}
+/* ==================write========================== */
+.writeTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 24px;
+}
+.writeTop h3 {
+  font-weight: 600;
+  font-size: 22px;
+}
+.writeTopIcons {
+  display: flex;
+}
+.writeTopIcons div:first-child {
+  background-color: #294199;
+  color: white;
+  padding: 9px 10px;
+  border-radius: 14px;
+}
+.writeTopIcons div:nth-child(2),
+.writeTopIcons div:last-child {
+  background-color: #f8f8f9;
+  padding: 9px 10px;
+  border-radius: 14px;
+}
+.writeTopIcons div {
+  margin-right: 14px;
+}
+.writeTitle > div,
+.writeContent > div {
+  font-size: 16px;
+  /* font-weight: bold; */
+  margin-bottom: 4px;
+}
+.writeTitle > input,
+.writeContent > textarea,
+.dropzone {
+  border: none;
+  width: 100%;
+  border: 2px solid #eceff2;
+  border-radius: 10px;
+  margin: 6px 0 18px 0;
+}
+.writeTitle > input,
+.writeContent > textarea {
+  padding: 18px 15px;
+  font-size: 16px;
+}
+.writeSubmit > button {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  margin-top: 20px;
+  background-color: #1e3a8a;
+  color: white;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+}
+/* =============file =========================*/
+.hiddenFileInput {
+  display: none;
+}
+
+.dropzone {
+  border: 2px dashed #d1d5db;
+  border-radius: 12px;
+  padding: 16px;
+  text-align: center;
+  color: #64748b;
+  box-shadow: none;
+  transition: 0.15s ease;
+  cursor: pointer;
+}
+.dropzone:hover {
+  border: 2px dashed #9ca3af;
+  background-color: #f3f8ff;
+}
+.dropzoneActive {
+  border: 2px dashed #3b82f6;
+  background-color: #eef4ff;
+}
+.dropzone span {
+  color: #9ca3af;
+}
+.fileList {
+  max-height: 160px;
+  overflow-y: auto;
+  margin-top: 8px;
+  display: grid;
+  gap: 6px;
+  width: 100%;
+  padding-left: 0;
+  list-style: none;
+}
+
+.fileItem {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #f9f9f9;
+  /* width: 100%; */
+}
+.fileItem button {
+  background-color: #374151;
+  border: none;
+  color: white;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781

@@ -1,4 +1,9 @@
 import { useEffect, useState } from "react";
+<<<<<<< HEAD
+=======
+
+const STORAGE_DEPT_KEY = "selected_dept";
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
 
 const STORAGE_DEPT_KEY = "selected_dept";
 
@@ -16,6 +21,7 @@ export default function Sidebar({ selected, onSelectDept }) {
     { id: "safety",       label: "안전",     icon: "shield" },
   ];
 
+<<<<<<< HEAD
   const [internalSelected, setInternalSelected] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_DEPT_KEY);
@@ -58,12 +64,42 @@ export default function Sidebar({ selected, onSelectDept }) {
       setInternalSelected(id);
     }
   };
+=======
+  const [selected, setSelected] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_DEPT_KEY);
+      const found = departments.find((d) => d.label === saved);
+      return found ? found.id : "rd";
+    } catch {
+      return "rd";
+    }
+  });
+
+  useEffect(() => {
+    const current = departments.find((d) => d.id === selected);
+    const label = current?.label ?? "";
+    try {
+      localStorage.setItem(STORAGE_DEPT_KEY, label);
+    } catch {}
+    window.dispatchEvent(
+      new CustomEvent("dept:changed", { detail: { dept: label } })
+    );
+  }, [selected]);
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
 
   return (
     <aside className="sidebar">
       <div className="sidebar-inner">
         <div className="logo-wrap">
+<<<<<<< HEAD
           <img src="src/assets/logo.png" alt="Company Logo" className="logo-img" />
+=======
+          <img
+            src="src/assets/logo.png"
+            alt="Company Logo"
+            className="logo-img"
+          />
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
         </div>
 
         <section className="profile">
@@ -122,8 +158,23 @@ function icon(name) {
     case "doc":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
+<<<<<<< HEAD
           <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" strokeWidth="2"/>
           <path d="M14 3v6h6" fill="none" stroke="currentColor" strokeWidth="2"/>
+=======
+          <path
+            d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          <path
+            d="M14 3v6h6"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
         </svg>
       );
     case "chat":

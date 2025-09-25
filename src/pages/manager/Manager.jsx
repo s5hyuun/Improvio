@@ -9,7 +9,10 @@ import Member from "./Members";
 const API = "http://localhost:5000";
 const STORAGE_KEY = "proposal_items_cache_v1";
 const NOTICE_STORAGE_KEY = "notices_v1";
+<<<<<<< HEAD
 const MEMBERS_STORAGE_KEY = "members_v1";
+=======
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
 
 function loadFromStorage() {
   try {
@@ -19,6 +22,7 @@ function loadFromStorage() {
     return null;
   }
 }
+<<<<<<< HEAD
 
 function getEmployeeCountFromStorage() {
   try {
@@ -37,11 +41,20 @@ export default function Manager() {
 
   const [employeeCount, setEmployeeCount] = useState(0);
   const [members, setMembers] = useState([]);
+=======
+
+export default function Manager() {
+  const [active, setActive] = useState("dashboard");
+
+  const [currentDeptId, setCurrentDeptId] = useState("all");
+
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
   const [items, setItems] = useState([]);
   const [urgentItems, setUrgentItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [activeNoticeCount, setActiveNoticeCount] = useState(0);
+<<<<<<< HEAD
   const [urgentNotices, setUrgentNotices] = useState([]);
 
   useEffect(() => {
@@ -74,12 +87,15 @@ export default function Manager() {
       window.removeEventListener("storage", onStorage);
     };
   }, []);
+=======
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
       const list = raw ? JSON.parse(raw) : [];
       setActiveNoticeCount(list.filter((n) => n.active).length);
+<<<<<<< HEAD
       setUrgentNotices(list.filter((n) => n.active && n.urgent));
     } catch {}
 
@@ -101,6 +117,23 @@ export default function Manager() {
     return () => window.removeEventListener("notice:changed", onNoticeChanged);
   }, []);
 
+=======
+    } catch {}
+  }, []);
+
+  useEffect(() => {
+    function onNoticeChanged(e) {
+      const { activeCount, list } = e.detail || {};
+      if (typeof activeCount === "number") {
+        setActiveNoticeCount(activeCount);
+      } else if (Array.isArray(list)) {
+        setActiveNoticeCount(list.filter((n) => n.active).length);
+      }
+    }
+    window.addEventListener("notice:changed", onNoticeChanged);
+    return () => window.removeEventListener("notice:changed", onNoticeChanged);
+  }, []);
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
   useEffect(() => {
     const handler = (e) => {
       const next = e?.detail?.id ?? "all";
@@ -109,7 +142,10 @@ export default function Manager() {
     window.addEventListener("dept:changed", handler);
     return () => window.removeEventListener("dept:changed", handler);
   }, []);
+<<<<<<< HEAD
 
+=======
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -176,9 +212,14 @@ export default function Manager() {
       mounted = false;
     };
   }, []);
+<<<<<<< HEAD
 
   useEffect(() => {
     const onUrgentChanged = (e) => {
+=======
+  useEffect(() => {
+    function onUrgentChanged(e) {
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
       const { id, urgent, item } = e.detail || {};
       if (!id) return;
 
@@ -192,12 +233,17 @@ export default function Manager() {
         const others = prev.filter((x) => x.id !== id);
         return urgent ? [...others, item ?? { id, urgent: true }] : others;
       });
+<<<<<<< HEAD
     };
+=======
+    }
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
     window.addEventListener("suggestion:urgent", onUrgentChanged);
     return () =>
       window.removeEventListener("suggestion:urgent", onUrgentChanged);
   }, []);
 
+<<<<<<< HEAD
   useEffect(() => {
     async function fetchMembers() {
       try {
@@ -217,6 +263,8 @@ export default function Manager() {
     fetchMembers();
   }, []);
 
+=======
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
   const unmarkUrgent = async (u) => {
     const id = u.id;
 
@@ -242,6 +290,7 @@ export default function Manager() {
     } catch {}
   };
 
+<<<<<<< HEAD
   const unmarkNoticeUrgent = (n) => {
     try {
       const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
@@ -275,17 +324,29 @@ export default function Manager() {
 
   const stats = useMemo(() => {
     const totalEmployees = employeeCount;
+=======
+  const stats = useMemo(() => {
+    const totalEmployees = 5;
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
     const totalSuggestions = items.length;
     const urgentCount = urgentItems.length;
     const activeNotices = activeNoticeCount;
 
     return [
+<<<<<<< HEAD
       { label: "총 직원 수", value: employeeCount },
+=======
+      { label: "총 직원 수", value: totalEmployees },
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
       { label: "총 제안 수", value: totalSuggestions },
       { label: "활성 공지", value: activeNotices },
       { label: "긴급 제안", value: urgentCount },
     ];
+<<<<<<< HEAD
   }, [employeeCount, items, urgentItems, activeNoticeCount]);
+=======
+  }, [items, urgentItems, activeNoticeCount]);
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
 
   const gridStyle = {
     display: "grid",
@@ -326,7 +387,11 @@ export default function Manager() {
               className={`${styles.button} ${
                 active === "dashboard" ? styles.active : ""
               }`}
+<<<<<<< HEAD
               onClick={() => handleClick("dashboard")}
+=======
+              onClick={() => setActive("dashboard")}
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
               aria-pressed={active === "dashboard"}
             >
               관리자 대시보드
@@ -336,7 +401,11 @@ export default function Manager() {
               className={`${styles.button} ${
                 active === "employee" ? styles.active : ""
               }`}
+<<<<<<< HEAD
               onClick={() => handleClick("employee")}
+=======
+              onClick={() => setActive("employee")}
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
               aria-pressed={active === "employee"}
             >
               직원 관리
@@ -346,7 +415,11 @@ export default function Manager() {
               className={`${styles.button} ${
                 active === "suggestion" ? styles.active : ""
               }`}
+<<<<<<< HEAD
               onClick={() => handleClick("suggestion")}
+=======
+              onClick={() => setActive("suggestion")}
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
               aria-pressed={active === "suggestion"}
             >
               제안 관리
@@ -356,7 +429,11 @@ export default function Manager() {
               className={`${styles.button} ${
                 active === "notice" ? styles.active : ""
               }`}
+<<<<<<< HEAD
               onClick={() => handleClick("notice")}
+=======
+              onClick={() => setActive("notice")}
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
               aria-pressed={active === "notice"}
             >
               공지 관리
@@ -385,18 +462,32 @@ export default function Manager() {
                 aria-label="긴급 제안"
               >
                 <div className={styles.urgentPanelHeader}>⚠ 긴급 제안</div>
+<<<<<<< HEAD
                 {loading ? (
                   <div className={styles.urgentCards}>
                     <div className={styles.emptyText}>
+=======
+
+                {loading ? (
+                  <div className={styles.urgentCards}>
+                    <div
+                      className={styles.urgentCard}
+                      style={{ color: "#c2410c" }}
+                    >
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
                       현재 긴급 제안이 없습니다.
                     </div>
                   </div>
                 ) : (
+<<<<<<< HEAD
                   <div
                     className={`${styles.urgentCards} ${
                       urgentItems.length > 2 ? styles.urgentCardsScroll : ""
                     }`}
                   >
+=======
+                  <div className={styles.urgentCards}>
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
                     {urgentItems
                       .slice()
                       .sort((a, b) =>
@@ -426,6 +517,7 @@ export default function Manager() {
                           </button>
                         </div>
                       ))}
+<<<<<<< HEAD
                     {urgentItems.length === 0 && (
                       <div className={styles.emptyText}>
                         표시할 긴급 제안이 없습니다.
@@ -483,11 +575,22 @@ export default function Manager() {
                   )}
                 </div>
               </div>
+=======
+                  </div>
+                )}
+              </div>
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
             </>
           )}
 
           {active === "suggestion" && <SuggestionList />}
+<<<<<<< HEAD
           {active === "employee" && <Member selectedDeptId={currentDeptId} />}
+=======
+
+          {active === "employee" && <Member selectedDeptId={currentDeptId} />}
+
+>>>>>>> bae11b3d28ac03bbdabe76c6f3f4f44369b0e781
           {active === "notice" && <Notice />}
         </section>
       </main>
