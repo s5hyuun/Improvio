@@ -29,6 +29,7 @@ ul {
   justify-content: space-between;
   border-radius: 16px;
   border: 1px solid transparent;
+  cursor: pointer;
 }
 .commBoards li:hover {
   border: 1px solid #bfdbfe;
@@ -113,17 +114,20 @@ ul {
 .postContainer div:first-child span {
   background-color: tomato;
   color: white;
-  padding: 5px 8px;
-  font-size: 12px;
+  padding: 4px 7px;
+  font-size: 10px;
   border-radius: 6px;
   margin-right: 10px;
 }
 .postContainer h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
 }
 .postContainer div {
-  margin-bottom: 10px;
+  margin-bottom: 6px;
+}
+.postContainer div:nth-child(2) {
+  font-size: 14px;
 }
 .postIcons span {
   margin-right: 20px;
@@ -133,6 +137,7 @@ ul {
 /* =====================hot========= */
 .commHotPost {
   border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
 }
 .commHotPost:hover {
   background-color: #f3f4f6;

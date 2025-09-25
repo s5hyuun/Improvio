@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { Outlet } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import Post from "../community/components/Post";
@@ -62,16 +62,7 @@ function Community() {
             </ul>
           </div>
           <div className={styles.commPostsContainer}>
-            <div>
-              <i class="fa-solid fa-message"></i>
-              <div>자유게시판</div> <span>( 324 )</span>
-            </div>
-            <div className={styles.commPosts}>
-              <Post />
-              <Post />
-              <Post />
-              <Post />
-            </div>
+            <Outlet />
           </div>
           <div className={styles.commRightbar}>
             <div className={styles.commHot}>

@@ -1,8 +1,14 @@
 import styles from "../../../styles/Community.module.css";
 
-function Post() {
+function Post({ onClick }) {
   return (
-    <div className={styles.postContainer}>
+    <div
+      className={styles.postContainer}
+      onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => e.key === "Enter" && onClick?.()}
+    >
       <div>
         <span>HOT</span>
         <h1>제목 자리 입니다 ..</h1>
