@@ -491,3 +491,16 @@ i {
   border-radius: 10px;
   cursor: pointer;
 }
+
+.detailImages {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  overflow-x: auto;
+}
+
+.detailImage {
+  max-height: 200px;
+  border-radius: 5px;
+  object-fit: cover;
+}

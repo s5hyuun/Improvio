@@ -64,7 +64,16 @@ export default function Sidebar() {
             <span className="ico">{icon("bars")}</span>
             <span>Main Chart</span>
           </a>
-          <a className="nav-item" href="#">
+          <a
+            className="nav-item"
+            href="#"
+            onClick={() => {
+              // 모든 부서 보기 (빈 문자열 전달)
+              window.dispatchEvent(
+                new CustomEvent("dept:changed", { detail: { dept: "" } })
+              );
+            }}
+          >
             <span className="ico">{icon("doc")}</span>
             <span>Requirements</span>
           </a>

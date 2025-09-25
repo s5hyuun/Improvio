@@ -14,6 +14,14 @@ function BoardDetail({ suggestion, onClose }) {
 
   // ESC 눌러도 닫히게
   useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  useEffect(() => {
     if (!suggestion) return;
     fetch(
       `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/details`
@@ -174,6 +182,18 @@ function BoardDetail({ suggestion, onClose }) {
           </div>
 
           <div className={styles.detailContent}>
+            {detail.attachments && detail.attachments.length > 0 && (
+              <div className={styles.detailImages}>
+                {detail.attachments.map((att) => (
+                  <img
+                    key={att.attachment_id}
+                    src={`http://localhost:5000/uploads/${att.file_path}`}
+                    alt="attachment"
+                    className={styles.detailImage}
+                  />
+                ))}
+              </div>
+            )}
             <div>제안 내용</div>
             <div>{description}</div>
 
