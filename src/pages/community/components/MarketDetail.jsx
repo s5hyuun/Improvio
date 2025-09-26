@@ -1,0 +1,411 @@
+import { useEffect, useMemo, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import styles from "../../../styles/market.module.css";
+
+const LS_KEY = "market_meta_v1";
+const MS = { m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000 };
+
+function readStore() {
+  try {
+    return JSON.parse(localStorage.getItem(LS_KEY)) || {};
+  } catch {
+    return {};
+  }
+}
+function writeStore(obj) {
+  localStorage.setItem(LS_KEY, JSON.stringify(obj));
+}
+function patchStore(id, patch) {
+  const store = readStore();
+  store[id] = { ...(store[id] || {}), ...patch };
+  writeStore(store);
+  return store[id];
+}
+
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  if (diff < MS.m) return "방금 전";
+  if (diff < MS.h) return `${Math.floor(diff / MS.m)}분 전`;
+  if (diff < MS.d) return `${Math.floor(diff / MS.h)}시간 전`;
+  return `${Math.floor(diff / MS.d)}일 전`;
+}
+
+function parseRelativeToCreatedAt(str) {
+  const m = /(\d+)\s*(분|시간|일)/.exec(str || "");
+  if (!m) return Date.now();
+  const n = Number(m[1]);
+  const unit = m[2];
+  const ms = unit === "분" ? n * MS.m : unit === "시간" ? n * MS.h : n * MS.d;
+  return Date.now() - ms;
+}
+
+function countAllComments(list) {
+  let total = 0;
+  for (const c of list) {
+    total += 1;
+    if (Array.isArray(c.replies)) total += c.replies.length;
+  }
+  return total;
+}
+
+export default function MarketDetail() {
+  const { postId } = useParams();
+  const id = Number(postId);
+  const nav = useNavigate();
+
+  const [post, setPost] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState("");
+
+  const [comments, setComments] = useState([]);
+  const [newComment, setNewComment] = useState("");
+  const [replyOpen, setReplyOpen] = useState({});
+  const [replyDraft, setReplyDraft] = useState({});
+  const [meta, setMeta] = useState(() => readStore()[id] || {});
+
+  const fallback = useMemo(
+    () => ({
+      88156: {
+        id: 88156,
+        title: "제목",
+        body: "내용",
+        time: "6시간 전",
+        likes: 67,
+        images: ["사진"],
+        author: "익명 88156",
+      },
+      81113: {
+        id: 81113,
+        title: "제목",
+        body: "내용",
+        time: "12시간 전",
+        likes: 11,
+        images: ["사진"],
+        author: "익명 81113",
+      },
+    }),
+    []
+  );
+  useEffect(() => {
+    let alive = true;
+    (async () => {
+      try {
+        setLoading(true);
+        setErr("");
+
+        const data = fallback[id];
+        if (!data) throw new Error("게시글을 찾을 수 없습니다.");
+        if (alive) setPost(data);
+
+        const now = Date.now();
+        const seed = [
+          {
+            id: 2,
+            author: "익명3",
+            time: "09/25 01:00",
+            text: "?",
+            likes: 5,
+            deleted: false,
+            createdAt: now - 15 * 60 * 1000,
+            replies: [
+              {
+                id: 21,
+                author: "익명(글쓴이)",
+                isWriter: true,
+                time: "09/25 01:01",
+                text: "??",
+                likes: 36,
+                createdAt: now - 14 * 60 * 1000,
+              },
+            ],
+          },
+          {
+            id: 3,
+            author: "익명16",
+            time: "09/25 01:05",
+            text: "???",
+            likes: 0,
+            deleted: false,
+            createdAt: now - 10 * 60 * 1000,
+            replies: [],
+          },
+        ];
+        const sorted = [...seed].sort((a, b) => (b.createdAt ?? b.id) - (a.createdAt ?? a.id));
+        if (alive) setComments(sorted);
+
+        const store = readStore();
+        const initial = store[id] || {
+          createdAt: parseRelativeToCreatedAt(data.time),
+          likes: data.likes ?? 0,
+          comments: countAllComments(sorted),
+          liked: false,
+        };
+        patchStore(id, initial); 
+        if (alive) setMeta(initial);
+      } catch (e) {
+        if (alive) setErr(e.message || "불러오기 실패");
+      } finally {
+        if (alive) setLoading(false);
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [id, fallback]);
+
+  const submitRootComment = () => {
+    const text = newComment.trim();
+    if (!text) return;
+    const item = {
+      id: Date.now(),
+      author: "익명",
+      time: "방금 전",
+      text,
+      likes: 0,
+      deleted: false,
+      createdAt: Date.now(),
+      replies: [],
+    };
+    const next = [item, ...comments].sort((a, b) => (b.createdAt ?? b.id) - (a.createdAt ?? a.id));
+    setComments(next);
+    setNewComment("");
+
+    const total = countAllComments(next);
+    const nextMeta = patchStore(id, { comments: total });
+    setMeta(nextMeta);
+  };
+
+  const toggleReply = (cid) =>
+    setReplyOpen((prev) => ({ ...prev, [cid]: !prev[cid] }));
+
+  const submitReply = (cid) => {
+    const text = (replyDraft[cid] || "").trim();
+    if (!text) return;
+    const reply = {
+      id: Date.now(),
+      author: "익명",
+      time: "방금 전",
+      text,
+      likes: 0,
+      createdAt: Date.now(),
+    };
+    const next = comments.map((c) =>
+      c.id === cid ? { ...c, replies: [...c.replies, reply] } : c
+    );
+    setComments(next);
+    setReplyDraft((d) => ({ ...d, [cid]: "" }));
+    setReplyOpen((o) => ({ ...o, [cid]: false }));
+
+    const total = countAllComments(next);
+    const nextMeta = patchStore(id, { comments: total });
+    setMeta(nextMeta);
+  };
+
+  const toggleLike = () => {
+    const curr = readStore()[id] || {};
+    const liked = !curr.liked;
+    const likes = Math.max(0, (curr.likes || 0) + (liked ? 1 : -1));
+    const nextMeta = patchStore(id, { liked, likes });
+    setMeta(nextMeta);
+  };
+
+  if (loading) {
+    return (
+      <div>
+        <div className={`${styles.metaRow} ${styles.detailTop}`}>
+          <button className={styles.backBtn} onClick={() => nav(-1)}>
+            ← 목록
+          </button>
+        </div>
+        <div className={styles.body}>불러오는 중…</div>
+      </div>
+    );
+  }
+  if (err || !post) {
+    return (
+      <div>
+        <div className={`${styles.metaRow} ${styles.detailTop}`}>
+          <button className={styles.backBtn} onClick={() => nav(-1)}>
+            ← 목록
+          </button>
+        </div>
+        <div className={styles.body} style={{ color: "crimson" }}>
+          {err || "게시글을 불러오지 못했습니다."}
+        </div>
+      </div>
+    );
+  }
+
+  const timeText = timeAgo(meta.createdAt || Date.now());
+  const totalComments = countAllComments(comments);
+
+  return (
+    <div>
+      <div className={`${styles.metaRow} ${styles.detailTop}`}>
+        <button className={styles.backBtn} onClick={() => nav(-1)}>
+          ← 목록
+        </button>
+      </div>
+
+      <div className={styles.title}>{post.title}</div>
+      <div className={styles.body} style={{ whiteSpace: "pre-wrap" }}>
+        {post.body}
+      </div>
+      {Array.isArray(post.images) && post.images.length > 0 && (
+        <div className={styles.imageWrap}>{post.images[0]}</div>
+      )}
+
+      <div className={styles.metaRow} style={{ marginTop: 8 }}>
+        <div className={styles.metaLeft}>
+          <div className={styles.metaItem}>{post.author}</div>
+          <div className={styles.metaItem}>
+            <i className="fa-regular fa-clock" aria-hidden="true" />
+            {timeText}
+          </div>
+
+          <button
+            className={styles.metaItem}
+            onClick={toggleLike}
+            aria-pressed={!!meta.liked}
+            title={meta.liked ? "좋아요 취소" : "좋아요"}
+            style={{ background: "none", border: 0, cursor: "pointer", padding: 0 }}
+          >
+            <i
+              className={meta.liked ? "fa-solid fa-heart" : "fa-regular fa-heart"}
+              style={{ color: meta.liked ? "#ef4444" : "inherit" }}
+            />
+            {meta.likes ?? 0}
+          </button>
+
+          <div className={styles.metaItem}>
+            <i className="fa-regular fa-comment" />
+            {totalComments}
+          </div>
+        </div>
+      </div>
+
+      <div className={styles.commentsSection}>
+        <div className={styles.commentsHeader}>
+          댓글 <span className={styles.commentsCount}>{totalComments}</span>
+        </div>
+
+        <div className={styles.commentDock}>
+          <input
+            className={styles.commentInputBar}
+            type="text"
+            placeholder="댓글을 입력하세요."
+            value={newComment}
+            onChange={(e) => setNewComment(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") submitRootComment();
+            }}
+          />
+          <div className={styles.commentSide}>
+            <button
+              className={styles.sendBtn}
+              onClick={submitRootComment}
+              aria-label="댓글 등록"
+            >
+              <i className="fa-solid fa-pen"></i>
+            </button>
+          </div>
+        </div>
+
+        <div className={styles.commentsList}>
+          {comments.map((c) =>
+            c.deleted ? (
+              <div key={c.id} className={`${styles.commentItem} ${styles.deletedItem}`}>
+                삭제된 댓글입니다.
+              </div>
+            ) : (
+              <div key={c.id} className={styles.commentItem}>
+                <div className={styles.commentHead}>
+                  <div className={styles.commentAvatar} />
+                  <div className={styles.commentMeta}>
+                    <div className={styles.commentAuthor}>{c.author}</div>
+                    <div className={styles.commentTime}>{timeAgo(c.createdAt)}</div>
+                  </div>
+                  <div className={styles.commentActRight}>
+                    <button className={styles.linkBtn} onClick={() => toggleReply(c.id)}>
+                      대댓글
+                    </button>
+                    <button className={styles.linkBtn}>공감</button>
+                    <button className={styles.linkBtn}>쪽지</button>
+                    <button className={styles.linkBtn}>신고</button>
+                  </div>
+                </div>
+
+                <div className={styles.commentBody} style={{ whiteSpace: "pre-wrap" }}>
+                  {c.text}
+                </div>
+
+                <div className={styles.commentFoot}>
+                  <span className={styles.likeWrap}>
+                    <i className="fa-regular fa-heart" />
+                    <em className={styles.likeCount}>{c.likes}</em>
+                  </span>
+                </div>
+
+                {replyOpen[c.id] && (
+                  <div className={styles.replyInputRow}>
+                    <input
+                      className={styles.replyInput}
+                      type="text"
+                      placeholder="대댓글을 입력하세요."
+                      value={replyDraft[c.id] || ""}
+                      onChange={(e) =>
+                        setReplyDraft((d) => ({ ...d, [c.id]: e.target.value }))
+                      }
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") submitReply(c.id);
+                      }}
+                    />
+                    <button className={styles.replySendBtn} onClick={() => submitReply(c.id)}>
+                      등록
+                    </button>
+                  </div>
+                )}
+
+                {Array.isArray(c.replies) && c.replies.length > 0 && (
+                  <div className={styles.replyList}>
+                    {c.replies.map((r) => (
+                      <div key={r.id} className={styles.replyBox}>
+                        <div className={styles.commentHead}>
+                          <div className={styles.commentAvatarSm} />
+                          <div className={styles.commentMeta}>
+                            <div
+                              className={`${styles.commentAuthor} ${
+                                r.isWriter ? styles.writer : ""
+                              }`}
+                            >
+                              {r.author}
+                            </div>
+                            <div className={styles.commentTime}>{timeAgo(r.createdAt)}</div>
+                          </div>
+                          <div className={styles.commentActRight}>
+                            <button className={styles.linkBtn}>공감</button>
+                            <button className={styles.linkBtn}>쪽지</button>
+                            <button className={styles.linkBtn}>신고</button>
+                          </div>
+                        </div>
+                        <div className={styles.commentBody} style={{ whiteSpace: "pre-wrap" }}>
+                          {r.text}
+                        </div>
+                        <div className={styles.commentFoot}>
+                          <span className={styles.likeWrap}>
+                            <i className="fa-regular fa-heart" />
+                            <em className={styles.likeCount}>{r.likes ?? 0}</em>
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
