@@ -1,0 +1,36 @@
+.dashboard-container {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3열 */
+  gap: 20px;
+  padding: 20px;
+  background-color: #eaf2fb;
+}
+
+.card {
+  background-color: #f9fbfe;
+  border: 1px solid #d4e2f0;
+  border-radius: 8px;
+  padding: 20px;
+  min-height: 430px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+}
+
+.card-title {
+  font-size: 23px;
+  font-weight: bold;
+  margin-bottom: 12px;
+  color: #333;
+}
+
+.card-content {
+  font-size: 14px;
+  color: #444;
+  border: 1px dashed #bcd2e4;
+  padding: 40px;
+  text-align: center;
+  border-radius: 6px;
+  background-color: #fff;
+  height: 100%;
+}

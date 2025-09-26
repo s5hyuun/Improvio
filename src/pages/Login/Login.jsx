@@ -1,4 +1,3 @@
-// src/pages/Login.jsx
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
@@ -22,7 +21,7 @@ export default function Login() {
       const data = await response.json();
       if (data.success) {
         alert("로그인 성공!");
-        navigate("/dashboard");
+        navigate("/main");
       } else {
         alert(data.message || "로그인 실패");
       }
@@ -69,15 +68,15 @@ export default function Login() {
                   required
                 />
               </div>
-            </form>
-            <div className={styles.loginButtons}>
-              <button type="submit" className={styles.button}>
-                로그인
-              </button>
-              <div className={styles.signup}>
-                <button onClick={handleSignup}>회원가입</button>
+              <div className={styles.loginButtons}>
+                <button type="submit" className={styles.button}>
+                  로그인
+                </button>
+                <div className={styles.signup}>
+                  <button onClick={handleSignup}>회원가입</button>
+                </div>
               </div>
-            </div>
+            </form>
           </div>
         </section>
       </main>
