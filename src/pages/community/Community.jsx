@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
-import axios from "axios";
 import styles from "../../styles/Community.module.css";
 
 function Community() {
@@ -10,16 +9,22 @@ function Community() {
 
   useEffect(() => {
     // 1️⃣ 자유게시판 게시글 가져오기
-    axios
-      .get("http://localhost:5000/api/posts")
-      .then((res) => setPosts(res.data))
+    fetch("http://localhost:5000/api/posts")
+      .then((res) => {
+        if (!res.ok) throw new Error("게시글 가져오기 실패");
+        return res.json();
+      })
+      .then((data) => setPosts(data))
       .catch((err) => console.error(err));
 
     // 2️⃣ HOT 게시글 가져오기 (예: vote_count 기준 상위 4개)
-    axios
-      .get("http://localhost:5000/api/suggestions") // 예시로 Suggestion API 사용
+    fetch("http://localhost:5000/api/suggestions")
       .then((res) => {
-        const sorted = res.data
+        if (!res.ok) throw new Error("HOT 게시글 가져오기 실패");
+        return res.json();
+      })
+      .then((data) => {
+        const sorted = data
           .sort((a, b) => b.vote_count - a.vote_count)
           .slice(0, 4);
         setHotPosts(sorted);
@@ -59,16 +64,17 @@ function Community() {
           {/* 게시글 리스트 */}
           <div className={styles.commPostsContainer}>
             {posts.map((post) => (
-              <div key={post.post_id} className={styles.postCard}>
+              <div key={post.post_id} className={styles.postContainer}>
                 <h3>{post.title}</h3>
                 <p>{post.content}</p>
-                <div className={styles.postInfo}>
+                <div className={styles.postIcons}>
                   <span>작성자: {post.username}</span>
                   <span>
                     작성일: {new Date(post.created_at).toLocaleString()}
                   </span>
                 </div>
-                {post.comments && post.comments.length > 0 && (
+
+                {/* {post.comments && post.comments.length > 0 && (
                   <div className={styles.postComments}>
                     <strong>댓글:</strong>
                     <ul>
@@ -79,7 +85,7 @@ function Community() {
                       ))}
                     </ul>
                   </div>
-                )}
+                )} */}
               </div>
             ))}
           </div>
@@ -89,7 +95,7 @@ function Community() {
             <div className={styles.commHot}>
               <div>🔥HOT 게시글</div>
               {hotPosts.map((hp) => (
-                <div key={hp.suggestion_id} className={styles.hotPost}>
+                <div key={hp.suggestion_id} className={styles.commhotPost}>
                   <span>{hp.title}</span>
                   <span>👍 {hp.vote_count}</span>
                 </div>

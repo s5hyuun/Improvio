@@ -182,19 +182,31 @@ function BoardDetail({ suggestion, onClose }) {
           </div>
 
           <div className={styles.detailContent}>
+            <div>제안 내용</div>
             {detail.attachments && detail.attachments.length > 0 && (
               <div className={styles.detailImages}>
-                {detail.attachments.map((att) => (
-                  <img
-                    key={att.attachment_id}
-                    src={`http://localhost:5000/uploads/${att.file_path}`}
-                    alt="attachment"
-                    className={styles.detailImage}
-                  />
-                ))}
+                {detail.attachments
+                  .filter((att) => {
+                    // 확장자 검사
+                    const ext = att.file_path.split(".").pop().toLowerCase();
+                    return ext === "jpg";
+                  })
+                  .map((att) => (
+                    <img
+                      key={att.attachment_id}
+                      src={`http://localhost:5000/uploads/${encodeURIComponent(
+                        att.file_path
+                      )}`}
+                      alt="첨부 이미지"
+                      style={{ maxWidth: "100%", marginBottom: "8px" }}
+                      onError={(e) => {
+                        // e.target.src = "/default-image.png"; // 로드 실패 시 기본 이미지
+                      }}
+                    />
+                  ))}
               </div>
             )}
-            <div>제안 내용</div>
+
             <div>{description}</div>
 
             <div className={styles.detailThumb}>
