@@ -834,22 +834,47 @@ app.get("/api/posts", async (req, res) => {
 });
 
 // 게시글 상세
+// 게시글 상세
 app.get("/api/posts/:id", async (req, res) => {
   try {
     const { id } = req.params;
+
+    // 1. 게시글 기본 정보 + 작성자
     const [[post]] = await pool.query(
-      `SELECT p.*, u.username FROM post p LEFT JOIN user u ON p.user_id = u.user_id WHERE post_id = ?`,
+      `SELECT p.*, u.username
+       FROM post p
+       LEFT JOIN user u ON p.user_id = u.user_id
+       WHERE post_id = ?`,
       [id]
     );
 
     if (!post) return res.status(404).json({ message: "게시글 없음" });
 
+    // 2. 댓글 가져오기
     const [comments] = await pool.query(
-      `SELECT c.*, u.username FROM postcomment c LEFT JOIN user u ON c.user_id = u.user_id WHERE c.post_id = ? ORDER BY c.created_at ASC`,
+      `SELECT c.*, u.username 
+       FROM postcomment c 
+       LEFT JOIN user u ON c.user_id = u.user_id 
+       WHERE c.post_id = ? 
+       ORDER BY c.created_at ASC`,
       [id]
     );
-
     post.comments = comments;
+
+    // 3. 댓글 수
+    const [[{ comment_count }]] = await pool.query(
+      `SELECT COUNT(*) AS comment_count FROM postcomment WHERE post_id = ?`,
+      [id]
+    );
+    post.comment_count = comment_count;
+
+    // 4. 좋아요 수
+    const [[{ like_count }]] = await pool.query(
+      `SELECT COUNT(*) AS like_count FROM post_like WHERE post_id = ?`,
+      [id]
+    );
+    post.like_count = like_count;
+
     res.json(post);
   } catch (err) {
     console.error(err);
