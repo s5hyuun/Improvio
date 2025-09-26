@@ -194,7 +194,7 @@ function BoardDetail({ suggestion, onClose }) {
                 ))}
               </div>
             )}
-            <div>제안 내용</div>
+            {/* <div>제안 내용</div> */}
             <div>{description}</div>
 
             <div className={styles.detailThumb}>
@@ -221,9 +221,11 @@ function BoardDetail({ suggestion, onClose }) {
             <i className="fa-regular fa-comment"></i>
             <span>댓글 ({comments.length})</span>
           </div>
-          {comments.map((c) => (
-            <BoardComment key={c.comment_id} comment={c} />
-          ))}
+          <div className={styles.detailCommentList}>
+            {comments.map((c) => (
+              <BoardComment key={c.comment_id} comment={c} />
+            ))}
+          </div>
           <form
             className={styles.detailCommentInput}
             onSubmit={handleCommentSubmit}

@@ -104,7 +104,7 @@ export default function Login() {
                         type="submit"
                         className={`${styles.button} ${styles.signinBtn}`}
                       >
-                        <span>Sign in</span>
+                        <span>로그인</span>
                       </button>
                       {/* <button
                         type="button"
