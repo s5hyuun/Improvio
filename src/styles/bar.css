@@ -1,3 +1,4 @@
+/* style.css */
 :root {
   --sep-line: rgba(255, 255, 255, 0.06);
   --bg: #0b0f14;
@@ -30,6 +31,8 @@ body {
 body {
   margin: 0;
   background: #fff;
+  /* color: var(--text); */
+  /* font: 14px/1.45 system-ui, -apple-system, Segoe UI, Roboto, "Noto Sans KR", Apple SD Gothic Neo, Arial, sans-serif; */
 }
 
 .app {
@@ -38,6 +41,7 @@ body {
   min-height: 100vh;
 }
 
+/* ===== Sidebar ===== */
 .sidebar {
   padding: 24px;
 }
@@ -94,9 +98,11 @@ body {
   color: #db3b18;
 }
 
+/* nav */
 .nav {
   display: flex;
   flex-direction: column;
+  /* gap: 6px; */
   margin: 10px 0 0;
 }
 .nav-item {
@@ -105,7 +111,7 @@ body {
   gap: 12px;
   padding: 12px 12px;
   border-radius: 12px;
-  color: #1d4ed8;
+  color: #1D4ED8;
   text-decoration: none;
   font-weight: 600;
 }
@@ -120,27 +126,31 @@ body {
 }
 .nav-item:hover {
   background-color: rgba(37, 99, 235, 0.08);
-  color: #2563eb;
+  color: #2563EB;;
 }
 .nav-item.active {
   background: #eaf2ff;
   color: #0a4bff;
 }
 
+/* section title */
 .section-title {
   margin: 6px 6px 0;
   font-weight: 700;
 }
 
+/* department list */
 .dept-wrap {
+  /* 남은 높이를 모두 차지하여 내부에서 스크롤 */
   flex: 1;
-  min-height: 0;
+  min-height: 0; /* overflow 작동 핵심 */
 }
 
 .logo-img {
   max-width: 100%;
   max-height: 100%;
   object-fit: contain;
+  
 }
 .logo-wrap {
   padding: 0 0 12px;
@@ -171,7 +181,7 @@ body {
   gap: 12px;
   padding: 10px 12px;
   border-radius: 12px;
-  color: #1d4ed8;
+  color: #1D4ED8;
   cursor: pointer;
 }
 .dept-item .ico {
@@ -184,13 +194,14 @@ body {
 }
 .dept-item:hover {
   background-color: rgba(37, 99, 235, 0.08);
-  color: #2563eb;
+  color: #2563EB;
 }
 .dept-item.selected {
-  background-color: #2563eb;
+  background-color: #2563EB;
   color: white;
 }
 
+/* ===== Main & Topbar ===== */
 .main {
   display: flex;
   flex-direction: column;
@@ -199,7 +210,7 @@ body {
 .topbar {
   position: static !important;
   background: transparent !important;
-  border: none !important;
+  border: none !important; /* ← 오타 수정 (flex → none) */
   border-bottom: 1px solid var(--sep-line) !important;
   border-radius: 0 !important;
   box-shadow: none !important;
@@ -222,13 +233,13 @@ body {
 }
 .topbar-title {
   font-size: 18px;
-  color: #1e3a8a;
+  color: #1E3A8A;
   white-space: nowrap;
 }
 .topbar .ico {
   width: 22px;
   height: 22px;
-  color: #60a5fa;
+  color: #60A5FA;
 }
 .topbar .ico svg {
   width: 22px;
@@ -302,10 +313,12 @@ body {
   color: #2a5eff;
 }
 
+/* bell badge */
 .icon-btn[data-badge]:after {
   content: attr(data-badge);
   position: absolute;
   transform: translate(14px, -14px);
+  background: #ff2b2b;
   color: #fff;
   border-radius: 999px;
   font-size: 11px;
@@ -313,6 +326,7 @@ body {
   font-weight: 800;
 }
 
+/* dropdown */
 .dropdown {
   position: relative;
 }
@@ -328,9 +342,10 @@ body {
 .menu {
   position: absolute;
   right: 0;
-  top: calc(60% + 8px);
+  top: calc(100% + 8px);
   min-width: 140px;
-  background: #fff;
+  background: #0f1b2a;
+  border: 1px solid var(--border);
   border-radius: 12px;
   padding: 6px;
   box-shadow: var(--shadow);
@@ -338,26 +353,29 @@ body {
 .menu li {
   list-style: none;
   padding: 10px 12px;
+  color: #cfe1ff;
   border-radius: 8px;
   cursor: pointer;
 }
 .menu li:hover {
-  background: #b5b6b8;
+  background: #0f2133;
 }
 
+/* content */
 .content {
   background: transparent !important;
   border: 0 !important;
   border-radius: 0 !important;
   box-shadow: none !important;
-  padding: 20px !important;
-  margin-top: 16px !important;
+  padding: 20px !important; 
+  margin-top: 16px !important; /* 상단바와 간격 유지 */
 }
 .placeholder {
   background: transparent !important;
   border: 0 !important;
 }
 
+/* 반응형 */
 @media (max-width: 1100px) {
   .app {
     grid-template-columns: 280px 1fr;
@@ -380,6 +398,9 @@ body {
   }
 }
 
+/* =========================================
+   [Override] 헤더 라이트 톤/하단선/아웃라인
+   ========================================= */
 :root {
   --topbar-line: rgba(120, 165, 255, 0.35);
   --topbar-outline: rgba(120, 165, 255, 0.35);
@@ -404,7 +425,7 @@ body {
   border-radius: 8px;
   display: grid;
   place-items: center;
-  background: #ea580c;
+  background: #EA580C;
   color: #fff;
 }
 .topbar-left .ico svg {
@@ -437,22 +458,11 @@ body {
   color: #d7581f !important;
   background: rgba(255, 122, 51, 0.08) !important;
 }
-.icon-btn[data-dot]::after {
-  content: "";
-  position: absolute;
-  top: 6px;
-  right: 6px;
-  width: 8px;
-  height: 8px;
-  border-radius: 9999px;
-  background: #ff2d2d;
-}
 
 .icon-btn {
   width: 40px !important;
   height: 40px !important;
   padding: 0 !important;
-  position: relative;
 }
 .icon-btn svg {
   width: 18px !important;
@@ -462,6 +472,9 @@ body {
   transform: translate(12px, -12px) !important;
 }
 
+/* =========================================
+   [Layout] 제목 + 검색창 한 줄
+   ========================================= */
 .topbar {
   display: flex !important;
   align-items: center !important;
@@ -490,6 +503,9 @@ body {
   gap: 12px !important;
 }
 
+/* =========================================
+   [Layout] 한국어/로그아웃/사용자 모드 한 줄 고정
+   ========================================= */
 .topbar-actions {
   flex-wrap: nowrap !important;
   overflow: visible !important;
@@ -510,27 +526,34 @@ body {
   white-space: nowrap !important;
 }
 
+/* 공간 확보를 위해 검색창 기본 폭을 약간 줄임(필요시 조정) */
 .topbar-actions .search {
-  flex: 1 1 420px !important;
+  flex: 1 1 420px !important; /* 360~480px 사이에서 취향대로 */
   min-width: 240px !important;
 }
 
+/* 아이콘 버튼 간격 유지 */
 .icon-btn {
   margin-left: 0 !important;
 }
 
+/* =========================================
+   [Buttons] Topbar 버튼 크기 통일 & 간격
+   ========================================= */
 :root {
-  --topbar-btn-h: 40px;
-  --topbar-btn-r: 12px;
-  --topbar-btn-px: 14px;
-  --topbar-gap: 12px;
-  --topbar-group-gap: 16px;
+  --topbar-btn-h: 40px; /* 텍스트 버튼 높이 */
+  --topbar-btn-r: 12px; /* 라운드 */
+  --topbar-btn-px: 14px; /* 좌우 패딩 */
+  --topbar-gap: 12px; /* 기본 간격 */
+  --topbar-group-gap: 16px; /* 그룹 간 간격(이후 균일화에서 0으로 오버라이드) */
 }
 
+/* 기본 간격 통일 */
 .topbar-actions {
   gap: var(--topbar-gap) !important;
 }
 
+/* 텍스트 버튼 */
 .topbar-actions .btn,
 .topbar-actions .btn-ghost,
 .topbar-actions .btn-accent,
@@ -545,23 +568,28 @@ body {
   gap: 8px !important;
 }
 
+/* 아이콘 버튼(원형/사각형 공통 베이스) */
 .topbar-actions .icon-btn {
   width: var(--topbar-btn-h) !important;
   height: var(--topbar-btn-h) !important;
   border-radius: var(--topbar-btn-r) !important;
   padding: 0 !important;
-  position: relative;
 }
+
+/* 텍스트 버튼 뒤 첫 아이콘 버튼은 그룹 간격 */
 .topbar-actions .btn-accent + .icon-btn,
 .topbar-actions .btn + .icon-btn,
 .topbar-actions .dropdown + .icon-btn {
   margin-left: var(--topbar-group-gap) !important;
 }
 
+/* =========================================
+   [Icons] 알림/되돌리기/새로고침: 더 둥근 사각형 + 아이콘끼리 간격
+   ========================================= */
 :root {
-  --icon-btn-size: 42px;
-  --icon-btn-radius: 16px;
-  --icon-btn-gap: 16px;
+  --icon-btn-size: 42px; /* 아이콘 버튼 정사각 크기 */
+  --icon-btn-radius: 16px; /* 더 둥근 사각형 */
+  --icon-btn-gap: 16px; /* 아이콘끼리 최종 간격(목표) */
 }
 .topbar-actions .icon-btn {
   width: var(--icon-btn-size) !important;
@@ -577,6 +605,9 @@ body {
   transform: translate(12px, -12px) !important;
 }
 
+/* =========================================
+   [특정 아이콘 강제] 알림 종(첫 아이콘) & 우측 끝 아이콘
+   ========================================= */
 .topbar-actions .icon-btn:first-of-type,
 .topbar-actions .icon-btn:last-of-type,
 #notifyBtn,
@@ -595,16 +626,19 @@ body {
   transform: translate(12px, -12px) !important;
 }
 
+/* ==========================================================
+   === 균일 간격 & 한국어(드롭다운) 세로 높이 정확히 맞추기 ===
+   ========================================================== */
 :root {
-  --topbar-gap: 16px;
+  --topbar-gap: 16px; /* 시각적으로 균일한 간격값 */
 }
 .topbar-actions .btn-accent + .icon-btn,
 .topbar-actions .btn + .icon-btn,
 .topbar-actions .dropdown + .icon-btn {
-  margin-left: 0 !important;
+  margin-left: 0 !important; /* 추가 그룹 간격 제거 */
 }
 .topbar-actions .icon-btn + .icon-btn {
-  margin-left: 0 !important;
+  margin-left: 0 !important; /* 아이콘끼리도 gap만 적용 */
 }
 
 .dropdown {
@@ -644,11 +678,20 @@ body {
   margin-right: 0 !important;
 }
 
+/* ================================
+   === 헤더 회색 배경 제거 (최종) ===
+   ================================ */
 .topbar {
-  background: transparent !important;
-  backdrop-filter: none !important;
+  background: transparent !important; /* 회색(옅은 배경감) 완전 제거 */
+  backdrop-filter: none !important; /* 블러 제거로 완전 투명 */
+  /* 아래 선은 유지됨: border-bottom 은 위에서 이미 설정 */
 }
 
+/* =========================================================
+   === 추가: 헤더 하단선 정렬/폭 보장 & 사이드바/부서 스크롤 ===
+   ========================================================= */
+
+/* 헤더 하단선이 메인 컬럼 시작~끝까지 정확히 이어지게 */
 .topbar {
   border-bottom: none !important;
   position: sticky;
@@ -665,6 +708,7 @@ body {
   pointer-events: none;
 }
 
+/* 수직 구분선은 메인 컬럼(left 0)에 그려서 화면 위~아래까지 이어지게 */
 .main {
   position: relative;
 }
@@ -679,15 +723,17 @@ body {
   pointer-events: none;
 }
 
+/* 사이드바는 고정, 내부만 스크롤 (부서 선택 영역만 스크롤) */
 .sidebar {
   position: sticky;
   top: 0;
   height: 100vh;
   align-self: start;
 }
+/* 사이드바 내부 라인은 제거(겹선 방지)하고 내부 스크롤 구조 유지 */
 .sidebar-inner {
   border-right: none !important;
-  height: calc(100vh - 48px) !important;
+  height: calc(100vh - 48px) !important; /* padding 24*2 보정 */
   overflow: hidden !important;
   display: flex !important;
   flex-direction: column !important;
@@ -695,9 +741,11 @@ body {
 .dept-wrap {
   flex: 1 1 auto !important;
   min-height: 0 !important;
-  overflow: auto !important;
+  overflow: auto !important; /* 부서 목록만 스크롤 */
   padding-right: 2px;
 }
+
+/* 모바일일 때 보정 */
 @media (max-width: 900px) {
   .sidebar {
     height: auto;
@@ -710,21 +758,23 @@ body {
   }
   .main::before {
     display: none;
-  }
+  } /* 모바일에선 세로 구분선 숨김 */
   .topbar::after {
     left: 0;
     right: 0;
   }
 }
 
+/* 부서 선택 상태 컬러 고정 */
 .dept-item.selected {
   background: #2563eb !important;
   color: #fff !important;
 }
 .dept-item.selected:hover {
-  background: #2563eb !important;
+  background: #2563eb !important; /* hover 시에도 유지 */
 }
 
+/* 아이콘도 화이트로 */
 .dept-item.selected .ico,
 .dept-item.selected svg {
   color: #fff !important;
@@ -738,6 +788,7 @@ body {
   stroke: currentColor !important;
   fill: currentColor !important;
 }
+/* === Sidebar / Header: White === */
 .sidebar {
   background: #fff !important;
   border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
@@ -751,10 +802,12 @@ body {
   border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
   backdrop-filter: none !important;
 }
+/* 기존 ::after로 그리던 하단선은 숨김 */
 .topbar::after {
   content: none !important;
 }
 
+/* === Dept selected: #2563EB bg + white text === */
 .dept-item.selected {
   background: #2563eb !important;
   color: #fff !important;
@@ -773,20 +826,23 @@ body {
 
 .brand-pill {
   background: url("public/logo.png") center / contain no-repeat !important;
-  width: 200px !important;
+  width: 200px !important; /* 필요시 180x58 등으로 조정 */
   height: 55px !important;
   text-indent: -9999px;
   overflow: hidden;
 }
 
+/* Profile 카드 배경 & edit 색상 */
 .profile {
   background: #eff6ff !important;
   border-color: #dbeafe !important;
 }
 .profile .link-btn {
+  /* "edit" 링크 */
   color: #2563eb !important;
 }
 
+/* 옵션(사이드바 메뉴) 선택 상태를 R&D와 동일하게 */
 .nav-item.active {
   background: #2563eb !important;
   color: #fff !important;
@@ -795,6 +851,7 @@ body {
   background: #2563eb !important;
 }
 
+/* 선택 항목의 아이콘도 화이트 */
 .nav-item.active .ico,
 .nav-item.active svg {
   color: #fff !important;
@@ -813,34 +870,4 @@ body {
   color: #1e3a8a !important;
 }
 
-#refreshBtn.spinOnce svg {
-  animation: refreshHalfTurn 0.26s linear;
-}
-@keyframes refreshHalfTurn {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(180deg);
-  }
-}
-/* Sidebar: keep only the custom .dept-list scrollbar */
-.sidebar {
-  overflow: hidden;
-}
-.sidebar-inner {
-  overflow: hidden !important;
-}
-.dept-wrap {
-  overflow: hidden !important; /* .dept-wrap, .sidebar 쪽 스크롤 숨김 */
-  scrollbar-width: none; /* Firefox 숨김 */
-}
-.dept-wrap::-webkit-scrollbar {
-  /* WebKit 숨김 */
-  width: 0 !important;
-  height: 0 !important;
-}
-.dept-list {
-  /* 커스텀 스크롤 컨테이너 */
-  overflow: auto !important; /* ✅ 이것만 스크롤 */
-}
+

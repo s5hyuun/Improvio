@@ -1,44 +1,20 @@
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 
-export default function Header() {
-  // 알림 목록 데이터 > 확인용
-  const [notifs, setNotifs] = useState([
-    {
-      id: 1,
-      title: "새 제안이 등록되었습니다.",
-      meta: "R&D · 방금 전",
-      read: false,
-    },
-    {
-      id: 2,
-      title: "공지: 시스템 점검 안내",
-      meta: "관리팀 · 1시간 전",
-      read: false,
-    },
-  ]);
-
-  const unread = notifs.filter((n) => !n.read).length;
-  const [notifOpen, setNotifOpen] = useState(false);
-
+export default function Header({ isLoggedIn, setIsLoggedIn }) {
+  const [badge, setBadge] = useState(1);
   const [langOpen, setLangOpen] = useState(false);
   const [lang, setLang] = useState("한국어");
+  const menuRef = useRef(null);
 
-  const langMenuRef = useRef(null);
-  const notifMenuRef = useRef(null);
   useEffect(() => {
     function handleClick(e) {
-      if (langMenuRef.current && !langMenuRef.current.contains(e.target)) {
+      if (menuRef.current && !menuRef.current.contains(e.target)) {
         setLangOpen(false);
-      }
-      if (notifMenuRef.current && !notifMenuRef.current.contains(e.target)) {
-        setNotifOpen(false);
       }
     }
     function handleEsc(e) {
-      if (e.key === "Escape") {
-        setLangOpen(false);
-        setNotifOpen(false);
-      }
+      if (e.key === "Escape") setLangOpen(false);
     }
     document.addEventListener("mousedown", handleClick);
     document.addEventListener("keydown", handleEsc);
@@ -47,19 +23,6 @@ export default function Header() {
       document.removeEventListener("keydown", handleEsc);
     };
   }, []);
-
-  const hasBadge = unread > 0;
-  const bellColor = hasBadge ? "#EA580C" : undefined;
-  const bellBtnStyle = hasBadge ? { borderColor: "#EA580C" } : undefined;
-  const markAsRead = (id) =>
-    setNotifs((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, read: true } : n))
-    );
-  const markAllRead = () =>
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-  const removeNotif = (id) =>
-    setNotifs((prev) => prev.filter((n) => n.id !== id));
-  const clearAll = () => setNotifs([]);
 
   return (
     <header className="topbar">
@@ -100,132 +63,29 @@ export default function Header() {
           <input type="text" placeholder="검색" />
         </div>
 
-        <div className="dropdown" ref={notifMenuRef}>
-          <button
-            className="icon-btn"
-            aria-label="알림"
-            data-dot={hasBadge ? "" : undefined}
-            style={bellBtnStyle}
-            onClick={() => setNotifOpen((v) => !v)}
-          >
-            <svg viewBox="0 0 24 24" style={{ color: bellColor }}>
-              <path
-                d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-              <path
-                d="M13.73 21a2 2 0 0 1-3.46 0"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-            </svg>
-          </button>
+        <button
+          className="icon-btn"
+          aria-label="알림"
+          data-badge={badge > 0 ? String(badge) : null}
+          onClick={() => setBadge((n) => Math.max(0, n - 1))}
+        >
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+            <path
+              d="M13.73 21a2 2 0 0 1-3.46 0"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+          </svg>
+        </button>
 
-          {notifOpen && (
-            <ul
-              className="menu"
-              role="menu"
-              style={{ minWidth: 320, paddingTop: 8, paddingBottom: 8 }}
-            >
-              <li
-                role="presentation"
-                style={{
-                  fontWeight: 700,
-                  padding: "8px 12px",
-                  pointerEvents: "none",
-                  opacity: 0.9,
-                }}
-              >
-                알림
-              </li>
-
-              {notifs.length === 0 ? (
-                <li role="menuitem" style={{ padding: "12px" }}>
-                  새 알림이 없습니다.
-                </li>
-              ) : (
-                notifs.map((n) => (
-                  <li
-                    key={n.id}
-                    role="menuitem"
-                    onClick={() => markAsRead(n.id)}
-                    style={{
-                      display: "grid",
-                      gap: 6,
-                      padding: "10px 12px",
-                      opacity: n.read ? 0.6 : 1,
-                    }}
-                  >
-                    <div
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "space-between",
-                        gap: 8,
-                      }}
-                    >
-                      <span style={{ fontWeight: 700 }}>{n.title}</span>
-                      <button
-                        type="button"
-                        aria-label="알림 삭제"
-                        title="삭제"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeNotif(n.id);
-                        }}
-                        style={{
-                          border: "none",
-                          background: "transparent",
-                          color: "#9ca3af",
-                          fontSize: 18,
-                          lineHeight: 1,
-                          cursor: "pointer",
-                          padding: 0,
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                    <span style={{ fontSize: 12, opacity: 0.8 }}>{n.meta}</span>
-                  </li>
-                ))
-              )}
-
-              {notifs.length > 0 && (
-                <li
-                  role="presentation"
-                  style={{
-                    padding: "8px 12px",
-                    display: "flex",
-                    justifyContent: "flex-end",
-                    gap: 12,
-                  }}
-                >
-                  <button
-                    className="link-btn"
-                    type="button"
-                    onClick={markAllRead}
-                  >
-                    모두 읽음
-                  </button>
-                  <button
-                    className="link-btn"
-                    type="button"
-                    onClick={clearAll}
-                    style={{ color: "#ef4444" }}
-                  >
-                    모두 삭제
-                  </button>
-                </li>
-              )}
-            </ul>
-          )}
-        </div>
-
-        <div className="dropdown" ref={langMenuRef}>
+        <div className="dropdown" ref={menuRef}>
           <button
             className="btn"
             type="button"
@@ -262,7 +122,7 @@ export default function Header() {
 
           {langOpen && (
             <ul className="menu" role="menu">
-              {["한국어", "English", "日本語", "中文"].map((l) => (
+              {["한국어", "English", "日本語"].map((l) => (
                 <li
                   key={l}
                   role="menuitem"
@@ -278,8 +138,43 @@ export default function Header() {
           )}
         </div>
 
-        <button className="btn btn-ghost" type="button">
-          로그아웃
+        {/* 👇 로그인 여부에 따라 버튼 토글 */}
+        {isLoggedIn ? (
+          <button
+            className="btn btn-ghost"
+            type="button"
+            onClick={() => setIsLoggedIn(false)}
+          >
+            로그아웃
+          </button>
+        ) : (
+          <>
+            <Link to="/login" className="btn btn-ghost">
+              로그인
+            </Link>
+            <Link to="/signupall" className="btn btn-ghost">
+              회원가입
+            </Link>
+          </>
+        )}
+
+        <button
+          className="icon-btn"
+          aria-label="새로고침"
+          type="button"
+          onClick={(e) => {
+            e.currentTarget.style.transform = "rotate(180deg)";
+            setTimeout(() => (e.currentTarget.style.transform = ""), 300);
+          }}
+        >
+          <svg viewBox="0 0 24 24">
+            <path
+              d="M21 12a9 9 0 1 1-3-6.7M21 3v6h-6"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+            />
+          </svg>
         </button>
       </div>
     </header>
