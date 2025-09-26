@@ -152,9 +152,10 @@
 
 .commentDock {
   display: flex; align-items: center; justify-content: space-between;
-  border: 1px solid #e5e7eb; border-radius: 8px; background: #f7f7f7;
+  border: 1px solid #e5e7eb; border-radius: 8px; background: #f7f7f79e;
   padding: 10px; gap: 10px; margin: 12px 0;
 }
+
 .commentInputBar {
   flex: 1; height: 42px; border: 1px solid #e5e7eb; border-radius: 6px;
   padding: 0 12px; font-size: 15px; background: #fff;
@@ -163,7 +164,7 @@
 .commentSide { display: flex; align-items: center; gap: 12px; }
 .sendBtn {
   width: 48px; height: 42px; border: none; border-radius: 8px; cursor: pointer;
-  background: #1d4ed8; color: #fff; font-size: 16px;
+  ; color: #fff; font-size: 16px;
   display: inline-flex; align-items: center; justify-content: center;
 }
 
@@ -182,6 +183,12 @@
 .writer { color: #536db4; }
 .commentTime { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; color: #6b7280; }
 
+.commentMeta{
+  font-size: 17px;
+}
+.commentBody{
+  font-size: 17px;
+}
 .commentActRight { margin-left: auto; display: flex; align-items: center; gap: 10px; color: #8a96b5; }
 .linkBtn { background: none; border: 0; color: inherit; cursor: pointer; padding: 0; }
 .linkBtn:hover { text-decoration: underline; }
@@ -203,4 +210,27 @@
 @media (max-width: 480px) {
   .detailWrap { padding: 16px; max-width: 100%; }
   .imageWrap { min-height: 200px; }
+}
+
+/* ...기존 그대로... */
+
+/* 하트 영역을 클릭 가능하게 */
+.likeWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #6b7280;
+  cursor: default;    
+  user-select: none;
+}
+
+/* 눌렀을 때 강조(아이콘 색은 JSX에서 #ef4444로 바꿈) */
+.liked i {
+  color: rgb(239, 68, 68);
+}
+
+/* 숫자는 원래 빨강이니 그대로 유지 */
+.likeCount {
+  color: #ef4444;
+  font-weight: 700;
 }

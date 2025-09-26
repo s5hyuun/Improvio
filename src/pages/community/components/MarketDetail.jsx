@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import styles from "../../../styles/Market.module.css"; // 대/소문자 정확히
+import styles from "../../../styles/Market.module.css";
 
 const LS_KEY = "market_meta_v1";
 const MS = { m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000 };
+const HEART_COLOR = "rgb(239, 68, 68)"; // #ef4444
 
 function readStore() {
   try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }
@@ -75,12 +76,12 @@ export default function MarketDetail() {
         const seed = [
           {
             id: 2, author: "익명3", time: "09/25 01:00", text: "?",
-            likes: 5, deleted: false, createdAt: now - 15 * 60 * 1000,
+            likes: 5, liked: false, deleted: false, createdAt: now - 15 * 60 * 1000,
             replies: [
-              { id: 21, author: "익명(글쓴이)", isWriter: true, time: "09/25 01:01", text: "??", likes: 36, createdAt: now - 14 * 60 * 1000 },
+              { id: 21, author: "익명(글쓴이)", isWriter: true, time: "09/25 01:01", text: "??", likes: 36, liked: false, createdAt: now - 14 * 60 * 1000 },
             ],
           },
-          { id: 3, author: "익명16", time: "09/25 01:05", text: "???", likes: 0, deleted: false, createdAt: now - 10 * 60 * 1000, replies: [] },
+          { id: 3, author: "익명16", time: "09/25 01:05", text: "???", likes: 0, liked: false, deleted: false, createdAt: now - 10 * 60 * 1000, replies: [] },
         ].sort((a, b) => (b.createdAt ?? b.id) - (a.createdAt ?? a.id));
         if (alive) setComments(seed);
 
@@ -105,7 +106,7 @@ export default function MarketDetail() {
   const submitRootComment = () => {
     const text = newComment.trim();
     if (!text) return;
-    const item = { id: Date.now(), author: "익명", time: "방금 전", text, likes: 0, deleted: false, createdAt: Date.now(), replies: [] };
+    const item = { id: Date.now(), author: "익명", time: "방금 전", text, likes: 0, liked: false, deleted: false, createdAt: Date.now(), replies: [] };
     const next = [item, ...comments].sort((a, b) => (b.createdAt ?? b.id) - (a.createdAt ?? a.id));
     setComments(next);
     setNewComment("");
@@ -118,17 +119,17 @@ export default function MarketDetail() {
   const submitReply = (cid) => {
     const text = (replyDraft[cid] || "").trim();
     if (!text) return;
-    const reply = { id: Date.now(), author: "익명", time: "방금 전", text, likes: 0, createdAt: Date.now() };
+    const reply = { id: Date.now(), author: "익명", time: "방금 전", text, likes: 0, liked: false, createdAt: Date.now() };
     const next = comments.map((c) => (c.id === cid ? { ...c, replies: [...c.replies, reply] } : c));
     setComments(next);
-    setReplyDraft((d) => ({ ...d, [cid]: "" }));
-    setReplyOpen((o) => ({ ...o, [cid]: false }));
+    setReplyDraft((d) => ({ ...d, [c.id]: "" }));
+    setReplyOpen((o) => ({ ...o, [c.id]: false }));
     const total = countAllComments(next);
     const nextMeta = patchStore(id, { comments: total });
     setMeta(nextMeta);
   };
 
-  const toggleLike = () => {
+  const togglePostLike = () => {
     const curr = readStore()[id] || {};
     const liked = !curr.liked;
     const likes = Math.max(0, (curr.likes || 0) + (liked ? 1 : -1));
@@ -136,10 +137,37 @@ export default function MarketDetail() {
     setMeta(nextMeta);
   };
 
+  // ✅ 댓글 공감(버튼으로만 토글)
+  const toggleCommentLike = (cid) => {
+    setComments((prev) =>
+      prev.map((c) => {
+        if (c.id !== cid) return c;
+        const liked = !c.liked;
+        const likes = Math.max(0, (c.likes || 0) + (liked ? 1 : -1));
+        return { ...c, liked, likes };
+      })
+    );
+  };
+
+  // ✅ 대댓글 공감(버튼으로만 토글)
+  const toggleReplyLike = (cid, rid) => {
+    setComments((prev) =>
+      prev.map((c) => {
+        if (c.id !== cid) return c;
+        const replies = c.replies.map((r) => {
+          if (r.id !== rid) return r;
+          const liked = !r.liked;
+          const likes = Math.max(0, (r.likes || 0) + (liked ? 1 : -1));
+          return { ...r, liked, likes };
+        });
+        return { ...c, replies };
+      })
+    );
+  };
+
   if (loading) {
     return (
       <div className={styles.detailWrap}>
-      <div data-role="detail" className={styles.detailWrap} style={{ display: "block" }}></div>
         <div className={`${styles.metaRow} ${styles.detailTop}`}>
           <button className={styles.backBtn} onClick={() => nav(-1)}>← 목록</button>
         </div>
@@ -186,14 +214,14 @@ export default function MarketDetail() {
 
           <button
             className={styles.metaItem}
-            onClick={toggleLike}
+            onClick={togglePostLike}
             aria-pressed={!!meta.liked}
             title={meta.liked ? "좋아요 취소" : "좋아요"}
             style={{ background: "none", border: 0, cursor: "pointer", padding: 0 }}
           >
             <i
               className={meta.liked ? "fa-solid fa-heart" : "fa-regular fa-heart"}
-              style={{ color: meta.liked ? "#ef4444" : "inherit" }}
+              style={{ color: meta.liked ? HEART_COLOR : "inherit" }}
             />
             {meta.likes ?? 0}
           </button>
@@ -242,7 +270,10 @@ export default function MarketDetail() {
                   </div>
                   <div className={styles.commentActRight}>
                     <button className={styles.linkBtn} onClick={() => toggleReply(c.id)}>대댓글</button>
-                    <button className={styles.linkBtn}>공감</button>
+                    {/* ✅ 오직 이 버튼으로만 공감 토글 */}
+                    <button className={styles.linkBtn} onClick={() => toggleCommentLike(c.id)}>
+                      공감
+                    </button>
                     <button className={styles.linkBtn}>쪽지</button>
                     <button className={styles.linkBtn}>신고</button>
                   </div>
@@ -252,9 +283,13 @@ export default function MarketDetail() {
                   {c.text}
                 </div>
 
+                {/* ✅ 하트 영역은 표시만 (클릭 없음) */}
                 <div className={styles.commentFoot}>
-                  <span className={styles.likeWrap}>
-                    <i className="fa-regular fa-heart" />
+                  <span className={`${styles.likeWrap} ${c.liked ? styles.liked : ""}`}>
+                    <i
+                      className={c.liked ? "fa-solid fa-heart" : "fa-regular fa-heart"}
+                      style={{ color: c.liked ? HEART_COLOR : undefined }}
+                    />
                     <em className={styles.likeCount}>{c.likes}</em>
                   </span>
                 </div>
@@ -288,7 +323,10 @@ export default function MarketDetail() {
                             <div className={styles.commentTime}>{timeAgo(r.createdAt)}</div>
                           </div>
                           <div className={styles.commentActRight}>
-                            <button className={styles.linkBtn}>공감</button>
+                            {/* ✅ 오직 이 버튼으로만 대댓글 공감 토글 */}
+                            <button className={styles.linkBtn} onClick={() => toggleReplyLike(c.id, r.id)}>
+                              공감
+                            </button>
                             <button className={styles.linkBtn}>쪽지</button>
                             <button className={styles.linkBtn}>신고</button>
                           </div>
@@ -297,8 +335,11 @@ export default function MarketDetail() {
                           {r.text}
                         </div>
                         <div className={styles.commentFoot}>
-                          <span className={styles.likeWrap}>
-                            <i className="fa-regular fa-heart" />
+                          <span className={`${styles.likeWrap} ${r.liked ? styles.liked : ""}`}>
+                            <i
+                              className={r.liked ? "fa-solid fa-heart" : "fa-regular fa-heart"}
+                              style={{ color: r.liked ? HEART_COLOR : undefined }}
+                            />
                             <em className={styles.likeCount}>{r.likes ?? 0}</em>
                           </span>
                         </div>
