@@ -808,42 +808,95 @@ app.post("/api/login", async (req, res) => {
     res.status(500).json({ success: false, message: "서버 오류 발생" });
   }
 });
+// GET /api/posts?board_id=?
 app.get("/api/posts", async (req, res) => {
   try {
-    // 1️⃣ 모든 게시글 가져오기
-    const [posts] = await pool.query(`
-      SELECT p.post_id, p.title, p.content, p.user_id, p.created_at,
-             u.username
+    const { board_id } = req.query;
+    let query = `
+      SELECT p.post_id, p.board_id, p.title, p.content, p.user_id, p.created_at, u.username
       FROM post p
       LEFT JOIN user u ON p.user_id = u.user_id
-      ORDER BY p.created_at DESC
-    `);
-
-    // 2️⃣ 각 게시글의 댓글 가져오기
-    const postIds = posts.map((p) => p.post_id);
-    let comments = [];
-    if (postIds.length > 0) {
-      const [rows] = await pool.query(
-        `
-        SELECT c.postcomment_id, c.post_id, c.user_id, c.content, c.created_at,
-               u.username
-        FROM postcomment c
-        LEFT JOIN user u ON c.user_id = u.user_id
-        WHERE c.post_id IN (?)
-        ORDER BY c.created_at ASC
-      `,
-        [postIds]
-      );
-      comments = rows;
+    `;
+    const params = [];
+    if (board_id) {
+      query += ` WHERE p.board_id = ?`;
+      params.push(board_id);
     }
+    query += ` ORDER BY p.created_at DESC`;
 
-    // 3️⃣ 댓글을 각 게시글에 매칭
-    const result = posts.map((post) => ({
-      ...post,
-      comments: comments.filter((c) => c.post_id === post.post_id),
-    }));
+    const [posts] = await pool.query(query, params);
 
-    res.json(result);
+    res.json(posts);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+// 게시글 상세
+app.get("/api/posts/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [[post]] = await pool.query(
+      `SELECT p.*, u.username FROM post p LEFT JOIN user u ON p.user_id = u.user_id WHERE post_id = ?`,
+      [id]
+    );
+
+    if (!post) return res.status(404).json({ message: "게시글 없음" });
+
+    const [comments] = await pool.query(
+      `SELECT c.*, u.username FROM postcomment c LEFT JOIN user u ON c.user_id = u.user_id WHERE c.post_id = ? ORDER BY c.created_at ASC`,
+      [id]
+    );
+
+    post.comments = comments;
+    res.json(post);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+// server.js (예시)
+app.get("/api/boards", async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `
+      SELECT b.board_id, b.name, b.description, 
+             COUNT(p.post_id) AS post_count
+      FROM board b
+      LEFT JOIN post p ON b.board_id = p.board_id
+      GROUP BY b.board_id, b.name, b.description
+      ORDER BY b.board_id ASC
+      `
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB error" });
+  }
+});
+app.get("/api/hot-posts", async (req, res) => {
+  try {
+    const [rows] = await pool.query(`
+      SELECT 
+          p.post_id,
+          p.title,
+          p.content,
+          u.username,
+          p.created_at,
+          COUNT(DISTINCT pc.postcomment_id) AS comment_count,
+          COUNT(DISTINCT pl.like_id) AS like_count,
+          (COUNT(DISTINCT pc.postcomment_id) + COUNT(DISTINCT pl.like_id)) AS hot_score
+      FROM post p
+      LEFT JOIN postcomment pc ON p.post_id = pc.post_id
+      LEFT JOIN post_like pl ON p.post_id = pl.post_id
+      LEFT JOIN user u ON p.user_id = u.user_id
+      GROUP BY p.post_id
+      ORDER BY hot_score DESC
+      LIMIT 4;
+    `);
+    res.json(rows);
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버 오류" });
