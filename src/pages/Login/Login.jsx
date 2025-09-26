@@ -8,8 +8,7 @@ import SignupAll from "../signupall/signupall";
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [tab, setTab] = useState("signin"); // signin | signup
-  const [view, setView] = useState("form"); // form | signupall
+  const [tab, setTab] = useState("signin"); // "signin" | "signup"
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -33,12 +32,6 @@ export default function Login() {
     }
   };
 
-  // Sign up 라벨/버튼 클릭 시 wrapper 내부로 전환
-  const handleSignupInline = () => {
-    setTab("signup");
-    setView("signupall");
-  };
-
   return (
     <div className="app">
       <Sidebar />
@@ -46,13 +39,8 @@ export default function Login() {
         <Header />
 
         <section className={styles.shell}>
-          {/* data-tab & data-view로 CSS 제어 */}
-          <form
-            className={styles.form}
-            data-tab={tab}
-            data-view={view}
-            onSubmit={handleLogin}
-          >
+          {/* data-tab 로 스타일 제어 */}
+          <form className={styles.form} data-tab={tab} onSubmit={handleLogin}>
             {/* 탭 라디오 (Reset 제거) */}
             <input
               id="signin"
@@ -61,10 +49,7 @@ export default function Login() {
               name="action"
               value="signin"
               checked={tab === "signin"}
-              onChange={() => {
-                setTab("signin");
-                setView("form");
-              }}
+              onChange={() => setTab("signin")}
             />
             <label className={styles.tab} htmlFor="signin">
               SIGN IN
@@ -77,20 +62,12 @@ export default function Login() {
               name="action"
               value="signup"
               checked={tab === "signup"}
-              onChange={() => {
-                setTab("signup");
-                // ✅ 라벨 클릭만으로도 즉시 signupall 표시
-                setView("signupall");
-              }}
+              onChange={() => setTab("signup")}
             />
             <label
               className={styles.tab}
               htmlFor="signup"
-              // 혹시 브라우저/스크린리더 딜레이 방지용
-              onClick={(e) => {
-                setTab("signup");
-                setView("signupall");
-              }}
+              onClick={() => setTab("signup")}
             >
               SIGN UP
             </label>
@@ -99,7 +76,7 @@ export default function Login() {
             <div className={styles.cardArea} data-card-area>
               <div className={styles.arrow} />
               <div className={styles.wrapper} data-wrapper>
-                {view === "form" ? (
+                {tab === "signin" ? (
                   <>
                     <input
                       className={styles.input}
@@ -119,38 +96,30 @@ export default function Login() {
                       required
                       autoComplete="current-password"
                     />
-                    {/* 디자인용(회원가입 탭일 때만 노출하도록 CSS에서 처리 가능) */}
-                    <input
-                      className={`${styles.input} ${styles.optional}`}
-                      type="password"
-                      placeholder="비밀번호 확인 (Sign up 탭)"
-                    />
+
+                    {/* 버튼 (signin에서만 노출) */}
+                    <div className={styles.actions}>
+                      <button
+                        type="submit"
+                        className={`${styles.button} ${styles.signinBtn}`}
+                      >
+                        <span>Sign in</span>
+                      </button>
+                      {/* <button
+                        type="button"
+                        className={`${styles.button} ${styles.ghost} ${styles.signupBtn}`}
+                        onClick={() => setTab("signup")}
+                      >
+                        회원가입
+                      </button> */}
+                    </div>
                   </>
                 ) : (
-                  <SignupAll onBack={() => setView("form")} />
+                  // ✅ SIGN UP 탭: 바로 signupall 렌더 (흰 화면 없이 즉시 전환)
+                  <SignupAll onBack={() => setTab("signin")} />
                 )}
               </div>
             </div>
-
-            {/* 버튼 영역: signupall 뷰일 땐 숨김 */}
-            {view === "form" ? (
-              <div className={styles.actions} data-actions>
-                <button
-                  type="submit"
-                  className={`${styles.button} ${styles.signinBtn}`}
-                >
-                  <span>Sign in</span>
-                </button>
-
-                <button
-                  type="button"
-                  className={`${styles.button} ${styles.ghost} ${styles.signupBtn}`}
-                  onClick={handleSignupInline}
-                >
-                  회원가입
-                </button>
-              </div>
-            ) : null}
 
             <p className={styles.hint}>Click on the tabs</p>
           </form>
