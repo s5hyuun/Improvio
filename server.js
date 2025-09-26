@@ -808,6 +808,47 @@ app.post("/api/login", async (req, res) => {
     res.status(500).json({ success: false, message: "서버 오류 발생" });
   }
 });
+app.get("/api/posts", async (req, res) => {
+  try {
+    // 1️⃣ 모든 게시글 가져오기
+    const [posts] = await pool.query(`
+      SELECT p.post_id, p.title, p.content, p.user_id, p.created_at,
+             u.username
+      FROM post p
+      LEFT JOIN user u ON p.user_id = u.user_id
+      ORDER BY p.created_at DESC
+    `);
+
+    // 2️⃣ 각 게시글의 댓글 가져오기
+    const postIds = posts.map((p) => p.post_id);
+    let comments = [];
+    if (postIds.length > 0) {
+      const [rows] = await pool.query(
+        `
+        SELECT c.postcomment_id, c.post_id, c.user_id, c.content, c.created_at,
+               u.username
+        FROM postcomment c
+        LEFT JOIN user u ON c.user_id = u.user_id
+        WHERE c.post_id IN (?)
+        ORDER BY c.created_at ASC
+      `,
+        [postIds]
+      );
+      comments = rows;
+    }
+
+    // 3️⃣ 댓글을 각 게시글에 매칭
+    const result = posts.map((post) => ({
+      ...post,
+      comments: comments.filter((c) => c.post_id === post.post_id),
+    }));
+
+    res.json(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
 
 app.listen(5000, () => {
   console.log("http://localhost:5000");
