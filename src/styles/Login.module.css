@@ -18,7 +18,7 @@
 
 /* 폼 */
 .form {
-  width: 450px;
+  width: 550px; /* ✅ 기존 450px → 550px */
   position: relative;
   background: transparent;
   font-family: "Raleway", system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
@@ -34,7 +34,7 @@
 .tab {
   cursor: pointer;
   display: inline-block;
-  font-size: 22px;
+  font-size: 24px;
   font-weight: 800;
   opacity: 0.5;
   margin-bottom: 30px;
@@ -56,44 +56,42 @@
 
 /* 카드 + 화살표 영역 */
 .cardArea {
-  position: relative; /* 화살표 기준 */
-  overflow: visible; /* 화살표 안 잘리게 */
+  position: relative;
+  overflow: visible;
 }
 
 /* 카드 */
 .wrapper {
   overflow: hidden;
   background: #fff;
-  border-radius: 16px;
-  box-shadow: 0 20px 40px rgba(2, 6, 23, 0.08);
-  padding: 16px;
-  /* 즉시 전환을 위해 height 애니메이션 제거(원하면 다시 추가 가능)
-     transition: height 0.35s cubic-bezier(0.6,0,0.4,1);
-     will-change: height;
-  */
+  border-radius: 20px; /* ✅ 둥글게 */
+  box-shadow: 0 24px 48px rgba(2, 6, 23, 0.12); /* ✅ 그림자 강화 */
+  padding: 24px; /* ✅ 패딩 확대 */
+  transition: height 0.35s cubic-bezier(0.6, 0, 0.4, 1);
+  will-change: height;
 }
 
-/* (선택) 탭별 고정 높이를 쓰지 않고 콘텐츠 높이에 맞춤 */
-/* 원래 애니메이션이 필요하면 아래처럼 복구
-.form[data-tab="signin"] [data-card-area] [data-wrapper] { height: 178px; }
-.form[data-tab="signup"] [data-card-area] [data-wrapper] { height: 262px; }
-*/
+/* 카드 높이 */
+.form[data-tab="signin"] [data-card-area] [data-wrapper] {
+  height: 280px; /* ✅ 기존 230px → 280px */
+}
+.form[data-tab="signup"] [data-card-area] [data-wrapper] {
+  height: 340px; /* ✅ 기존 283px → 340px */
+}
 
 /* 화살표 */
 .arrow {
   position: absolute;
-  top: -10px; /* 카드 윗변에 살짝 걸치기 */
-  left: 32px; /* 기본 좌표 */
+  top: -10px;
+  left: 32px;
   height: 0;
   width: 0;
-  border-bottom: 10px solid #fff; /* 카드 색상과 동일 */
+  border-bottom: 10px solid #fff;
   border-left: 10px solid transparent;
   border-right: 10px solid transparent;
   z-index: 2;
   transition: left 0.35s cubic-bezier(0.6, 0, 0.4, 1);
 }
-
-/* 탭 상태에 따른 화살표 위치 이동 */
 .form[data-tab="signin"] [data-card-area] .arrow {
   left: 32px;
 }
@@ -105,12 +103,12 @@
 .input {
   background: #fff;
   border: 1px solid #eef2ff;
-  border-radius: 8px;
-  font-size: 18px;
-  height: 56px;
+  border-radius: 10px;
+  font-size: 20px; /* ✅ 글자 키움 */
+  height: 64px; /* ✅ 인풋 크기 확대 */
   width: 100%;
-  margin-bottom: 8px; /* 여백 줄임 */
-  padding: 0 16px;
+  margin-bottom: 12px;
+  padding: 0 20px;
   transition: border 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
 }
 .input:last-child {
@@ -124,28 +122,28 @@
   box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.15);
 }
 
-/* 버튼 영역 — 입력 폭과 맞추기 위해 wrapper 패딩(16px)과 동일 */
+/* 버튼 영역 */
 .actions {
   display: block;
   padding: 0 16px;
-  margin-top: 12px;
+  margin-top: 16px;
 }
 
-/* 버튼 공통 */
+/* 버튼 */
 .button {
   background: #2563eb;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   color: #fff;
   cursor: pointer;
-  font-size: 18px;
-  height: 56px;
+  font-size: 20px; /* ✅ 글자 키움 */
+  height: 64px; /* ✅ 버튼 크기 확대 */
   width: 100%;
   transition: transform 0.1s ease, box-shadow 0.2s ease, background 0.2s ease;
-  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
 }
 .button + .button {
-  margin-top: 8px;
+  margin-top: 12px;
 }
 .button:hover {
   background: #1d4ed8;
@@ -169,7 +167,7 @@
 /* 힌트 */
 .hint {
   text-align: center;
-  margin-top: 8px;
+  margin-top: 12px;
   color: #6b7280;
-  font-size: 12px;
+  font-size: 14px;
 }

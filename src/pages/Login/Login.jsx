@@ -78,6 +78,7 @@ export default function Login() {
               <div className={styles.wrapper} data-wrapper>
                 {tab === "signin" ? (
                   <>
+                    {/* <h2 style={{ margin: "4px 0 8px 0" }}>로그인</h2> */}
                     <input
                       className={styles.input}
                       type="text"
