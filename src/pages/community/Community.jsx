@@ -1,4 +1,3 @@
-// Community.jsx
 import { Outlet, Link, useLocation } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
@@ -44,7 +43,6 @@ function Boards() {
           <span className={styles.badge}>203</span>
         </li>
 
-        {/* 장터게시판: 클릭 시 /community/market (호버 반응 동일) */}
         <li>
           <Link to="market" className={styles.commBoardsName}>
             <i className="fa-solid fa-cart-shopping" />

@@ -1,4 +1,3 @@
-// MarketList.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "../../../styles/Market.module.css";
@@ -27,18 +26,14 @@ export default function MarketList({ boardKey }) {
   const nav = useNavigate();
   const { pathname } = useLocation();
 
-  // 보드 판별 (prop 우선)
   const isMarket = boardKey ? boardKey === "market" : pathname.includes("/market");
 
-  // 헤더 아이콘/타이틀
   const boardMeta = isMarket
     ? { title: "장터게시판", count: 67, icon: "fa-solid fa-cart-shopping" }
     : { title: "자유게시판", count: 324, icon: "fa-solid fa-message" };
 
-  // 장터에서는 썸네일 표시, 자유게시판은 비표시
   const showThumb = isMarket;
 
-  // 데모용 데이터
   const base = useMemo(() => ([
     { id: 88156, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "6시간 전",  comments: 34, likes: 67, views: 888 },
     { id: 81113, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "12시간 전", comments: 14, likes: 11, views: 911 },
@@ -72,7 +67,6 @@ export default function MarketList({ boardKey }) {
     return () => clearInterval(t);
   }, []);
 
-  // ✅ 카드 클릭 → 상세 페이지 이동
   const goDetail = (id) => nav(`/community/market/${id}`);
 
   return (

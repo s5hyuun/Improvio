@@ -1,4 +1,3 @@
-// MarketDetail.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styles from "../../../styles/Market.module.css"; // 대/소문자 정확히
@@ -57,7 +56,6 @@ export default function MarketDetail() {
   const [replyDraft, setReplyDraft] = useState({});
   const [meta, setMeta] = useState(() => readStore()[id] || {});
 
-  // 목록과 맞춘 더미 데이터
   const fallback = useMemo(() => ({
     88156: { id: 88156, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "6시간 전", likes: 67, images: ["사진"], author: "익명 88156" },
     81113: { id: 81113, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "12시간 전", likes: 11, images: ["사진"], author: "익명 81113" },
