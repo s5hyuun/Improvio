@@ -824,7 +824,6 @@ body {
     transform: rotate(180deg);
   }
 }
-/* Sidebar: keep only the custom .dept-list scrollbar */
 .sidebar {
   overflow: hidden;
 }
@@ -832,15 +831,13 @@ body {
   overflow: hidden !important;
 }
 .dept-wrap {
-  overflow: hidden !important; /* .dept-wrap, .sidebar 쪽 스크롤 숨김 */
-  scrollbar-width: none; /* Firefox 숨김 */
+  overflow: hidden !important; 
+  scrollbar-width: none; 
 }
 .dept-wrap::-webkit-scrollbar {
-  /* WebKit 숨김 */
   width: 0 !important;
   height: 0 !important;
 }
 .dept-list {
-  /* 커스텀 스크롤 컨테이너 */
-  overflow: auto !important; /* ✅ 이것만 스크롤 */
+  overflow: auto !important; 
 }

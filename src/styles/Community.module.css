@@ -1,4 +1,3 @@
-/* ===== 레이아웃 ===== */
 .commContainer {
   display: flex;
   gap: 10px;
@@ -6,7 +5,6 @@
   height: 100%;
 }
 
-/* 공통 */
 i { margin-right: 6px; }
 ul { padding: 0; list-style: none; }
 
@@ -38,7 +36,6 @@ ul { padding: 0; list-style: none; }
   transition: background-color .12s ease, border-color .12s ease, color .12s ease;
 }
 
-/* ✅ 모든 항목(장터 포함) 동일 호버 반응 */
 .boardList li:hover {
   border: 1px solid #bfdbfe;
   background-color: #eff6ff;
@@ -60,7 +57,6 @@ ul { padding: 0; list-style: none; }
   color: inherit;
 }
 
-/* ===== 중앙: 게시글 영역 ===== */
 .commPostsContainer {
   flex: 3;
   padding: 20px;
@@ -68,7 +64,6 @@ ul { padding: 0; list-style: none; }
   border-radius: 14px;
 }
 
-/* 중앙 영역의 첫 줄 헤더(아이콘+제목) */
 .commPostsContainer > div:first-child {
   /* display: flex; */
   align-items: center;
@@ -82,7 +77,6 @@ ul { padding: 0; list-style: none; }
   font-size: 14px;
 }
 
-/* ===== 우측: HOT/광고 ===== */
 .commRightbar { flex: 1.3; }
 
 .commHot {
@@ -107,7 +101,6 @@ ul { padding: 0; list-style: none; }
   border-radius: 14px;
 }
 
-/* ===== 기타(기존 유지) ===== */
 .postContainer {
   display: flex;
   flex-direction: column;
