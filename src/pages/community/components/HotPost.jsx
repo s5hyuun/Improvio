@@ -1,20 +1,18 @@
 import styles from "../../../styles/Community.module.css";
-
-function HotPost({ title, author, comments, likes }) {
+function HotPost() {
   return (
     <div className={styles.commHotPost}>
-      <div>{title}</div>
+      <div>핫한 게시글 제목입니다요</div>
       <div>
-        <span>{author}</span>
+        <span>익룡101</span>
         <span>
-          <i className="fa-solid fa-message"></i> {comments}
+          <i class="fa-solid fa-message"></i>23
         </span>
         <span>
-          <i className="fa-solid fa-heart"></i> {likes}
+          <i class="fa-solid fa-heart"></i>45
         </span>
       </div>
     </div>
   );
 }
-
 export default HotPost;
