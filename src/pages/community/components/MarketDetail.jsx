@@ -4,7 +4,7 @@ import styles from "../../../styles/Market.module.css";
 
 const LS_KEY = "market_meta_v1";
 const MS = { m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000 };
-const HEART_COLOR = "rgb(239, 68, 68)"; // #ef4444
+const HEART_COLOR = "rgb(239, 68, 68)"; 
 
 function readStore() {
   try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }
@@ -137,7 +137,6 @@ export default function MarketDetail() {
     setMeta(nextMeta);
   };
 
-  // ✅ 댓글 공감(버튼으로만 토글)
   const toggleCommentLike = (cid) => {
     setComments((prev) =>
       prev.map((c) => {
@@ -149,7 +148,6 @@ export default function MarketDetail() {
     );
   };
 
-  // ✅ 대댓글 공감(버튼으로만 토글)
   const toggleReplyLike = (cid, rid) => {
     setComments((prev) =>
       prev.map((c) => {
@@ -270,7 +268,6 @@ export default function MarketDetail() {
                   </div>
                   <div className={styles.commentActRight}>
                     <button className={styles.linkBtn} onClick={() => toggleReply(c.id)}>대댓글</button>
-                    {/* ✅ 오직 이 버튼으로만 공감 토글 */}
                     <button className={styles.linkBtn} onClick={() => toggleCommentLike(c.id)}>
                       공감
                     </button>
@@ -282,8 +279,6 @@ export default function MarketDetail() {
                 <div className={styles.commentBody} style={{ whiteSpace: "pre-wrap" }}>
                   {c.text}
                 </div>
-
-                {/* ✅ 하트 영역은 표시만 (클릭 없음) */}
                 <div className={styles.commentFoot}>
                   <span className={`${styles.likeWrap} ${c.liked ? styles.liked : ""}`}>
                     <i
@@ -323,7 +318,6 @@ export default function MarketDetail() {
                             <div className={styles.commentTime}>{timeAgo(r.createdAt)}</div>
                           </div>
                           <div className={styles.commentActRight}>
-                            {/* ✅ 오직 이 버튼으로만 대댓글 공감 토글 */}
                             <button className={styles.linkBtn} onClick={() => toggleReplyLike(c.id, r.id)}>
                               공감
                             </button>

@@ -64,7 +64,7 @@
 }
 .metaLeft { display: flex; align-items: center; gap: 10px; min-width: 0; }
 .metaRight { display: inline-flex; align-items: center; gap: 16px; }
-.metaItem { display: inline-flex; align-items: center; gap: 6px; }
+.metaItem { display: inline-flex; align-items: center;}
 .metaItem i { color: #6b7280; }
 .dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #9ca3af; margin: 0 2px; }
 
@@ -190,13 +190,13 @@
   font-size: 17px;
 }
 .commentActRight { margin-left: auto; display: flex; align-items: center; gap: 10px; color: #8a96b5; }
-.linkBtn { background: none; border: 0; color: inherit; cursor: pointer; padding: 0; }
+.linkBtn { background: none; border: 0; cursor: pointer; padding: 0; }
 .linkBtn:hover { text-decoration: underline; }
 
 .commentBody { margin-top: 10px; color: #111827; line-height: 1.7; }
 .commentFoot { margin-top: 6px; display: flex; align-items: center; gap: 12px; }
-.likeWrap { display: inline-flex; align-items: center; gap: 6px; color: #6b7280; }
-.likeCount { color: #ef4444; font-weight: 700; }
+.likeWrap { display: inline-flex; align-items: center; color: #6b7280; }
+.likeCount { color: black; font-weight: 700; }
 
 .replyList { margin-top: 12px; display: flex; flex-direction: column; gap: 12px; }
 .replyBox { margin-left: 44px; background: #f7f8fb; border: 1px solid #e9ecf3; border-radius: 8px; padding: 12px; }
@@ -212,24 +212,18 @@
   .imageWrap { min-height: 200px; }
 }
 
-/* ...기존 그대로... */
-
-/* 하트 영역을 클릭 가능하게 */
 .likeWrap {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
   color: #6b7280;
   cursor: default;    
   user-select: none;
 }
 
-/* 눌렀을 때 강조(아이콘 색은 JSX에서 #ef4444로 바꿈) */
 .liked i {
   color: rgb(239, 68, 68);
 }
 
-/* 숫자는 원래 빨강이니 그대로 유지 */
 .likeCount {
   color: #ef4444;
   font-weight: 700;
