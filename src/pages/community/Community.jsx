@@ -1,64 +1,50 @@
-import { Outlet } from "react-router-dom";
+import React, { useEffect, useState } from "react";
+import { Outlet, useNavigate } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
-import Post from "../community/components/Post";
 import HotPost from "./components/HotPost";
-
 import styles from "../../styles/Community.module.css";
 
 function Community() {
+  const [boards, setBoards] = useState([]);
+  const [hotPosts, setHotPosts] = useState([]);
+  const nav = useNavigate();
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/boards")
+      .then((res) => res.json())
+      .then((data) => setBoards(data))
+      .catch((err) => console.error(err));
+  }, []);
+
+  useEffect(() => {
+    fetch("http://localhost:5000/api/hot-posts")
+      .then((res) => res.json())
+      .then((data) => setHotPosts(data))
+      .catch((err) => console.error(err));
+  }, []);
+
   return (
     <div className="app">
       <Sidebar />
-
       <div className="main">
         <Header />
         <div className={styles.commContainer}>
           <div className={styles.commBoards}>
             <div>게시판 목록</div>
             <ul>
-              <li>
-                <div className={styles.commBoardsName}>
-                  <i class="fa-solid fa-message"></i>
-                  <div>자유게시판</div>
-                </div>
-                <span>324</span>
-              </li>
-              <li>
-                <div className={styles.commBoardsName}>
-                  <i class="fa-solid fa-clock"></i>
-                  <div>신입게시판</div>
-                </div>
-                <span>89</span>
-              </li>
-              <li>
-                <div className={styles.commBoardsName}>
-                  <i class="fa-solid fa-lock"></i>
-                  <div>비밀게시판</div>
-                </div>
-                <span>156</span>
-              </li>
-              <li>
-                <div className={styles.commBoardsName}>
-                  <i class="fa-solid fa-circle-info"></i>
-                  <div>정보게시판</div>
-                </div>
-                <span>203</span>
-              </li>
-              <li>
-                <div className={styles.commBoardsName}>
-                  <i class="fa-solid fa-cart-shopping"></i>
-                  <div>장터게시판</div>
-                </div>
-                <span>67</span>
-              </li>
-              <li>
-                <div className={styles.commBoardsName}>
-                  <i class="fa-solid fa-newspaper"></i>
-                  <div>시사/이슈</div>
-                </div>
-                <span>134</span>
-              </li>
+              {boards.map((board) => (
+                <li
+                  key={board.board_id}
+                  onClick={() => nav(`/community/board/${board.board_id}`)}
+                >
+                  <div className={styles.commBoardsName}>
+                    <i className="fa-solid fa-message"></i>
+                    <div>{board.name}</div>
+                  </div>
+                  <span>{board.post_count}</span>
+                </li>
+              ))}
             </ul>
           </div>
           <div className={styles.commPostsContainer}>
@@ -67,12 +53,12 @@ function Community() {
           <div className={styles.commRightbar}>
             <div className={styles.commHot}>
               <div>🔥HOT 게시글</div>
-              <HotPost />
-              <HotPost />
-              <HotPost />
-              <HotPost />
+              {hotPosts.map((post) => (
+                <HotPost key={post.post_id} post={post} />
+              ))}
             </div>
-            <div className={styles.ad}>궹고 자리</div>
+
+            <div className={styles.ad}>광고 자리</div>
           </div>
         </div>
       </div>

@@ -30,7 +30,7 @@ export default function App() {
         <Route path="/" element={<LoginPage setIsLoggedIn={setIsLoggedIn} />} />
 
         <Route path="/community" element={<Community />}>
-          <Route index element={<PostList />} />
+          <Route path="board/:boardId" element={<PostList />} />
           <Route path=":postId" element={<PostDetail />} />
         </Route>
       </Routes>
