@@ -101,6 +101,7 @@ export default function Notice() {
     if (!t) return;
 
     if (editId !== null) {
+      // 수정 저장
       const next = list.map((n) =>
         n.id === editId ? { ...n, title: t, body: b, urgent } : n
       );
@@ -108,6 +109,7 @@ export default function Notice() {
       broadcast(next);
       closeModal();
     } else {
+      // 새 공지 게시
       const now = new Date();
       const item = {
         id: Date.now(),
@@ -123,16 +125,37 @@ export default function Notice() {
       const next = [item, ...list];
       setList(next);
       broadcast(next);
+
+      // ✅ 헤더 알림은 쏘지 않고, 도메인 이벤트만 발행
+      window.dispatchEvent(
+        new CustomEvent("notice:created", {
+          detail: { id: item.id, title: item.title },
+        })
+      );
+
       closeModal();
     }
   };
 
   const toggleActive = (id) => {
+    const target = list.find((n) => n.id === id);
+    if (!target) return;
+    const willActive = !target.active;
+
     const next = list.map((n) =>
-      n.id === id ? { ...n, active: !n.active } : n
+      n.id === id ? { ...n, active: willActive } : n
     );
     setList(next);
     broadcast(next);
+
+    // ✅ 재개 시에도 헤더 알림 직접 발행 X, 이벤트만
+    if (willActive) {
+      window.dispatchEvent(
+        new CustomEvent("notice:resumed", {
+          detail: { id, title: target.title },
+        })
+      );
+    }
   };
 
   return (

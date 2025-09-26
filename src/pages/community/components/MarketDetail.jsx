@@ -1,20 +1,16 @@
+// MarketDetail.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import styles from "../../../styles/market.module.css";
+import styles from "../../../styles/Market.module.css"; // 대/소문자 정확히
 
 const LS_KEY = "market_meta_v1";
 const MS = { m: 60 * 1000, h: 60 * 60 * 1000, d: 24 * 60 * 60 * 1000 };
 
 function readStore() {
-  try {
-    return JSON.parse(localStorage.getItem(LS_KEY)) || {};
-  } catch {
-    return {};
-  }
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }
+  catch { return {}; }
 }
-function writeStore(obj) {
-  localStorage.setItem(LS_KEY, JSON.stringify(obj));
-}
+function writeStore(obj) { localStorage.setItem(LS_KEY, JSON.stringify(obj)); }
 function patchStore(id, patch) {
   const store = readStore();
   store[id] = { ...(store[id] || {}), ...patch };
@@ -29,7 +25,6 @@ function timeAgo(ts) {
   if (diff < MS.d) return `${Math.floor(diff / MS.h)}시간 전`;
   return `${Math.floor(diff / MS.d)}일 전`;
 }
-
 function parseRelativeToCreatedAt(str) {
   const m = /(\d+)\s*(분|시간|일)/.exec(str || "");
   if (!m) return Date.now();
@@ -38,7 +33,6 @@ function parseRelativeToCreatedAt(str) {
   const ms = unit === "분" ? n * MS.m : unit === "시간" ? n * MS.h : n * MS.d;
   return Date.now() - ms;
 }
-
 function countAllComments(list) {
   let total = 0;
   for (const c of list) {
@@ -63,36 +57,18 @@ export default function MarketDetail() {
   const [replyDraft, setReplyDraft] = useState({});
   const [meta, setMeta] = useState(() => readStore()[id] || {});
 
-  const fallback = useMemo(
-    () => ({
-      88156: {
-        id: 88156,
-        title: "제목",
-        body: "내용",
-        time: "6시간 전",
-        likes: 67,
-        images: ["사진"],
-        author: "익명 88156",
-      },
-      81113: {
-        id: 81113,
-        title: "제목",
-        body: "내용",
-        time: "12시간 전",
-        likes: 11,
-        images: ["사진"],
-        author: "익명 81113",
-      },
-    }),
-    []
-  );
+  // 목록과 맞춘 더미 데이터
+  const fallback = useMemo(() => ({
+    88156: { id: 88156, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "6시간 전", likes: 67, images: ["사진"], author: "익명 88156" },
+    81113: { id: 81113, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "12시간 전", likes: 11, images: ["사진"], author: "익명 81113" },
+    80421: { id: 80421, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "2일 전", likes: 45, images: ["사진"], author: "익명 80421" },
+  }), []);
+
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
-        setLoading(true);
-        setErr("");
-
+        setLoading(true); setErr("");
         const data = fallback[id];
         if (!data) throw new Error("게시글을 찾을 수 없습니다.");
         if (alive) setPost(data);
@@ -100,47 +76,24 @@ export default function MarketDetail() {
         const now = Date.now();
         const seed = [
           {
-            id: 2,
-            author: "익명3",
-            time: "09/25 01:00",
-            text: "?",
-            likes: 5,
-            deleted: false,
-            createdAt: now - 15 * 60 * 1000,
+            id: 2, author: "익명3", time: "09/25 01:00", text: "?",
+            likes: 5, deleted: false, createdAt: now - 15 * 60 * 1000,
             replies: [
-              {
-                id: 21,
-                author: "익명(글쓴이)",
-                isWriter: true,
-                time: "09/25 01:01",
-                text: "??",
-                likes: 36,
-                createdAt: now - 14 * 60 * 1000,
-              },
+              { id: 21, author: "익명(글쓴이)", isWriter: true, time: "09/25 01:01", text: "??", likes: 36, createdAt: now - 14 * 60 * 1000 },
             ],
           },
-          {
-            id: 3,
-            author: "익명16",
-            time: "09/25 01:05",
-            text: "???",
-            likes: 0,
-            deleted: false,
-            createdAt: now - 10 * 60 * 1000,
-            replies: [],
-          },
-        ];
-        const sorted = [...seed].sort((a, b) => (b.createdAt ?? b.id) - (a.createdAt ?? a.id));
-        if (alive) setComments(sorted);
+          { id: 3, author: "익명16", time: "09/25 01:05", text: "???", likes: 0, deleted: false, createdAt: now - 10 * 60 * 1000, replies: [] },
+        ].sort((a, b) => (b.createdAt ?? b.id) - (a.createdAt ?? a.id));
+        if (alive) setComments(seed);
 
         const store = readStore();
         const initial = store[id] || {
           createdAt: parseRelativeToCreatedAt(data.time),
           likes: data.likes ?? 0,
-          comments: countAllComments(sorted),
+          comments: countAllComments(seed),
           liked: false,
         };
-        patchStore(id, initial); 
+        patchStore(id, initial);
         if (alive) setMeta(initial);
       } catch (e) {
         if (alive) setErr(e.message || "불러오기 실패");
@@ -148,54 +101,30 @@ export default function MarketDetail() {
         if (alive) setLoading(false);
       }
     })();
-    return () => {
-      alive = false;
-    };
+    return () => { alive = false; };
   }, [id, fallback]);
 
   const submitRootComment = () => {
     const text = newComment.trim();
     if (!text) return;
-    const item = {
-      id: Date.now(),
-      author: "익명",
-      time: "방금 전",
-      text,
-      likes: 0,
-      deleted: false,
-      createdAt: Date.now(),
-      replies: [],
-    };
+    const item = { id: Date.now(), author: "익명", time: "방금 전", text, likes: 0, deleted: false, createdAt: Date.now(), replies: [] };
     const next = [item, ...comments].sort((a, b) => (b.createdAt ?? b.id) - (a.createdAt ?? a.id));
     setComments(next);
     setNewComment("");
-
     const total = countAllComments(next);
     const nextMeta = patchStore(id, { comments: total });
     setMeta(nextMeta);
   };
 
-  const toggleReply = (cid) =>
-    setReplyOpen((prev) => ({ ...prev, [cid]: !prev[cid] }));
-
+  const toggleReply = (cid) => setReplyOpen((p) => ({ ...p, [cid]: !p[cid] }));
   const submitReply = (cid) => {
     const text = (replyDraft[cid] || "").trim();
     if (!text) return;
-    const reply = {
-      id: Date.now(),
-      author: "익명",
-      time: "방금 전",
-      text,
-      likes: 0,
-      createdAt: Date.now(),
-    };
-    const next = comments.map((c) =>
-      c.id === cid ? { ...c, replies: [...c.replies, reply] } : c
-    );
+    const reply = { id: Date.now(), author: "익명", time: "방금 전", text, likes: 0, createdAt: Date.now() };
+    const next = comments.map((c) => (c.id === cid ? { ...c, replies: [...c.replies, reply] } : c));
     setComments(next);
     setReplyDraft((d) => ({ ...d, [cid]: "" }));
     setReplyOpen((o) => ({ ...o, [cid]: false }));
-
     const total = countAllComments(next);
     const nextMeta = patchStore(id, { comments: total });
     setMeta(nextMeta);
@@ -211,25 +140,22 @@ export default function MarketDetail() {
 
   if (loading) {
     return (
-      <div>
+      <div className={styles.detailWrap}>
+      <div data-role="detail" className={styles.detailWrap} style={{ display: "block" }}></div>
         <div className={`${styles.metaRow} ${styles.detailTop}`}>
-          <button className={styles.backBtn} onClick={() => nav(-1)}>
-            ← 목록
-          </button>
+          <button className={styles.backBtn} onClick={() => nav(-1)}>← 목록</button>
         </div>
-        <div className={styles.body}>불러오는 중…</div>
+        <div className={styles.detailBody}>불러오는 중…</div>
       </div>
     );
   }
   if (err || !post) {
     return (
-      <div>
+      <div className={styles.detailWrap}>
         <div className={`${styles.metaRow} ${styles.detailTop}`}>
-          <button className={styles.backBtn} onClick={() => nav(-1)}>
-            ← 목록
-          </button>
+          <button className={styles.backBtn} onClick={() => nav(-1)}>← 목록</button>
         </div>
-        <div className={styles.body} style={{ color: "crimson" }}>
+        <div className={styles.detailBody} style={{ color: "crimson" }}>
           {err || "게시글을 불러오지 못했습니다."}
         </div>
       </div>
@@ -240,17 +166,14 @@ export default function MarketDetail() {
   const totalComments = countAllComments(comments);
 
   return (
-    <div>
+    <div className={styles.detailWrap}>
       <div className={`${styles.metaRow} ${styles.detailTop}`}>
-        <button className={styles.backBtn} onClick={() => nav(-1)}>
-          ← 목록
-        </button>
+        <button className={styles.backBtn} onClick={() => nav(-1)}>← 목록</button>
       </div>
 
-      <div className={styles.title}>{post.title}</div>
-      <div className={styles.body} style={{ whiteSpace: "pre-wrap" }}>
-        {post.body}
-      </div>
+      <div className={styles.detailTitle}>{post.title}</div>
+      <div className={styles.detailBody}>{post.body}</div>
+
       {Array.isArray(post.images) && post.images.length > 0 && (
         <div className={styles.imageWrap}>{post.images[0]}</div>
       )}
@@ -296,16 +219,10 @@ export default function MarketDetail() {
             placeholder="댓글을 입력하세요."
             value={newComment}
             onChange={(e) => setNewComment(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") submitRootComment();
-            }}
+            onKeyDown={(e) => { if (e.key === "Enter") submitRootComment(); }}
           />
           <div className={styles.commentSide}>
-            <button
-              className={styles.sendBtn}
-              onClick={submitRootComment}
-              aria-label="댓글 등록"
-            >
+            <button className={styles.sendBtn} onClick={submitRootComment} aria-label="댓글 등록">
               <i className="fa-solid fa-pen"></i>
             </button>
           </div>
@@ -326,9 +243,7 @@ export default function MarketDetail() {
                     <div className={styles.commentTime}>{timeAgo(c.createdAt)}</div>
                   </div>
                   <div className={styles.commentActRight}>
-                    <button className={styles.linkBtn} onClick={() => toggleReply(c.id)}>
-                      대댓글
-                    </button>
+                    <button className={styles.linkBtn} onClick={() => toggleReply(c.id)}>대댓글</button>
                     <button className={styles.linkBtn}>공감</button>
                     <button className={styles.linkBtn}>쪽지</button>
                     <button className={styles.linkBtn}>신고</button>
@@ -353,12 +268,8 @@ export default function MarketDetail() {
                       type="text"
                       placeholder="대댓글을 입력하세요."
                       value={replyDraft[c.id] || ""}
-                      onChange={(e) =>
-                        setReplyDraft((d) => ({ ...d, [c.id]: e.target.value }))
-                      }
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") submitReply(c.id);
-                      }}
+                      onChange={(e) => setReplyDraft((d) => ({ ...d, [c.id]: e.target.value }))}
+                      onKeyDown={(e) => { if (e.key === "Enter") submitReply(c.id); }}
                     />
                     <button className={styles.replySendBtn} onClick={() => submitReply(c.id)}>
                       등록
@@ -373,11 +284,7 @@ export default function MarketDetail() {
                         <div className={styles.commentHead}>
                           <div className={styles.commentAvatarSm} />
                           <div className={styles.commentMeta}>
-                            <div
-                              className={`${styles.commentAuthor} ${
-                                r.isWriter ? styles.writer : ""
-                              }`}
-                            >
+                            <div className={`${styles.commentAuthor} ${r.isWriter ? styles.writer : ""}`}>
                               {r.author}
                             </div>
                             <div className={styles.commentTime}>{timeAgo(r.createdAt)}</div>

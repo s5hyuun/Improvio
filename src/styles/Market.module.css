@@ -1,3 +1,4 @@
+/* ========== 목록(List) 영역: 그대로 사용 ========== */
 .header {
   display: flex;
   align-items: center;
@@ -24,11 +25,7 @@
 .card:hover { background: #f9fafb; }
 .firstCard { border-top: none; }
 
-.cardContent {
-  flex: 1;
-  min-width: 0;
-  order: 1;
-}
+.cardContent { flex: 1; min-width: 0; order: 1; }
 
 .thumb {
   order: 2;
@@ -44,25 +41,12 @@
   color: #4b5563;
   font-weight: 700;
 }
-.thumb img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  border-radius: inherit;
-}
+.thumb img { width: 100%; height: 100%; object-fit: cover; border-radius: inherit; }
 
-.titleRow {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 6px;
-}
-.title {
-  font-size: 16px;
-  font-weight: 800;
-  color: #0f172a;
-}
+.titleRow { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.title { font-size: 16px; font-weight: 800; color: #0f172a; }
 
+/* ✅ 목록 전용 본문: 한 줄/말줄임 (상세에는 쓰지 않음) */
 .body {
   font-size: 14px;
   color: #374151;
@@ -80,80 +64,119 @@
   font-size: 12px;
   margin-top: 30px;
 }
-.metaLeft {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 0;
-}
-.metaRight {
-  display: inline-flex;
-  align-items: center;
-  gap: 16px;
-}
-.metaItem {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
+.metaLeft { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.metaRight { display: inline-flex; align-items: center; gap: 16px; }
+.metaItem { display: inline-flex; align-items: center; gap: 6px; }
 .metaItem i { color: #6b7280; }
+.dot { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: #9ca3af; margin: 0 2px; }
 
-.dot {
-  display: inline-block;
-  width: 4px;
-  height: 4px;
-  border-radius: 50%;
-  background: #9ca3af;
-  margin: 0 2px;
+.sr-only, .srOnly {
+  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
+  overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0;
 }
 
-.sr-only,
-.srOnly {
-  position: absolute;
-  width: 1px; height: 1px;
-  padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0,0,0,0);
-  white-space: nowrap; border: 0;
+/* 반응형(목록) */
+@media (max-width: 720px) {
+  .card { flex-direction: column; }
+  .thumb { order: 2; width: 120px; height: 72px; margin-left: 0; align-self: flex-end; }
 }
 
-.detailTop { justify-content: flex-end; margin-bottom: 8px; }
+/* ========== 상세(Detail) – 항상 단일 컬럼로 고정 ========== */
+.detailWrap {
+  background: #fff;
+  border-radius: 12px;
+  padding: 20px;
+
+  /* 넓은 화면에서도 모바일과 같은 폭으로 중앙 정렬 */
+  max-width: 820px;         /* 필요하면 760~900px 사이로 조절 */
+  margin: 0 auto;
+
+  /* 단일 컬럼 */
+  display: block;
+}
+
+/* 상단 목록 버튼 라인 */
+.detailTop {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  margin-bottom: 12px;
+}
 .backBtn {
   background: none;
   border: 1px solid #dbeafe;
-  padding: 4px 10px;
-  border-radius: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
   cursor: pointer;
-  margin-left: auto;
-  margin-top: 10px;
+  color: #1d4ed8;
+  margin-left: 480px;  
 }
 .backBtn:focus,
 .backBtn:focus-visible { outline: none; box-shadow: none; }
 
-.commentsSection { margin-top: 16px; }
-.commentsHeader { font-weight: 700; margin-bottom: 10px; color: #111827; }
+/* 글 제목/본문 (상세 전용) */
+.detailTitle {
+  font-size: 22px;
+  font-weight: 800;
+  color: #111827;
+  margin: 6px 0 10px;
+  line-height: 1.35;
+  white-space: normal;
+  word-break: keep-all;
+}
+.detailBody {
+  font-size: 15px;
+  color: #111827;
+  line-height: 1.8;
+  white-space: pre-wrap;       /* 줄바꿈/공백 유지 */
+  word-break: break-word;      /* 긴 단어 줄바꿈 */
+}
+
+/* 상세 이미지(본문 아래에 항상 한 줄로) */
+.imageWrap {
+  width: 100%;
+  min-height: 240px;           /* 실제 이미지 없을 때 박스 높이 */
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  display: flex; align-items: center; justify-content: center;
+  color: #4b5563; font-weight: 700;
+  margin: 12px 0;
+}
+
+/* 상세 메타 정보 라인 */
+.detailWrap .metaRow {
+  margin-top: 10px;
+  border-top: 1px solid #eef0f3;
+  padding-top: 10px;
+}
+.detailWrap .metaLeft { gap: 12px; }
+
+/* 댓글 영역 */
+.commentsSection {
+  border-top: 1px solid #eef0f3;
+  margin-top: 20px;
+  padding-top: 16px;
+}
+.commentsHeader { font-size: 16px; font-weight: 700; color: #111827; }
 .commentsCount { margin-left: 6px; color: #6b7280; font-weight: 600; }
 
 .commentDock {
   display: flex; align-items: center; justify-content: space-between;
   border: 1px solid #e5e7eb; border-radius: 8px; background: #f7f7f7;
-  padding: 10px; gap: 10px; margin-bottom: 12px;
+  padding: 10px; gap: 10px; margin: 12px 0;
 }
 .commentInputBar {
   flex: 1; height: 42px; border: 1px solid #e5e7eb; border-radius: 6px;
   padding: 0 12px; font-size: 15px; background: #fff;
 }
-.commentInputBar:focus {
-  outline: none; border-color: #bfdbfe;
-  box-shadow: 0 0 0 3px rgba(59,130,246,.12);
-}
+.commentInputBar:focus { outline: none; border-color: #bfdbfe; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
 .commentSide { display: flex; align-items: center; gap: 12px; }
 .sendBtn {
   width: 48px; height: 42px; border: none; border-radius: 8px; cursor: pointer;
   background: #1d4ed8; color: #fff; font-size: 16px;
   display: inline-flex; align-items: center; justify-content: center;
 }
-.sendBtn:focus { outline: none; box-shadow: none; }
-.sendBtn:hover { filter: brightness(0.95); }
 
 .commentsList { display: flex; flex-direction: column; gap: 16px; }
 .commentItem { border-bottom: 1px solid #eef0f3; padding: 16px 0; }
@@ -176,40 +199,20 @@
 
 .commentBody { margin-top: 10px; color: #111827; line-height: 1.7; }
 .commentFoot { margin-top: 6px; display: flex; align-items: center; gap: 12px; }
-
 .likeWrap { display: inline-flex; align-items: center; gap: 6px; color: #6b7280; }
 .likeCount { color: #ef4444; font-weight: 700; }
 
 .replyList { margin-top: 12px; display: flex; flex-direction: column; gap: 12px; }
-.replyBox {
-  margin-left: 44px;
-  background: #f7f8fb;
-  border: 1px solid #e9ecf3;
-  border-radius: 8px;
-  padding: 12px;
-}
+.replyBox { margin-left: 44px; background: #f7f8fb; border: 1px solid #e9ecf3; border-radius: 8px; padding: 12px; }
 .replyInputRow { margin-top: 10px; margin-left: 44px; display: flex; gap: 8px; }
 .replyInput {
-  flex: 1; height: 38px; border: 1px solid #e5e7eb; border-radius: 6px;
-  padding: 0 10px; background: #fff;
+  flex: 1; height: 38px; border: 1px solid #e5e7eb; border-radius: 6px; padding: 0 10px; background: #fff;
 }
 .replyInput:focus { outline: none; border-color: #bfdbfe; box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
 .replySendBtn { border: none; background: #1d4ed8; color: #fff; border-radius: 6px; padding: 0 12px; cursor: pointer; }
 
-.listBtnWrap { margin-top: 16px; }
-.listBtn {
-  display: inline-flex; align-items: center; gap: 8px;
-  border: 2px solid #1d4ed8; color: #1d4ed8; background: #fff;
-  padding: 10px 16px; border-radius: 10px; font-weight: 800; cursor: pointer;
-}
-.listBtn:hover { background: #fff5f5; }
-
-@media (max-width: 720px) {
-  .card { flex-direction: column; }
-  .thumb {
-    order: 2;
-    width: 120px; height: 72px;
-    margin-left: 0;
-    align-self: flex-end;
-  }
+/* 반응형(상세) – 굳이 필요 없음(항상 단일 컬럼이므로), 안전용만 둠 */
+@media (max-width: 480px) {
+  .detailWrap { padding: 16px; max-width: 100%; }
+  .imageWrap { min-height: 200px; }
 }

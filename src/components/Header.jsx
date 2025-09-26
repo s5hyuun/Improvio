@@ -1,8 +1,42 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 const NOTIFS_STORAGE_KEY = "header_notifs_v1";
+const STORAGE_DEPT_KEY = "selected_dept";
+const AUTH_KEY = "auth_user";
+
+// Sidebar와 동일한 부서/아이콘 매핑
+const DEPARTMENTS = [
+  { id: "rd",           label: "R&D",         icon: "bulb" },
+  { id: "globalSales",  label: "해외영업",      icon: "globe" },
+  { id: "basicDesign",  label: "기본설계",      icon: "doc" },
+  { id: "futureBiz",    label: "미래사업개발",   icon: "flag" },
+  { id: "shipDesign",   label: "조선설계",      icon: "triangle" },
+  { id: "marineDesign", label: "해양설계",      icon: "sea" },
+  { id: "pm",           label: "PM",          icon: "user" },
+  { id: "purchase",     label: "구매",         icon: "list" },
+  { id: "ops",          label: "경영지원",      icon: "monitor" },
+  { id: "safety",       label: "안전",         icon: "shield" },
+];
+function deptById(id) {
+  return DEPARTMENTS.find((d) => d.id === id) || null;
+}
+function loadUser() {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  return {
+    role: localStorage.getItem("user_role") || "admin",
+    username: localStorage.getItem("username") || "username",
+    deptId: localStorage.getItem("user_dept") || null,
+  };
+}
 
 export default function Header() {
+  const user = useMemo(loadUser, []);
+  const isEmployee = String(user.role).toLowerCase() === "employee";
+
+  // --- 알림 상태 (기존) ---
   const [notifs, setNotifs] = useState(() => {
     try {
       const raw = localStorage.getItem(NOTIFS_STORAGE_KEY);
@@ -11,13 +45,11 @@ export default function Header() {
       return [];
     }
   });
-
   useEffect(() => {
     try {
       localStorage.setItem(NOTIFS_STORAGE_KEY, JSON.stringify(notifs));
     } catch {}
   }, [notifs]);
-
   useEffect(() => {
     const onAdd = (e) => {
       const { id, title, meta } = e.detail || {};
@@ -30,10 +62,10 @@ export default function Header() {
     window.addEventListener("header:notif:add", onAdd);
     return () => window.removeEventListener("header:notif:add", onAdd);
   }, []);
-
   const unread = notifs.filter((n) => !n.read).length;
   const [notifOpen, setNotifOpen] = useState(false);
 
+  // --- 언어 (기존) ---
   const [langOpen, setLangOpen] = useState(false);
   const [lang, setLang] = useState("한국어");
 
@@ -74,7 +106,35 @@ export default function Header() {
     setNotifs((prev) => prev.filter((n) => n.id !== id));
   const clearAll = () => setNotifs([]);
 
-  const [hoverAct, setHoverAct] = useState(null); 
+  // --- 부서 칩: 직원에게만 표시 ---
+  const [deptId, setDeptId] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_DEPT_KEY);
+      if (saved && deptById(saved)) return saved;
+      if (isEmployee && user.deptId && deptById(user.deptId)) return user.deptId;
+      return null;
+    } catch {
+      return isEmployee ? user.deptId || null : null;
+    }
+  });
+  // Sidebar에서 발생시키는 dept:changed 이벤트를 수신
+  useEffect(() => {
+    function onDeptChanged(e) {
+      const id = e?.detail?.id;
+      if (!id || id === "all") {
+        setDeptId(null);
+      } else if (deptById(id)) {
+        setDeptId(id);
+      }
+    }
+    window.addEventListener("dept:changed", onDeptChanged);
+    return () => window.removeEventListener("dept:changed", onDeptChanged);
+  }, []);
+
+  const dept = deptById(deptId || (isEmployee ? user.deptId : null));
+
+  const [hoverAct, setHoverAct] = useState(null);
+
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -96,6 +156,31 @@ export default function Header() {
           </span>
           <input type="text" placeholder="검색" />
         </div>
+
+        {/* 직원일 때만: 선택된 부서 아이콘+텍스트 칩 (#2563EB) */}
+        {isEmployee && dept && (
+          <div
+            aria-label="현재 부서"
+            title={dept.label}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: 8,
+              padding: "8px 12px",
+              borderRadius: 12,
+              border: "1px solid #2563EB",
+              color: "#2563EB",
+              background: "rgba(37,99,235,0.06)",
+              fontWeight: 800,
+              whiteSpace: "nowrap",
+            }}
+          >
+            <span className="ico" style={{ color: "#2563EB" }}>
+              {icon(dept.icon)}
+            </span>
+            <span>{dept.label}</span>
+          </div>
+        )}
 
         <div className="dropdown" ref={notifMenuRef}>
           <button
@@ -156,13 +241,7 @@ export default function Header() {
               )}
 
               {notifs.length > 0 && (
-                <li
-                  role="presentation"
-                  style={{
-                    padding: "8px 12px",
-                    background: "transparent", 
-                  }}
-                >
+                <li role="presentation" style={{ padding: "8px 12px", background: "transparent" }}>
                   <div style={{ display: "flex", justifyContent: "flex-end" }}>
                     <div
                       role="group"
@@ -197,7 +276,7 @@ export default function Header() {
 
                       <button
                         type="button"
-                        onClick={clearAll} 
+                        onClick={clearAll}
                         onMouseEnter={() => setHoverAct("delete")}
                         onMouseLeave={() => setHoverAct(null)}
                         className="link-btn"
@@ -262,4 +341,75 @@ export default function Header() {
       </div>
     </header>
   );
+}
+
+// 아이콘 셋 (Sidebar와 동일)
+function icon(name) {
+  switch (name) {
+    case "bulb":
+      return (
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+        </svg>
+      );
+    case "globe":
+      return (
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2"/>
+          <path d="M2 12h20M12 2a15 15 0 0 1 0 20" fill="none" stroke="currentColor" strokeWidth="2"/>
+        </svg>
+      );
+    case "doc":
+      return (
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" strokeWidth="2"/>
+          <path d="M14 3v6h6" fill="none" stroke="currentColor" strokeWidth="2"/>
+        </svg>
+      );
+    case "flag":
+      return (
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <path d="M12 2v6l5 3-5 3v8" fill="none" stroke="currentColor" strokeWidth="2"/>
+        </svg>
+      );
+    case "triangle":
+      return (
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <path d="M3 18l9-12 9 12H3z" fill="none" stroke="currentColor" strokeWidth="2"/>
+        </svg>
+      );
+    case "sea":
+      return (
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <path d="M2 18s4-6 10-6 10 6 10 6-4 4-10 4-10-4-10-4zm10-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="currentColor" strokeWidth="2"/>
+        </svg>
+      );
+    case "user":
+      return (
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22c0-5 4-8 9-8s9 3 9 8" fill="none" stroke="currentColor" strokeWidth="2"/>
+        </svg>
+      );
+    case "list":
+      return (
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" strokeWidth="2"/>
+        </svg>
+      );
+    case "monitor":
+      return (
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <path d="M4 4h16v12H4z" fill="none" stroke="currentColor" strokeWidth="2"/>
+          <path d="M8 20h8" stroke="currentColor" strokeWidth="2"/>
+        </svg>
+      );
+    case "shield":
+      return (
+        <svg viewBox="0 0 24 24" width="18" height="18">
+          <path d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z" fill="none" stroke="currentColor" strokeWidth="2"/>
+        </svg>
+      );
+    default:
+      return null;
+  }
 }

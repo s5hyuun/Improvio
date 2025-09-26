@@ -1,3 +1,4 @@
+/* ===== 레이아웃 ===== */
 .commContainer {
   display: flex;
   gap: 10px;
@@ -5,45 +6,46 @@
   height: 100%;
 }
 
-i {
-  margin-right: 6px;
-}
-
-ul {
-  padding: 0;
-  list-style: none;
-}
+/* 공통 */
+i { margin-right: 6px; }
+ul { padding: 0; list-style: none; }
 
 .commBoards {
   flex: 0.9;
-  padding: 20px;
+  padding: 5px;
+  background: #fff;
+  border-radius: 14px;
 }
 
-.commBoards > div {
+.sectionTitle {
   font-size: 18px;
   padding-bottom: 20px;
   border-bottom: 1px solid #dbeafe;
 }
 
-.commBoards li {
+.boardList { margin: 0; padding: 0; }
+
+.boardList li {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
-  color: #4b5563;
-  padding: 12px 20px;
   justify-content: space-between;
+  margin-bottom: 10px;
+  padding: 12px 20px;
+  color: #4b5563;
   border-radius: 16px;
   border: 1px solid transparent;
   cursor: pointer;
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease;
 }
 
-.commBoards li:hover {
+/* ✅ 모든 항목(장터 포함) 동일 호버 반응 */
+.boardList li:hover {
   border: 1px solid #bfdbfe;
   background-color: #eff6ff;
   color: #1d4ed8;
 }
 
-.commBoards span {
+.badge {
   background-color: #f3f4f6;
   padding: 5px 10px;
   font-size: 14px;
@@ -53,69 +55,59 @@ ul {
 .commBoardsName {
   display: flex;
   align-items: center;
-  text-decoration: none; 
-  color: inherit;   
   gap: 8px;
+  text-decoration: none;
+  color: inherit;
 }
 
+/* ===== 중앙: 게시글 영역 ===== */
 .commPostsContainer {
   flex: 3;
   padding: 20px;
+  background: #fff;
+  border-radius: 14px;
 }
 
+/* 중앙 영역의 첫 줄 헤더(아이콘+제목) */
 .commPostsContainer > div:first-child {
-  display: flex;
+  /* display: flex; */
   align-items: center;
   font-size: 20px;
   border-bottom: 1px solid #dbeafe;
   padding-bottom: 20px;
 }
-
-.commPostsContainer > div:first-child i {
-  color: #2563eb;
-}
-
+.commPostsContainer > div:first-child i { color: #2563eb; }
 .commPostsContainer > div:first-child span {
   margin-left: 10px;
   font-size: 14px;
 }
 
-.commRightbar {
-  flex: 1.3;
-}
+/* ===== 우측: HOT/광고 ===== */
+.commRightbar { flex: 1.3; }
 
 .commHot {
-  /* height: 30%; */
   align-self: flex-start;
   padding: 20px;
+  background: #fff;
+  border-radius: 14px;
 }
-
 .commHot > div:first-child {
   font-size: 18px;
   padding-bottom: 20px;
   border-bottom: 1px solid #dbeafe;
 }
 
-.commHotPost {
-  padding: 10px 0;
-}
-
-.commBoards,
-.commPostsContainer,
-.commHot {
-  border-radius: 14px;
-  background-color: white;
-}
-
 .ad {
-  background-color: white;
+  background: #fff;
   margin-top: 10px;
   height: 200px;
   display: flex;
   justify-content: center;
   align-items: center;
+  border-radius: 14px;
 }
 
+/* ===== 기타(기존 유지) ===== */
 .postContainer {
   display: flex;
   flex-direction: column;
@@ -124,80 +116,19 @@ ul {
   cursor: pointer;
   position: relative;
 }
-.postContainer:hover {
-  background-color: #f3f4f6;
-}
-.postContainer div:first-child {
-  display: flex;
-  align-items: center;
-}
+.postContainer:hover { background-color: #f3f4f6; }
+.postContainer div:first-child { display: flex; align-items: center; }
 .postContainer div:first-child span {
-  background-color: tomato;
-  color: white;
-  padding: 4px 7px;
-  font-size: 10px;
-  border-radius: 6px;
-  margin-right: 10px;
+  background-color: tomato; color: white;
+  padding: 4px 7px; font-size: 10px; border-radius: 6px; margin-right: 10px;
 }
-.postContainer h1 {
-  margin: 0;
-  font-size: 18px;
-}
-.postContainer div {
-  margin-bottom: 6px;
-}
-.postContainer div:nth-child(2) {
-  font-size: 14px;
-}
-.postIcons span {
-  margin-right: 20px;
-  font-size: 12px;
-  color: #6b7280;
-}
+.postContainer h1 { margin: 0; font-size: 18px; }
+.postContainer div { margin-bottom: 6px; }
+.postContainer div:nth-child(2) { font-size: 14px; }
+.postIcons span { margin-right: 20px; font-size: 12px; color: #6b7280; }
 
-.commHotPost {
-  border-bottom: 1px solid #f3f4f6;
-  cursor: pointer;
-}
-.commHotPost:hover {
-  background-color: #f3f4f6;
-}
-.commHotPost > div:first-child {
-  margin-bottom: 10px;
-}
-.commHotPost > div:last-child {
-  font-size: 12px;
-}
-.commHotPost > div:last-child span {
-  margin-right: 10px;
-  color: #6b7280;
-}
-
-.commBoards li.noActive,
-.commBoards li.noActive:hover {
-  border: 1px solid transparent !important;
-  background: transparent !important;
-  color: inherit !important;
-}
-
-.commBoards li.noActive a {
-  text-decoration: none !important;
-  color: inherit !important;
-}
-
-.commBoards li.noActive {
-  border: 1px solid transparent;
-  background: transparent;
-  color: inherit;
-}
-
-.commBoards li.noActive:hover {
-  border: 1px solid #bfdbfe;
-  background-color: #eff6ff;
-  color: #1d4ed8;
-}
-
-.commBoards li.noActive a {
-  text-decoration: none;
-  color: inherit;
-}
+.commHotPost { border-bottom: 1px solid #f3f4f6; cursor: pointer; }
+.commHotPost:hover { background-color: #f3f4f6; }
+.commHotPost > div:first-child { margin-bottom: 10px; }
+.commHotPost > div:last-child { font-size: 12px; }
+.commHotPost > div:last-child span { margin-right: 10px; color: #6b7280; }

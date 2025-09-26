@@ -1,35 +1,58 @@
-// Sidebar.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 const STORAGE_DEPT_KEY = "selected_dept";
+const AUTH_KEY = "auth_user";
+
+// 공통 부서 정의
+const DEPARTMENTS = [
+  { id: "rd",           label: "R&D",         icon: "bulb" },
+  { id: "globalSales",  label: "해외영업",      icon: "globe" },
+  { id: "basicDesign",  label: "기본설계",      icon: "doc" },
+  { id: "futureBiz",    label: "미래사업개발",   icon: "flag" },
+  { id: "shipDesign",   label: "조선설계",      icon: "triangle" },
+  { id: "marineDesign", label: "해양설계",      icon: "sea" },
+  { id: "pm",           label: "PM",          icon: "user" },
+  { id: "purchase",     label: "구매",         icon: "list" },
+  { id: "ops",          label: "경영지원",      icon: "monitor" },
+  { id: "safety",       label: "안전",         icon: "shield" },
+];
+
+function loadUser() {
+  try {
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (raw) return JSON.parse(raw);
+  } catch {}
+  // fallback
+  return {
+    role: localStorage.getItem("user_role") || "admin",
+    username: localStorage.getItem("username") || "username",
+    deptId: localStorage.getItem("user_dept") || null,
+  };
+}
+function deptById(id) {
+  return DEPARTMENTS.find((d) => d.id === id) || null;
+}
 
 export default function Sidebar({ selected, onSelectDept }) {
   const location = useLocation();
   const isCommunity = location.pathname.startsWith("/community");
 
-  const departments = [
-    { id: "rd",           label: "R&D",       icon: "bulb" },
-    { id: "globalSales",  label: "해외영업",    icon: "globe" },
-    { id: "basicDesign",  label: "기본설계",    icon: "doc" },
-    { id: "futureBiz",    label: "미래사업개발", icon: "flag" },
-    { id: "shipDesign",   label: "조선설계",    icon: "triangle" },
-    { id: "marineDesign", label: "해양설계",    icon: "sea" },
-    { id: "pm",           label: "PM",        icon: "user" },
-    { id: "purchase",     label: "구매",       icon: "list" },
-    { id: "ops",          label: "경영지원",    icon: "monitor" },
-    { id: "safety",       label: "안전",       icon: "shield" },
-  ];
+  const user = useMemo(loadUser, []);
+  const isEmployee = String(user.role).toLowerCase() === "employee";
 
+  // 선택 상태: props.selected → 저장값 → 직원의 부서 → null
   const [internalSelected, setInternalSelected] = useState(() => {
     try {
+      if (typeof selected !== "undefined") {
+        return selected === "all" ? null : selected;
+      }
       const saved = localStorage.getItem(STORAGE_DEPT_KEY);
-      if (!saved) return null;
-      if (departments.some((d) => d.id === saved)) return saved;
-      const found = departments.find((d) => d.label === saved);
-      return found ? found.id : null;
-    } catch {
+      if (saved && deptById(saved)) return saved;
+      if (isEmployee && user.deptId && deptById(user.deptId)) return user.deptId;
       return null;
+    } catch {
+      return isEmployee && user.deptId ? user.deptId : null;
     }
   });
 
@@ -40,7 +63,7 @@ export default function Sidebar({ selected, onSelectDept }) {
 
   useEffect(() => {
     const cur = currentSelected;
-    const curLabel = departments.find((d) => d.id === cur)?.label ?? "";
+    const curLabel = deptById(cur)?.label ?? "";
 
     try {
       if (cur) localStorage.setItem(STORAGE_DEPT_KEY, cur);
@@ -56,13 +79,19 @@ export default function Sidebar({ selected, onSelectDept }) {
     } catch {}
   }, [currentSelected]);
 
-  const handleSelect = (id) => {
-    if (isControlled && onSelectDept) {
-      onSelectDept(id);
-    } else {
-      setInternalSelected(id);
+  // 직원 로그인 시 부서 지정 보정(최초 1회)
+  useEffect(() => {
+    if (!isControlled && isEmployee && user.deptId && deptById(user.deptId)) {
+      setInternalSelected((prev) => (prev ? prev : user.deptId));
     }
+  }, [isControlled, isEmployee, user.deptId]);
+
+  const handleSelect = (id) => {
+    if (isControlled && onSelectDept) onSelectDept(id);
+    else setInternalSelected(id);
   };
+
+  const myDept = deptById(isEmployee ? (user.deptId || currentSelected) : currentSelected);
 
   return (
     <aside className="sidebar">
@@ -72,15 +101,17 @@ export default function Sidebar({ selected, onSelectDept }) {
         </div>
 
         <section className="profile">
-          <div className="profile-name">username</div>
+          <div className="profile-name">{user.username || "username"}</div>
           <button className="link-btn" type="button">edit</button>
           <div className="chip-row">
-            <span className="chip chip-primary">R&amp;D</span>
-            <span className="chip chip-warn">관리자</span>
+            <span className="chip chip-primary">
+              {myDept ? myDept.label : "부서 미지정"}
+            </span>
+            {/* ✅ 직원이면 '관리자' 배지 숨김, 관리자만 표시 */}
+            {!isEmployee && <span className="chip chip-warn">관리자</span>}
           </div>
         </section>
 
-        {/* 네비게이션 */}
         <nav className="nav">
           <NavLink className="nav-item" to="/" end>
             <span className="ico">{icon("bars")}</span>
@@ -96,13 +127,12 @@ export default function Sidebar({ selected, onSelectDept }) {
           </NavLink>
         </nav>
 
-        {/* /community 경로에서는 부서 선택 숨김 */}
         {!isCommunity && (
           <>
             <div className="section-title">부서 선택</div>
             <div className="dept-wrap">
               <ul className="dept-list">
-                {departments.map((d) => (
+                {DEPARTMENTS.map((d) => (
                   <li
                     key={d.id}
                     className={`dept-item ${currentSelected === d.id ? "selected" : ""}`}
@@ -132,7 +162,7 @@ function icon(name) {
     case "doc":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0  1 1 1-1z" fill="none" stroke="currentColor" strokeWidth="2"/>
+          <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" strokeWidth="2"/>
           <path d="M14 3v6h6" fill="none" stroke="currentColor" strokeWidth="2"/>
         </svg>
       );
