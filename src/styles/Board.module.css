@@ -186,15 +186,13 @@ h3 {
 
 .modal {
   background: white;
-  padding: 26px 26px 40px 26px;
+  padding: 26px 26px 16px 26px;
   border-radius: 10px;
-  /* width: 40%; */
   width: min(530px, 92vw);
   max-height: 90vh;
   display: grid;
-  grid-template-rows: auto 1fr;
+  grid-template-rows: auto 1fr auto;
   overflow: hidden;
-
   position: relative;
 }
 i {
@@ -231,6 +229,11 @@ i {
   border: none;
   background-color: white;
   cursor: pointer;
+}
+.writeBody {
+  overflow-y: auto;
+  padding-right: 6px;
+  padding-bottom: 12px;
 }
 
 .detailContent {
@@ -425,31 +428,73 @@ i {
   /* font-weight: bold; */
   margin-bottom: 4px;
 }
-.writeTitle > input,
-.writeContent > textarea,
-.dropzone {
+
+.writeContent > textarea {
   border: none;
   width: 100%;
   border: 2px solid #eceff2;
+  min-height: 120px;
   border-radius: 10px;
   margin: 6px 0 18px 0;
+}
+.dropzone {
+  border: 2px solid #eceff2;
+  width: 100%;
+  border-radius: 10px;
+  margin: 6px 0 18px 0;
+  height: 40px;
+  min-height: 0;
+  padding: 24px 12px !important;
+  font-size: 15px;
+  line-height: 1.4;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.writeTitle > input {
+  border: 2px solid #eceff2;
+  width: 100%;
+  border-radius: 10px;
+  margin: 6px 0 18px 0;
+  height: 40px;
+  padding: 8px 12px;
+  font-size: 15px;
+  box-sizing: border-box;
 }
 .writeTitle > input,
 .writeContent > textarea {
   padding: 18px 15px;
   font-size: 16px;
 }
+.writeSubmit {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding-top: 10px;
+  margin-top: 8px;
+  border-top: 1px solid #eceff2;
+  z-index: 10;
+}
+.writeSubmit {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding-top: 10px;
+  margin-top: 8px;
+  border-top: 1px solid #eceff2;
+  z-index: 10;
+  /* box-shadow: 0 -8px 16px rgba(2, 6, 23, 0.06); */
+}
 .writeSubmit > button {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  margin-top: 20px;
   background-color: #1e3a8a;
   color: white;
-  padding: 8px 16px;
+  padding: 10px 16px;
   border: none;
   border-radius: 10px;
   cursor: pointer;
+  display: inline-block;
+  margin-left: auto;
 }
 /* =============file =========================*/
 .hiddenFileInput {
@@ -486,6 +531,11 @@ i {
   width: 100%;
   padding-left: 0;
   list-style: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f9fafb;
+  padding: 8px;
+  margin-bottom: 16px;
 }
 
 .fileItem {
@@ -493,18 +543,26 @@ i {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 6px 10px;
+  padding: 8px 10px;
   border-radius: 8px;
-  background: #f9f9f9;
-  /* width: 100%; */
+  background: #ffffff;
+  border: 1px solid #eef2ff;
 }
+.fileItem span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .fileItem button {
   background-color: #374151;
   border: none;
   color: white;
-  padding: 8px 14px;
-  border-radius: 10px;
+  padding: 6px 12px;
+  border-radius: 8px;
   cursor: pointer;
+  font-size: 13px;
 }
 
 .detailImages {
