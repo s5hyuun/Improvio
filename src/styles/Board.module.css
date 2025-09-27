@@ -183,8 +183,7 @@ h3 {
   justify-content: center;
   z-index: 9999;
 }
-
-.modal {
+.modalWrite {
   background: white;
   padding: 26px 26px 16px 26px;
   border-radius: 10px;
@@ -194,6 +193,28 @@ h3 {
   grid-template-rows: auto 1fr auto;
   overflow: hidden;
   position: relative;
+}
+.modal {
+  background: white;
+  padding: 26px 26px 16px 26px;
+  border-radius: 10px;
+  width: min(1100px, 92vw);
+  max-height: 90vh;
+  display: grid;
+  /* grid-template-rows: auto 1fr auto; */
+  grid-template-columns: minmax(0, 1.6fr) 380px;
+  gap: 20px;
+  height: 84vh;
+  max-height: 84vh;
+  overflow: hidden;
+  position: relative;
+}
+.detailIPost {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 i {
   margin-right: 5px;
@@ -241,6 +262,10 @@ i {
   padding: 20px;
   border-radius: 10px;
   margin-bottom: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 .detailContent > div:first-child {
   color: #1e3a8a;
@@ -272,14 +297,16 @@ i {
   border-radius: 10px;
 }
 .detailComment {
-  border-top: 2px solid #eceff2;
   padding-top: 10px;
-  overflow-y: auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  max-height: 300px;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-left: 1px solid #eceff2;
+  padding-left: 12px;
 }
 .detailComment > div:first-child {
   font-size: 18px;
@@ -289,7 +316,7 @@ i {
   /* color: #1e3a8a; */
 }
 .detailCommentInput {
-  position: relative;
+  /* position: relative; */
   display: flex;
   align-items: center;
   flex-shrink: 0;
@@ -570,6 +597,9 @@ i {
   gap: 10px;
   margin-bottom: 10px;
   overflow-x: auto;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 4px;
 }
 
 .detailImage {
@@ -582,4 +612,20 @@ i {
   gap: 10px;
   margin-bottom: 10px;
   overflow-x: auto;
+}
+
+@media (max-width: 1100px) {
+  .modal {
+    grid-template-columns: 1fr;
+    width: min(680px, 95vw);
+  }
+  .detailComment {
+    border-left: 0;
+    border-top: 1px solid #eceff2;
+    padding-left: 0;
+    padding-top: 10px;
+  }
+}
+.description {
+  color: black;
 }

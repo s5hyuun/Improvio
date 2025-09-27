@@ -55,7 +55,7 @@ function BoardWrite({ onClose, onSubmit }) {
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
-      <div className={styles.modal}>
+      <div className={styles.modalWrite}>
         {/* 상단 */}
         <div className={styles.writeTop}>
           <div>
