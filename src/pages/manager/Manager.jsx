@@ -20,7 +20,9 @@ function loadFromStorage() {
 }
 
 export default function Manager() {
-  const [active, setActive] = useState("dashboard");
+  const [active, setActive] = useState(
+    localStorage.getItem("active_view") || "dashboard"
+  );
   const [currentDeptId, setCurrentDeptId] = useState("all");
 
   const [items, setItems] = useState([]);
@@ -162,18 +164,9 @@ export default function Manager() {
       );
     };
 
-    const onPublished = (e) => {
-      const { title } = e.detail || {};
-      addHeaderNotif("새 공지 게시", title);
-    };
-    const onResumed = (e) => {
-      const { title } = e.detail || {};
-      addHeaderNotif("공지 게시 재개", title);
-    };
-    const onCreated = (e) => {
-      const { title } = e.detail || {};
-      addHeaderNotif("공지 작성 완료", title);
-    };
+    const onPublished = (e) => addHeaderNotif("새 공지 게시", e.detail?.title);
+    const onResumed = (e) => addHeaderNotif("공지 게시 재개", e.detail?.title);
+    const onCreated = (e) => addHeaderNotif("공지 작성 완료", e.detail?.title);
 
     window.addEventListener("notice:published", onPublished);
     window.addEventListener("notice:resumed", onResumed);
@@ -248,6 +241,12 @@ export default function Manager() {
   };
   const labelStyle = { fontSize: "14px", color: "#4b5563" };
 
+  const handleClick = (view) => {
+    localStorage.setItem("active_view", view);
+    setActive(view);
+    setTimeout(() => window.location.reload(), 0);
+  };
+
   return (
     <div className="app">
       <Sidebar
@@ -261,33 +260,37 @@ export default function Manager() {
           <div className={styles.btn}>
             <button
               type="button"
-              className={`${styles.button} ${active === "dashboard" ? styles.active : ""}`}
-              onClick={() => setActive("dashboard")}
-              aria-pressed={active === "dashboard"}
+              className={`${styles.button} ${
+                active === "dashboard" ? styles.active : ""
+              }`}
+              onClick={() => handleClick("dashboard")}
             >
               관리자 대시보드
             </button>
             <button
               type="button"
-              className={`${styles.button} ${active === "employee" ? styles.active : ""}`}
-              onClick={() => setActive("employee")}
-              aria-pressed={active === "employee"}
+              className={`${styles.button} ${
+                active === "employee" ? styles.active : ""
+              }`}
+              onClick={() => handleClick("employee")}
             >
               직원 관리
             </button>
             <button
               type="button"
-              className={`${styles.button} ${active === "suggestion" ? styles.active : ""}`}
-              onClick={() => setActive("suggestion")}
-              aria-pressed={active === "suggestion"}
+              className={`${styles.button} ${
+                active === "suggestion" ? styles.active : ""
+              }`}
+              onClick={() => handleClick("suggestion")}
             >
               제안 관리
             </button>
             <button
               type="button"
-              className={`${styles.button} ${active === "notice" ? styles.active : ""}`}
-              onClick={() => setActive("notice")}
-              aria-pressed={active === "notice"}
+              className={`${styles.button} ${
+                active === "notice" ? styles.active : ""
+              }`}
+              onClick={() => handleClick("notice")}
             >
               공지 관리
             </button>
@@ -295,21 +298,24 @@ export default function Manager() {
 
           {active === "dashboard" && (
             <>
-              <div style={gridStyle} aria-label="대시보드 통계">
+              <div style={gridStyle}>
                 {stats.map((s, i) => (
-                  <div key={i} style={cardStyle} role="status" aria-live="polite">
+                  <div key={i} style={cardStyle}>
                     <div style={valueStyle}>{s.value}</div>
                     <div style={labelStyle}>{s.label}</div>
                   </div>
                 ))}
               </div>
 
-              <div className={styles.urgentPanel} role="region" aria-label="긴급 제안">
+              <div className={styles.urgentPanel}>
                 <div className={styles.urgentPanelHeader}>⚠ 긴급 제안</div>
 
                 {loading ? (
                   <div className={styles.urgentCards}>
-                    <div className={styles.urgentCard} style={{ color: "#c2410c" }}>
+                    <div
+                      className={styles.urgentCard}
+                      style={{ color: "#c2410c" }}
+                    >
                       현재 긴급 제안이 없습니다.
                     </div>
                   </div>
@@ -318,17 +324,24 @@ export default function Manager() {
                     {urgentItems
                       .slice()
                       .sort((a, b) =>
-                        String(a.title || "").localeCompare(String(b.title || ""), "ko", {
-                          sensitivity: "base",
-                          numeric: true,
-                        })
+                        String(b.title || "").localeCompare(
+                          String(a.title || ""),
+                          "ko",
+                          {
+                            sensitivity: "base",
+                            numeric: true,
+                          }
+                        )
                       )
                       .map((u) => (
                         <div key={u.id} className={styles.urgentCard}>
                           <div className={styles.urgentCardText}>
-                            <div className={styles.rowTitle}>{u.title || "제목"}</div>
+                            <div className={styles.rowTitle}>
+                              {u.title || "제목"}
+                            </div>
                             <div className={styles.rowMeta}>
-                              {u.dept ?? "부서 미상"} · {String(u.created_at).slice(0, 10)}
+                              {u.dept ?? "부서 미상"} ·{" "}
+                              {String(u.created_at).slice(0, 10)}
                             </div>
                           </div>
                           <button
@@ -347,9 +360,7 @@ export default function Manager() {
           )}
 
           {active === "suggestion" && <SuggestionList />}
-
           {active === "employee" && <Member selectedDeptId={currentDeptId} />}
-
           {active === "notice" && <Notice />}
         </section>
       </main>
