@@ -1,3 +1,4 @@
+// Header.jsx
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const NOTIFS_STORAGE_KEY = "header_notifs_v1";
@@ -17,9 +18,11 @@ const DEPARTMENTS = [
   { id: "ops",          label: "경영지원",      icon: "monitor" },
   { id: "safety",       label: "안전",         icon: "shield" },
 ];
+
 function deptById(id) {
   return DEPARTMENTS.find((d) => d.id === id) || null;
 }
+
 function loadUser() {
   try {
     const raw = localStorage.getItem(AUTH_KEY);
@@ -32,11 +35,35 @@ function loadUser() {
   };
 }
 
+/** 공지 알림 정규화
+ * - 제목이 '공지 게시 재개'로 들어오는 기존 구조까지 자동 치환
+ * - 결과: title = 글 제목, meta = '관리자 · 시간'
+ */
+function normalizeNotice(n) {
+  const isNotice =
+    n.kind === "notice" ||
+    String(n.title || "").trim() === "공지 게시 재개";
+
+  if (!isNotice) return n;
+
+  // meta 예: "생산라인 자동화 제안 검토 필요 · 19:38"
+  const metaStr = String(n.meta ?? "");
+  const [descRaw, timeRaw] = metaStr.split("·"); // 앞: 설명(=실제 글제목), 뒤: 시간
+  const desc = (descRaw ?? "").trim();
+  const time = (timeRaw ?? "").trim();
+
+  return {
+    ...n,
+    title: desc || n.title || "공지",
+    meta: time ? `관리자 · ${time}` : "관리자",
+  };
+}
+
 export default function Header() {
   const user = useMemo(loadUser, []);
   const isEmployee = String(user.role).toLowerCase() === "employee";
 
-  // --- 알림 상태 (기존) ---
+  // --- 알림 상태 ---
   const [notifs, setNotifs] = useState(() => {
     try {
       const raw = localStorage.getItem(NOTIFS_STORAGE_KEY);
@@ -45,32 +72,43 @@ export default function Header() {
       return [];
     }
   });
+
   useEffect(() => {
     try {
       localStorage.setItem(NOTIFS_STORAGE_KEY, JSON.stringify(notifs));
     } catch {}
   }, [notifs]);
+
+  // 기존 이벤트 방식 유지(프로듀서 변경 불필요)
   useEffect(() => {
     const onAdd = (e) => {
-      const { id, title, meta } = e.detail || {};
-      if (!title) return;
+      const { id, title, meta, kind, postTitle, actor } = e.detail || {};
       setNotifs((prev) => [
-        { id: id ?? Date.now(), title, meta: meta ?? "", read: false },
+        {
+          id: id ?? Date.now(),
+          kind: kind || "generic",
+          // 원본을 그대로 저장(렌더링 단계에서 normalize)
+          title: postTitle || title || "",
+          meta: actor || meta || "",
+          read: false,
+        },
         ...prev,
       ]);
     };
     window.addEventListener("header:notif:add", onAdd);
     return () => window.removeEventListener("header:notif:add", onAdd);
   }, []);
+
   const unread = notifs.filter((n) => !n.read).length;
   const [notifOpen, setNotifOpen] = useState(false);
 
-  // --- 언어 (기존) ---
+  // --- 언어 ---
   const [langOpen, setLangOpen] = useState(false);
   const [lang, setLang] = useState("한국어");
 
   const langMenuRef = useRef(null);
   const notifMenuRef = useRef(null);
+
   useEffect(() => {
     function handleClick(e) {
       if (langMenuRef.current && !langMenuRef.current.contains(e.target)) {
@@ -117,7 +155,8 @@ export default function Header() {
       return isEmployee ? user.deptId || null : null;
     }
   });
-  // Sidebar에서 발생시키는 dept:changed 이벤트를 수신
+
+  // Sidebar에서 발생시키는 dept:changed 이벤트 수신
   useEffect(() => {
     function onDeptChanged(e) {
       const id = e?.detail?.id;
@@ -132,7 +171,6 @@ export default function Header() {
   }, []);
 
   const dept = deptById(deptId || (isEmployee ? user.deptId : null));
-
   const [hoverAct, setHoverAct] = useState(null);
 
   return (
@@ -157,7 +195,7 @@ export default function Header() {
           <input type="text" placeholder="검색" />
         </div>
 
-        {/* 직원일 때만: 선택된 부서 아이콘+텍스트 칩 (#2563EB) */}
+        {/* 직원일 때만: 선택된 부서 아이콘+텍스트 칩 */}
         {isEmployee && dept && (
           <div
             aria-label="현재 부서"
@@ -205,39 +243,42 @@ export default function Header() {
               {notifs.length === 0 ? (
                 <li role="menuitem" style={{ padding: "12px" }}>새 알림이 없습니다.</li>
               ) : (
-                notifs.map((n) => (
-                  <li
-                    key={n.id}
-                    role="menuitem"
-                    onClick={() => markAsRead(n.id)}
-                    style={{ display: "grid", gap: 6, padding: "10px 12px", opacity: n.read ? 0.6 : 1 }}
-                  >
-                    <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                      <span style={{ fontWeight: 700 }}>{n.title}</span>
-                      <button
-                        type="button"
-                        aria-label="알림 삭제"
-                        title="삭제"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          removeNotif(n.id);
-                        }}
-                        style={{
-                          border: "none",
-                          background: "transparent",
-                          color: "#9ca3af",
-                          fontSize: 18,
-                          lineHeight: 1,
-                          cursor: "pointer",
-                          padding: 0,
-                        }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                    <span style={{ fontSize: 12, opacity: 0.8 }}>{n.meta}</span>
-                  </li>
-                ))
+                notifs.map((raw) => {
+                  const n = normalizeNotice(raw);
+                  return (
+                    <li
+                      key={n.id}
+                      role="menuitem"
+                      onClick={() => markAsRead(n.id)}
+                      style={{ display: "grid", gap: 6, padding: "10px 12px", opacity: n.read ? 0.6 : 1 }}
+                    >
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                        <span style={{ fontWeight: 700 }}>{n.title}</span>
+                        <button
+                          type="button"
+                          aria-label="알림 삭제"
+                          title="삭제"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            removeNotif(n.id);
+                          }}
+                          style={{
+                            border: "none",
+                            background: "transparent",
+                            color: "#9ca3af",
+                            fontSize: 18,
+                            lineHeight: 1,
+                            cursor: "pointer",
+                            padding: 0,
+                          }}
+                        >
+                          ×
+                        </button>
+                      </div>
+                      <span style={{ fontSize: 12, opacity: 0.8 }}>{n.meta}</span>
+                    </li>
+                  );
+                })
               )}
 
               {notifs.length > 0 && (
