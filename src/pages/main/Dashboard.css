@@ -1,7 +1,6 @@
 .dashboard-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  /* 3열 */
+  grid-template-columns: repeat(3, 1fr); /* 3열 */
   gap: 20px;
   padding: 20px;
   background-color: #eaf2fb;
