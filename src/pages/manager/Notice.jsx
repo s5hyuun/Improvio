@@ -109,16 +109,16 @@ export default function Notice() {
       closeModal();
     } else {
       const now = new Date();
+      const created_at = `${now.getFullYear()}-${String(
+        now.getMonth() + 1
+      ).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
       const item = {
         id: Date.now(),
         title: t,
         body: b,
         urgent,
         active: true,
-        created_at: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
-          2,
-          "0"
-        )}-${String(now.getDate()).padStart(2, "0")}`,
+        created_at,
       };
       const next = [item, ...list];
       setList(next);
@@ -129,7 +129,6 @@ export default function Notice() {
           detail: { id: item.id, title: item.title },
         })
       );
-
       closeModal();
     }
   };
@@ -152,6 +151,24 @@ export default function Notice() {
         })
       );
     }
+  };
+
+  const removeNotice = () => {
+    if (editId === null) return;
+    const target = list.find((n) => n.id === editId);
+    if (!target) return;
+
+    const next = list.filter((n) => n.id !== editId);
+    setList(next);
+    broadcast(next);
+
+    window.dispatchEvent(
+      new CustomEvent("notice:deleted", {
+        detail: { id: target.id, title: target.title },
+      })
+    );
+
+    closeModal();
   };
 
   return (
@@ -263,6 +280,18 @@ export default function Notice() {
                 >
                   취소
                 </button>
+
+                {editId !== null && (
+                  <button
+                    type="button"
+                    className={styles.stopBtn} 
+                    onClick={removeNotice}
+                    title="공지 삭제"
+                  >
+                    삭제
+                  </button>
+                )}
+
                 <button type="submit" className={styles.submitBtn}>
                   {editId !== null ? "저장" : "게시"}
                 </button>

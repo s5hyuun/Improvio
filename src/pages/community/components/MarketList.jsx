@@ -1,4 +1,3 @@
-// src/pages/community/components/MarketList.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
@@ -37,13 +36,9 @@ const parseRel = (s) => {
   return Date.now() - ms;
 };
 
-/* ─────────────────────────────────────────
-    파일 내부 모달 컴포넌트: MarketWrite
-   ───────────────────────────────────────── */
 function MarketWrite({ onClose }) {
   const [mounted, setMounted] = useState(false);
 
-  // 폼 상태
   const [productName, setProductName] = useState("");
   const [title, setTitle] = useState("");
   const [category, setCategory] = useState("");
@@ -77,7 +72,6 @@ function MarketWrite({ onClose }) {
       alert("필수 항목을 확인해주세요.");
       return;
     }
-    // TODO: 저장/전송 로직 연결
     onClose?.();
   };
 
@@ -100,7 +94,6 @@ function MarketWrite({ onClose }) {
         </div>
 
         <form className={styles.writeForm} onSubmit={submit}>
-          {/* 상품명 */}
           <div className={styles.mwField}>
             <FieldLabel icon="fa-solid fa-box" text="상품명" req />
             <input
@@ -111,7 +104,6 @@ function MarketWrite({ onClose }) {
             />
           </div>
 
-          {/* 제목 */}
           <div className={styles.mwField}>
             <FieldLabel icon="fa-solid fa-tag" text="제목" req />
             <input
@@ -122,7 +114,6 @@ function MarketWrite({ onClose }) {
             />
           </div>
 
-          {/* 카테고리 / 가격 */}
           <div className={styles.mwRow2}>
             <div className={styles.mwField}>
               <FieldLabel text="카테고리" req />
@@ -171,7 +162,6 @@ function MarketWrite({ onClose }) {
             </div>
           </div>
 
-          {/* 상품 상태 */}
           <div className={styles.mwField}>
             <FieldLabel text="상품 상태" req />
             <select
@@ -188,7 +178,6 @@ function MarketWrite({ onClose }) {
             </select>
           </div>
 
-          {/* 상품 설명 */}
           <div className={styles.mwField}>
             <FieldLabel text="상품 설명" req />
             <textarea
@@ -200,7 +189,6 @@ function MarketWrite({ onClose }) {
             />
           </div>
 
-          {/* 상품 사진 */}
           <div className={styles.mwField}>
             <FieldLabel icon="fa-solid fa-camera" text="상품 사진" />
             <label htmlFor="market-file" className={styles.fileDrop}>
@@ -217,7 +205,6 @@ function MarketWrite({ onClose }) {
             </label>
           </div>
 
-          {/* 거래 방법 */}
           <div className={styles.mwField}>
             <FieldLabel icon="fa-solid fa-truck" text="거래 방법" req />
             <div className={styles.mwChecks}>
@@ -232,7 +219,6 @@ function MarketWrite({ onClose }) {
             </div>
           </div>
 
-          {/* 연락처 */}
           <div className={styles.mwField}>
             <FieldLabel icon="fa-solid fa-phone" text="연락처" />
             <input
@@ -254,7 +240,6 @@ function MarketWrite({ onClose }) {
 
   return createPortal(body, document.body);
 }
-/* ───────────────────────────────────────── */
 
 export default function MarketList({ boardKey }) {
   const nav = useNavigate();

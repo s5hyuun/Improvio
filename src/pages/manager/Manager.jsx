@@ -1,4 +1,3 @@
-// Manager.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
@@ -20,7 +19,6 @@ function loadFromStorage() {
   }
 }
 
-// 공지 목록에서 '긴급 + 활성'만 추출
 function pickUrgentNotices(list) {
   return (Array.isArray(list) ? list : []).filter((n) => n?.urgent && n?.active);
 }
@@ -32,14 +30,12 @@ export default function Manager() {
   const [currentDeptId, setCurrentDeptId] = useState("all");
 
   const [items, setItems] = useState([]);
-  const [urgentItems, setUrgentItems] = useState([]); // 제안(피드백) 긴급
+  const [urgentItems, setUrgentItems] = useState([]); 
   const [loading, setLoading] = useState(true);
 
-  // 공지 집계/목록
   const [activeNoticeCount, setActiveNoticeCount] = useState(0);
-  const [urgentNotices, setUrgentNotices] = useState([]); // 공지 중 '긴급'만
+  const [urgentNotices, setUrgentNotices] = useState([]);
 
-  // 공지 초기 로드
   useEffect(() => {
     try {
       const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
@@ -49,7 +45,6 @@ export default function Manager() {
     } catch {}
   }, []);
 
-  // 공지 변경 이벤트 수신 → 집계/긴급목록 동기화
   useEffect(() => {
     function onNoticeChanged(e) {
       const { activeCount, list } = e.detail || {};
@@ -69,7 +64,6 @@ export default function Manager() {
     return () => window.removeEventListener("notice:changed", onNoticeChanged);
   }, []);
 
-  // 부서 변경 수신
   useEffect(() => {
     const handler = (e) => {
       const next = e?.detail?.id ?? "all";
@@ -79,7 +73,6 @@ export default function Manager() {
     return () => window.removeEventListener("dept:changed", handler);
   }, []);
 
-  // 제안(피드백) 목록 로드
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -147,7 +140,6 @@ export default function Manager() {
     };
   }, []);
 
-  // 제안 긴급 토글 이벤트 수신
   useEffect(() => {
     function onUrgentChanged(e) {
       const { id, urgent, item } = e.detail || {};
@@ -169,7 +161,6 @@ export default function Manager() {
       window.removeEventListener("suggestion:urgent", onUrgentChanged);
   }, []);
 
-  // 헤더 알림 발행용 헬퍼
   const pushHeaderNotif = (label, title) => {
     const now = new Date();
     const hh = String(now.getHours()).padStart(2, "0");
@@ -181,7 +172,6 @@ export default function Manager() {
     );
   };
 
-  // 공지 '긴급 해제'
   const unmarkNoticeUrgent = (notice) => {
     try {
       const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
@@ -191,16 +181,13 @@ export default function Manager() {
       );
       localStorage.setItem(NOTICE_STORAGE_KEY, JSON.stringify(next));
 
-      // 상태 즉시 반영
       setUrgentNotices(pickUrgentNotices(next));
       setActiveNoticeCount(next.filter((n) => n.active).length);
 
-      // 다른 컴포넌트 동기화
       window.dispatchEvent(
         new CustomEvent("notice:changed", { detail: { list: next } })
       );
 
-      // 헤더 알림 (선택)
       pushHeaderNotif("공지 긴급 해제", notice.title);
     } catch {}
   };
@@ -273,7 +260,6 @@ export default function Manager() {
     setTimeout(() => window.location.reload(), 0);
   };
 
-  // 공지 날짜/부서 안전 추출
   const noticeMeta = (n) => {
     const dept = n?.dept || n?.deptLabel || "공지";
     const dt =
@@ -324,7 +310,6 @@ export default function Manager() {
 
           {active === "dashboard" && (
             <>
-              {/* 상단 통계 */}
               <div style={gridStyle}>
                 {stats.map((s, i) => (
                   <div key={i} style={cardStyle}>
@@ -334,7 +319,6 @@ export default function Manager() {
                 ))}
               </div>
 
-              {/* 긴급 제안 */}
               <div className={styles.urgentPanel}>
                 <div className={styles.urgentPanelHeader}>⚠ 긴급 제안</div>
 
@@ -376,7 +360,6 @@ export default function Manager() {
                 )}
               </div>
 
-              {/* 긴급 공지 */}
               <div className={styles.urgentPanel}>
                 <div className={styles.urgentPanelHeader}>⚠ 긴급 공지</div>
 
