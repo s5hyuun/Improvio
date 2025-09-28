@@ -1,3 +1,4 @@
+// src/pages/community/components/MarketList.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import styles from "../../../styles/Market.module.css";
@@ -38,13 +39,17 @@ const parseRel = (s) => {
 export default function MarketList({ boardKey }) {
   const nav = useNavigate();
   const { pathname } = useLocation();
-  const isMarket = boardKey ? boardKey === "market" : pathname.includes("/market");
 
+  // 어떤 보드인지 판별
+  const isMarket = boardKey ? boardKey === "market" : pathname.includes("/market");
   const boardMeta = isMarket
     ? { title: "장터게시판", count: 67, icon: "fa-solid fa-cart-shopping" }
     : { title: "자유게시판", count: 324, icon: "fa-solid fa-message" };
 
   const showThumb = isMarket;
+
+  // **모달 토글: 로컬 상태로만 제어**
+  const [showWrite, setShowWrite] = useState(false);
 
   const base = useMemo(() => ([
     { id: 88156, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "6시간 전",  comments: 0, likes: 0, views: 0 },
@@ -52,6 +57,7 @@ export default function MarketList({ boardKey }) {
     { id: 80421, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "2일 전",   comments: 0, likes: 0, views: 0 },
   ]), []);
 
+  // 스토리지 마이그레이션
   const migrate = (store) => {
     if (store.__v === SCHEMA_V) return store;
     const next = { ...store };
@@ -96,6 +102,7 @@ export default function MarketList({ boardKey }) {
     };
   }, []);
 
+  // 상대시간 1분마다 갱신
   const [, setTick] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setTick((n) => n + 1), 60 * 1000);
@@ -109,18 +116,29 @@ export default function MarketList({ boardKey }) {
     nav(`/community/market/${id}`);
   };
 
+  // **글쓰기 버튼 → 로컬 상태로 모달 오픈**
   const goWrite = () => {
-    nav(isMarket ? "/community/market/write" : "/community/free/write");
+    console.log("[MarketList] 글쓰기 클릭"); // 클릭 여부 확인용
+    setShowWrite(true);
+  };
+
+  const closeWrite = () => {
+    setShowWrite(false);
   };
 
   return (
     <>
-      <div className={styles.header}>
+      <div className={styles.header} style={{ position: "relative" }}>
         <i className={boardMeta.icon} aria-hidden="true" />
         {boardMeta.title}
         <span> ({boardMeta.count})</span>
 
-        <button type="button" className={styles.writeBtn} onClick={goWrite}>
+        <button
+          type="button"
+          className={styles.writeBtn}
+          onClick={goWrite}
+          style={{ cursor: "pointer", zIndex: 1 }}
+        >
           <i className="fa-solid fa-pen" aria-hidden="true" />
           글쓰기
         </button>
@@ -182,6 +200,9 @@ export default function MarketList({ boardKey }) {
           );
         })}
       </div>
+
+      {/* 모달 표시: 포털로 body 아래에 떠서 z-index/overflow 영향 안 받음 */}
+      {showWrite && <MarketWrite onClose={closeWrite} />}
     </>
   );
 }
