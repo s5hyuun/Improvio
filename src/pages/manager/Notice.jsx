@@ -1,4 +1,3 @@
-// Notice.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/Notice.module.css";
 
@@ -7,7 +6,7 @@ const STORAGE_KEY = "notices_v1";
 function loadNotices() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null; // 저장이 없으면 null, 있으면 [] 포함해 그대로 반환
+    return raw ? JSON.parse(raw) : null; 
   } catch {
     return null;
   }
@@ -38,14 +37,12 @@ export default function Notice() {
   useEffect(() => {
     const cached = loadNotices();
 
-    // ✅ 저장값이 존재하면(빈 배열 [] 포함) 그대로 사용
     if (cached !== null) {
       setList(cached);
       broadcast(cached);
       return;
     }
 
-    // ⛳ 최초 방문(저장 자체가 없을 때)만 시드 주입
     const seed = [
       {
         id: 1,
@@ -160,7 +157,6 @@ export default function Notice() {
     }
   };
 
-  // 🔥 확인창 없이 즉시 삭제 + 저장소 반영 (새로고침해도 유지)
   const removeNotice = () => {
     if (editId === null) return;
     const target = list.find((n) => n.id === editId);
@@ -168,7 +164,7 @@ export default function Notice() {
 
     const next = list.filter((n) => n.id !== editId);
     setList(next);
-    broadcast(next); // localStorage 저장 + 이벤트 브로드캐스트
+    broadcast(next); 
 
     window.dispatchEvent(
       new CustomEvent("notice:deleted", {
@@ -292,7 +288,7 @@ export default function Notice() {
                 {editId !== null && (
                   <button
                     type="button"
-                    className={styles.stopBtn} // 위험 버튼 스타일 재사용
+                    className={styles.stopBtn} 
                     onClick={removeNotice}
                     title="공지 삭제"
                   >
