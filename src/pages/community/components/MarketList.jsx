@@ -1,6 +1,7 @@
 // src/pages/community/components/MarketList.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { createPortal } from "react-dom";
 import styles from "../../../styles/Market.module.css";
 
 const LS_KEY = "market_meta_v1";
@@ -36,19 +37,235 @@ const parseRel = (s) => {
   return Date.now() - ms;
 };
 
+/* ─────────────────────────────────────────
+    파일 내부 모달 컴포넌트: MarketWrite
+   ───────────────────────────────────────── */
+function MarketWrite({ onClose }) {
+  const [mounted, setMounted] = useState(false);
+
+  // 폼 상태
+  const [productName, setProductName] = useState("");
+  const [title, setTitle] = useState("");
+  const [category, setCategory] = useState("");
+  const [price, setPrice] = useState("0");
+  const [isNegotiable, setIsNegotiable] = useState(false);
+  const [condition, setCondition] = useState("");
+  const [desc, setDesc] = useState("");
+  const [dealDirect, setDealDirect] = useState(false);
+  const [dealParcel, setDealParcel] = useState(false);
+  const [contact, setContact] = useState("");
+  const [files, setFiles] = useState([]);
+
+  useEffect(() => { setMounted(true); return () => setMounted(false); }, []);
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === "Escape") onClose?.(); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onClose]);
+
+  const isValid =
+    productName.trim() &&
+    title.trim() &&
+    category &&
+    condition &&
+    price !== "" &&
+    (dealDirect || dealParcel);
+
+  const submit = (e) => {
+    e.preventDefault();
+    if (!isValid) {
+      alert("필수 항목을 확인해주세요.");
+      return;
+    }
+    // TODO: 저장/전송 로직 연결
+    onClose?.();
+  };
+
+  if (!mounted) return null;
+
+  const FieldLabel = ({ icon, text, req }) => (
+    <div className={styles.mwLabelRow}>
+      {icon && <i className={icon} aria-hidden="true" />}
+      <span>{text}</span>
+      {req && <em className={styles.reqStar}>*</em>}
+    </div>
+  );
+
+  const body = (
+    <div className={styles.modalOverlay} role="dialog" aria-modal="true" onClick={(e)=>{ if (e.target === e.currentTarget) onClose?.(); }}>
+      <div className={styles.modalPanel} onClick={(e)=>e.stopPropagation()}>
+        <div className={styles.modalHeader}>
+          <h2 className={styles.modalTitle}>장터 글쓰기</h2>
+          <button type="button" className={styles.closeBtn} onClick={onClose} aria-label="닫기">✕</button>
+        </div>
+
+        <form className={styles.writeForm} onSubmit={submit}>
+          {/* 상품명 */}
+          <div className={styles.mwField}>
+            <FieldLabel icon="fa-solid fa-box" text="상품명" req />
+            <input
+              className={styles.inputLike}
+              placeholder="판매하실 상품명을 입력해주세요"
+              value={productName}
+              onChange={(e)=>setProductName(e.target.value)}
+            />
+          </div>
+
+          {/* 제목 */}
+          <div className={styles.mwField}>
+            <FieldLabel icon="fa-solid fa-tag" text="제목" req />
+            <input
+              className={styles.inputLike}
+              placeholder="제목을 입력해주세요"
+              value={title}
+              onChange={(e)=>setTitle(e.target.value)}
+            />
+          </div>
+
+          {/* 카테고리 / 가격 */}
+          <div className={styles.mwRow2}>
+            <div className={styles.mwField}>
+              <FieldLabel text="카테고리" req />
+              <select
+                className={styles.inputLike}
+                value={category}
+                onChange={(e)=>setCategory(e.target.value)}
+              >
+                <option value="">카테고리를 선택해주세요</option>
+                <option>디지털/가전</option>
+                <option>가구/인테리어</option>
+                <option>생활/주방</option>
+                <option>남성패션</option>
+                <option>여성패션</option>
+                <option>스포츠/레저</option>
+                <option>취미/게임/음반</option>
+                <option>도서</option>
+                <option>반려동물</option>
+                <option>기타</option>
+              </select>
+            </div>
+
+            <div className={styles.mwField}>
+              <div className={styles.mwLabelRow}>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <span style={{ fontWeight: 700 }}>$</span> 가격
+                </span>
+                <em className={styles.reqStar}>*</em>
+              </div>
+              <div className={styles.mwPriceRow}>
+                <input
+                  className={styles.inputLike}
+                  type="number"
+                  min="0"
+                  step="1"
+                  value={price}
+                  onChange={(e)=>setPrice(e.target.value)}
+                  placeholder="0"
+                />
+                <span className={styles.mwWon}>원</span>
+              </div>
+              <label className={styles.mwCheckLine}>
+                <input type="checkbox" checked={isNegotiable} onChange={(e)=>setIsNegotiable(e.target.checked)} />
+                가격 협의 가능
+              </label>
+            </div>
+          </div>
+
+          {/* 상품 상태 */}
+          <div className={styles.mwField}>
+            <FieldLabel text="상품 상태" req />
+            <select
+              className={styles.inputLike}
+              value={condition}
+              onChange={(e)=>setCondition(e.target.value)}
+            >
+              <option value="">상품 상태를 선택해주세요</option>
+              <option>미개봉</option>
+              <option>거의 새것</option>
+              <option>좋음</option>
+              <option>보통</option>
+              <option>사용감 있음</option>
+            </select>
+          </div>
+
+          {/* 상품 설명 */}
+          <div className={styles.mwField}>
+            <FieldLabel text="상품 설명" req />
+            <textarea
+              className={styles.inputLike}
+              rows={6}
+              placeholder="상품에 대한 자세한 설명을 작성해주세요..."
+              value={desc}
+              onChange={(e)=>setDesc(e.target.value)}
+            />
+          </div>
+
+          {/* 상품 사진 */}
+          <div className={styles.mwField}>
+            <FieldLabel icon="fa-solid fa-camera" text="상품 사진" />
+            <label htmlFor="market-file" className={styles.fileDrop}>
+              <input
+                id="market-file"
+                type="file"
+                accept="image/*"
+                multiple
+                hidden
+                onChange={(e)=> setFiles(Array.from(e.target.files || []).slice(0,5))}
+              />
+              <i className="fa-solid fa-upload" aria-hidden="true" />
+              <span>사진 업로드 (최대 5장)</span>
+            </label>
+          </div>
+
+          {/* 거래 방법 */}
+          <div className={styles.mwField}>
+            <FieldLabel icon="fa-solid fa-truck" text="거래 방법" req />
+            <div className={styles.mwChecks}>
+              <label className={styles.mwCheckLine}>
+                <input type="checkbox" checked={dealDirect} onChange={(e)=>setDealDirect(e.target.checked)} />
+                직거래
+              </label>
+              <label className={styles.mwCheckLine}>
+                <input type="checkbox" checked={dealParcel} onChange={(e)=>setDealParcel(e.target.checked)} />
+                택배거래
+              </label>
+            </div>
+          </div>
+
+          {/* 연락처 */}
+          <div className={styles.mwField}>
+            <FieldLabel icon="fa-solid fa-phone" text="연락처" />
+            <input
+              className={styles.inputLike}
+              placeholder="연락 가능한 번호나 이메일을 입력해주세요"
+              value={contact}
+              onChange={(e)=>setContact(e.target.value)}
+            />
+          </div>
+
+          <div className={styles.actions}>
+            <button type="button" className={styles.backBtn} onClick={onClose}>취소</button>
+            <button type="submit" className={styles.submitBtn} disabled={!isValid}>등록하기</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+
+  return createPortal(body, document.body);
+}
+/* ───────────────────────────────────────── */
+
 export default function MarketList({ boardKey }) {
   const nav = useNavigate();
   const { pathname } = useLocation();
 
-  // 어떤 보드인지 판별
   const isMarket = boardKey ? boardKey === "market" : pathname.includes("/market");
   const boardMeta = isMarket
     ? { title: "장터게시판", count: 67, icon: "fa-solid fa-cart-shopping" }
     : { title: "자유게시판", count: 324, icon: "fa-solid fa-message" };
 
   const showThumb = isMarket;
-
-  // **모달 토글: 로컬 상태로만 제어**
   const [showWrite, setShowWrite] = useState(false);
 
   const base = useMemo(() => ([
@@ -57,7 +274,6 @@ export default function MarketList({ boardKey }) {
     { id: 80421, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "2일 전",   comments: 0, likes: 0, views: 0 },
   ]), []);
 
-  // 스토리지 마이그레이션
   const migrate = (store) => {
     if (store.__v === SCHEMA_V) return store;
     const next = { ...store };
@@ -102,7 +318,6 @@ export default function MarketList({ boardKey }) {
     };
   }, []);
 
-  // 상대시간 1분마다 갱신
   const [, setTick] = useState(0);
   useEffect(() => {
     const t = setInterval(() => setTick((n) => n + 1), 60 * 1000);
@@ -116,16 +331,6 @@ export default function MarketList({ boardKey }) {
     nav(`/community/market/${id}`);
   };
 
-  // **글쓰기 버튼 → 로컬 상태로 모달 오픈**
-  const goWrite = () => {
-    console.log("[MarketList] 글쓰기 클릭"); // 클릭 여부 확인용
-    setShowWrite(true);
-  };
-
-  const closeWrite = () => {
-    setShowWrite(false);
-  };
-
   return (
     <>
       <div className={styles.header} style={{ position: "relative" }}>
@@ -136,7 +341,7 @@ export default function MarketList({ boardKey }) {
         <button
           type="button"
           className={styles.writeBtn}
-          onClick={goWrite}
+          onClick={() => setShowWrite(true)}
           style={{ cursor: "pointer", zIndex: 1 }}
         >
           <i className="fa-solid fa-pen" aria-hidden="true" />
@@ -201,8 +406,7 @@ export default function MarketList({ boardKey }) {
         })}
       </div>
 
-      {/* 모달 표시: 포털로 body 아래에 떠서 z-index/overflow 영향 안 받음 */}
-      {showWrite && <MarketWrite onClose={closeWrite} />}
+      {showWrite && <MarketWrite onClose={() => setShowWrite(false)} />}
     </>
   );
 }
