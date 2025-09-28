@@ -365,9 +365,7 @@ export default function Manager() {
 
                 {urgentNotices.length === 0 ? (
                   <div className={styles.urgentCards}>
-                    <div className={styles.urgentEmptyText}>
-                      현재 긴급 공지가 없습니다.
-                    </div>
+      
                   </div>
                 ) : (
                   <div className={styles.urgentCards}>
