@@ -600,6 +600,7 @@ i {
   max-height: 50vh;
   overflow-y: auto;
   padding-right: 4px;
+  justify-content: center;
 }
 
 .detailImage {
@@ -628,4 +629,9 @@ i {
 }
 .description {
   color: black;
+}
+.effect {
+  margin-top: 20px;
+  margin-bottom: 10px;
+  font-size: 18px;
 }

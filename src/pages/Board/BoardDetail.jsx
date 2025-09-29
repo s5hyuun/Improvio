@@ -67,6 +67,7 @@ function BoardDetail({ suggestion, onClose }) {
     dislike_count,
     comments,
     status,
+    expected_effect,
     user_id: author_id,
   } = detail;
 
@@ -202,7 +203,7 @@ function BoardDetail({ suggestion, onClose }) {
                           att.file_path
                         )}`}
                         alt="첨부 이미지"
-                        style={{ maxWidth: "100%", marginBottom: "8px" }}
+                        style={{ maxWidth: "70%", marginBottom: "8px" }}
                         onError={(e) => {
                           e.target.style.display = "none"; // 깨진 이미지 숨기기
                         }}
@@ -212,22 +213,38 @@ function BoardDetail({ suggestion, onClose }) {
               )}
 
               <div className={styles.description}>{description}</div>
+              <div className={styles.effect}>기대효과</div>
+              <div className={styles.description}>{expected_effect}</div>
             </div>
+
             <div className={styles.detailThumb}>
-              <div onClick={handleVote} style={{ cursor: "pointer" }}>
+              <button
+                onClick={handleVote}
+                style={{ cursor: "pointer", background: "none", border: 0 }}
+              >
                 <i
-                  className={`fa-regular fa-thumbs-up ${voted ? "active" : ""}`}
-                ></i>{" "}
-                {voteCount}{" "}
-              </div>
-              <div onClick={handleDislike} style={{ cursor: "pointer" }}>
+                  className={`${
+                    voted ? "fa-solid" : "fa-regular"
+                  } fa-thumbs-up`}
+                  style={{ color: voted ? "#2563eb" : "#6b7280" }}
+                  aria-pressed={voted}
+                />{" "}
+                {voteCount}
+              </button>
+
+              <button
+                onClick={handleDislike}
+                style={{ cursor: "pointer", background: "none", border: 0 }}
+              >
                 <i
-                  className={`fa-regular fa-thumbs-down ${
-                    disliked ? "active" : ""
-                  }`}
-                ></i>{" "}
-                {dislikeCount}{" "}
-              </div>
+                  className={`${
+                    disliked ? "fa-solid" : "fa-regular"
+                  } fa-thumbs-down`}
+                  style={{ color: disliked ? "#ef4444" : "#6b7280" }}
+                  aria-pressed={disliked}
+                />{" "}
+                {dislikeCount}
+              </button>
             </div>
           </div>
         </div>
