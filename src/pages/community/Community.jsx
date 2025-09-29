@@ -1,10 +1,11 @@
+import { useEffect, useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import HotPost from "./components/HotPost";
 import styles from "../../styles/Community.module.css";
 
-function Boards() {
+function Boards({ counts }) {
   return (
     <div className={styles.commBoards}>
       <div className={styles.sectionTitle}>게시판 목록</div>
@@ -15,7 +16,7 @@ function Boards() {
             <i className="fa-solid fa-message" />
             <div>자유게시판</div>
           </Link>
-          <span className={styles.badge}>324</span>
+          <span className={styles.badge}>{counts.free ?? 0}</span>
         </li>
 
         <li>
@@ -23,7 +24,7 @@ function Boards() {
             <i className="fa-solid fa-clock" />
             <div>신입게시판</div>
           </div>
-          <span className={styles.badge}>89</span>
+          <span className={styles.badge}>{counts.rookie ?? 0}</span>
         </li>
 
         <li>
@@ -31,7 +32,7 @@ function Boards() {
             <i className="fa-solid fa-lock" />
             <div>비밀게시판</div>
           </div>
-          <span className={styles.badge}>156</span>
+          <span className={styles.badge}>{counts.secret ?? 0}</span>
         </li>
 
         <li>
@@ -39,7 +40,7 @@ function Boards() {
             <i className="fa-solid fa-circle-info" />
             <div>정보게시판</div>
           </div>
-          <span className={styles.badge}>203</span>
+          <span className={styles.badge}>{counts.info ?? 0}</span>
         </li>
 
         <li>
@@ -47,7 +48,7 @@ function Boards() {
             <i className="fa-solid fa-cart-shopping" />
             <div>장터게시판</div>
           </Link>
-          <span className={styles.badge}>67</span>
+          <span className={styles.badge}>{counts.market ?? 0}</span>
         </li>
 
         <li>
@@ -55,7 +56,7 @@ function Boards() {
             <i className="fa-solid fa-newspaper" />
             <div>시사/이슈</div>
           </div>
-          <span className={styles.badge}>134</span>
+          <span className={styles.badge}>{counts.issue ?? 0}</span>
         </li>
       </ul>
     </div>
@@ -80,13 +81,32 @@ function Rightbar() {
 export default function Community() {
   const loc = useLocation();
 
+  const [counts, setCounts] = useState({
+    free: 0,
+    rookie: 0,
+    secret: 0,
+    info: 0,
+    market: 0,
+    issue: 0,
+  });
+
+  useEffect(() => {
+    const onCount = (e) => {
+      const { key, count } = e.detail || {};
+      if (!key) return;
+      setCounts((prev) => ({ ...prev, [key]: Number(count) || 0 }));
+    };
+    window.addEventListener("board:count", onCount);
+    return () => window.removeEventListener("board:count", onCount);
+  }, []);
+
   return (
     <div className="app">
       <Sidebar />
       <div className="main">
         <Header />
         <div className={styles.commContainer}>
-          <Boards />
+          <Boards counts={counts} />
 
           <div className={styles.commPostsContainer}>
             <Outlet key={loc.pathname} />

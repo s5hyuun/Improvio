@@ -246,18 +246,30 @@ export default function MarketList({ boardKey }) {
   const { pathname } = useLocation();
 
   const isMarket = boardKey ? boardKey === "market" : pathname.includes("/market");
-  const boardMeta = isMarket
-    ? { title: "장터게시판", count: 67, icon: "fa-solid fa-cart-shopping" }
-    : { title: "자유게시판", count: 324, icon: "fa-solid fa-message" };
-
-  const showThumb = isMarket;
-  const [showWrite, setShowWrite] = useState(false);
 
   const base = useMemo(() => ([
     { id: 88156, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "6시간 전",  comments: 0, likes: 0, views: 0 },
     { id: 81113, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "12시간 전", comments: 0, likes: 0, views: 0 },
     { id: 80421, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "2일 전",   comments: 0, likes: 0, views: 0 },
   ]), []);
+
+  useEffect(() => {
+    const key = isMarket ? "market" : "free";
+    const report = () => {
+      window.dispatchEvent(new CustomEvent("board:count", {
+        detail: { key, count: base.length }
+      }));
+    };
+    if (typeof requestAnimationFrame === "function") requestAnimationFrame(report);
+    else setTimeout(report, 0);
+  }, [isMarket, base.length]);
+
+  const boardMeta = isMarket
+    ? { title: "장터게시판", count: base.length, icon: "fa-solid fa-cart-shopping" }
+    : { title: "자유게시판", count: base.length, icon: "fa-solid fa-message" };
+
+  const showThumb = isMarket;
+  const [showWrite, setShowWrite] = useState(false);
 
   const migrate = (store) => {
     if (store.__v === SCHEMA_V) return store;
