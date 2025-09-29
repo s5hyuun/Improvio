@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const NOTIFS_STORAGE_KEY = "header_notifs_v1";
 const STORAGE_DEPT_KEY = "selected_dept";
@@ -19,51 +19,23 @@ const DEPARTMENTS = [
 ];
 
 const DEPT_NUM_TO_ID = {
-  1: "rd",
-  2: "globalSales",
-  3: "basicDesign",
-  4: "futureBiz",
-  5: "shipDesign",
-  6: "marineDesign",
-  7: "pm",
-  8: "purchase",
-  9: "ops",
-  10: "safety",
+  1: "rd", 2: "globalSales", 3: "basicDesign", 4: "futureBiz", 5: "shipDesign",
+  6: "marineDesign", 7: "pm", 8: "purchase", 9: "ops", 10: "safety",
 };
 
-function deptById(id) {
-  return DEPARTMENTS.find((d) => d.id === id) || null;
-}
-function deptByLabel(label) {
-  return DEPARTMENTS.find((d) => d.label === label) || null;
-}
+function deptById(id) { return DEPARTMENTS.find((d) => d.id === id) || null; }
+function deptByLabel(label) { return DEPARTMENTS.find((d) => d.label === label) || null; }
 
 function resolveDeptIdFromServer(deptRaw) {
   if (!deptRaw && deptRaw !== 0) return null;
   if (typeof deptRaw === "number") return DEPT_NUM_TO_ID[deptRaw] || null;
-  if (typeof deptRaw === "string" && /^\d+$/.test(deptRaw)) {
-    const num = parseInt(deptRaw, 10);
-    return DEPT_NUM_TO_ID[num] || null;
-  }
-  if (typeof deptRaw === "string") {
-    if (deptById(deptRaw)) return deptRaw;
-    const byLabel = deptByLabel(deptRaw);
-    return byLabel ? byLabel.id : null;
-  }
+  if (typeof deptRaw === "string" && /^\d+$/.test(deptRaw)) return DEPT_NUM_TO_ID[parseInt(deptRaw,10)] || null;
+  if (typeof deptRaw === "string") { if (deptById(deptRaw)) return deptRaw; const x=deptByLabel(deptRaw); return x?x.id:null; }
   if (typeof deptRaw === "object") {
-    const numId = Number(
-      deptRaw.department_id ?? deptRaw.id ?? deptRaw.departmentId
-    );
-    if (!Number.isNaN(numId) && numId) {
-      const byNum = DEPT_NUM_TO_ID[numId];
-      if (byNum) return byNum;
-    }
-    const label =
-      deptRaw.department_name ?? deptRaw.name ?? deptRaw.label ?? null;
-    if (label) {
-      const byLabel = deptByLabel(String(label));
-      if (byLabel) return byLabel.id;
-    }
+    const numId = Number(deptRaw.department_id ?? deptRaw.id ?? deptRaw.departmentId);
+    if (!Number.isNaN(numId) && numId) { const byNum = DEPT_NUM_TO_ID[numId]; if (byNum) return byNum; }
+    const label = deptRaw.department_name ?? deptRaw.name ?? deptRaw.label ?? null;
+    if (label) { const byLabel = deptByLabel(String(label)); if (byLabel) return byLabel.id; }
   }
   return null;
 }
@@ -74,50 +46,28 @@ function loadUserOnce() {
     username: localStorage.getItem("username") || "username",
     deptId: localStorage.getItem("user_dept") || null,
   };
-  try {
-    const raw = localStorage.getItem(AUTH_KEY);
-    if (raw) base = { ...base, ...JSON.parse(raw) };
-  } catch {}
-  const role = String(
-    base.role ?? base.user_role ?? base.position ?? ""
-  ).toLowerCase();
-
+  try { const raw = localStorage.getItem(AUTH_KEY); if (raw) base = { ...base, ...JSON.parse(raw) }; } catch {}
+  const role = String(base.role ?? base.user_role ?? base.position ?? "").toLowerCase();
   const deptRaw =
-    base.deptId ??
-    base.user_dept ??
-    base.department ??
-    base.department_id ??
-    base.department_name ??
-    base.departmentId ??
-    null;
-
+    base.deptId ?? base.user_dept ?? base.department ?? base.department_id ??
+    base.department_name ?? base.departmentId ?? null;
   const deptId = resolveDeptIdFromServer(deptRaw);
-
-  return {
-    role,
-    username: base.username || base.name || "username",
-    deptId,
-  };
+  return { role, username: base.username || base.name || "username", deptId };
 }
 
 function normalizeNotice(n) {
-  const isNotice =
-    n.kind === "notice" || String(n.title || "").trim() === "공지 게시 재개";
+  const isNotice = n.kind === "notice" || String(n.title || "").trim() === "공지 게시 재개";
   if (!isNotice) return n;
-  const metaStr = String(n.meta ?? "");
-  const [descRaw, timeRaw] = metaStr.split("·");
-  const desc = (descRaw ?? "").trim();
-  const time = (timeRaw ?? "").trim();
-  return {
-    ...n,
-    title: desc || n.title || "공지",
-    meta: time ? `관리자 · ${time}` : "관리자",
-  };
+  const metaStr = String(n.meta ?? ""); const [descRaw, timeRaw] = metaStr.split("·");
+  const desc = (descRaw ?? "").trim(); const time = (timeRaw ?? "").trim();
+  return { ...n, title: desc || n.title || "공지", meta: time ? `관리자 · ${time}` : "관리자" };
 }
 
 export default function Header() {
   const [user, setUser] = useState(loadUserOnce());
   const navigate = useNavigate();
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
 
   useEffect(() => {
     const onAuthChanged = () => setUser(loadUserOnce());
@@ -134,33 +84,15 @@ export default function Header() {
   const isAdmin = role === "admin" || role === "manager";
 
   const [notifs, setNotifs] = useState(() => {
-    try {
-      const raw = localStorage.getItem(NOTIFS_STORAGE_KEY);
-      return raw ? JSON.parse(raw) : [];
-    } catch {
-      return [];
-    }
+    try { const raw = localStorage.getItem(NOTIFS_STORAGE_KEY); return raw ? JSON.parse(raw) : []; } catch { return []; }
   });
-  useEffect(() => {
-    try {
-      localStorage.setItem(NOTIFS_STORAGE_KEY, JSON.stringify(notifs));
-    } catch {}
-  }, [notifs]);
+  useEffect(() => { try { localStorage.setItem(NOTIFS_STORAGE_KEY, JSON.stringify(notifs)); } catch {} }, [notifs]);
 
   const [notifOpen, setNotifOpen] = useState(false);
   useEffect(() => {
     const onAdd = (e) => {
       const { id, title, meta, kind, postTitle, actor } = e.detail || {};
-      setNotifs((prev) => [
-        {
-          id: id ?? Date.now(),
-          kind: kind || "generic",
-          title: postTitle || title || "",
-          meta: actor || meta || "",
-          read: false,
-        },
-        ...prev,
-      ]);
+      setNotifs((prev) => [{ id: id ?? Date.now(), kind: kind || "generic", title: postTitle || title || "", meta: actor || meta || "", read: false }, ...prev]);
     };
     window.addEventListener("header:notif:add", onAdd);
     return () => window.removeEventListener("header:notif:add", onAdd);
@@ -176,33 +108,18 @@ export default function Header() {
   const notifMenuRef = useRef(null);
   useEffect(() => {
     function handleClick(e) {
-      if (langMenuRef.current && !langMenuRef.current.contains(e.target)) {
-        setLangOpen(false);
-      }
-      if (notifMenuRef.current && !notifMenuRef.current.contains(e.target)) {
-        setNotifOpen(false);
-      }
+      if (langMenuRef.current && !langMenuRef.current.contains(e.target)) setLangOpen(false);
+      if (notifMenuRef.current && !notifMenuRef.current.contains(e.target)) setNotifOpen(false);
     }
-    function handleEsc(e) {
-      if (e.key === "Escape") {
-        setLangOpen(false);
-        setNotifOpen(false);
-      }
-    }
+    function handleEsc(e) { if (e.key === "Escape") { setLangOpen(false); setNotifOpen(false); } }
     document.addEventListener("mousedown", handleClick);
     document.addEventListener("keydown", handleEsc);
-    return () => {
-      document.removeEventListener("mousedown", handleClick);
-      document.removeEventListener("keydown", handleEsc);
-    };
+    return () => { document.removeEventListener("mousedown", handleClick); document.removeEventListener("keydown", handleEsc); };
   }, []);
 
-  const markAsRead = (id) =>
-    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  const markAllRead = () =>
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-  const removeNotif = (id) =>
-    setNotifs((prev) => prev.filter((n) => n.id !== id));
+  const markAsRead = (id) => setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  const markAllRead = () => setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+  const removeNotif = (id) => setNotifs((prev) => prev.filter((n) => n.id !== id));
   const clearAll = () => setNotifs([]);
 
   const initialDeptId = useMemo(() => {
@@ -217,22 +134,16 @@ export default function Header() {
   const [deptId, setDeptId] = useState(initialDeptId);
   useEffect(() => {
     function onDeptChanged(e) {
-      const id = e?.detail?.id;
-      const label = e?.detail?.dept;
-      if (id && deptById(id)) {
-        setDeptId(id);
-      } else if (label && deptByLabel(label)) {
-        setDeptId(deptByLabel(label).id);
-      } else if (label === "" || id === "all") {
-        setDeptId(null);
-      }
+      const id = e?.detail?.id; const label = e?.detail?.dept;
+      if (id && deptById(id)) setDeptId(id);
+      else if (label && deptByLabel(label)) setDeptId(deptByLabel(label).id);
+      else if (label === "" || id === "all") setDeptId(null);
     }
     window.addEventListener("dept:changed", onDeptChanged);
     return () => window.removeEventListener("dept:changed", onDeptChanged);
   }, []);
 
   const dept = isEmployee ? (deptId && deptById(deptId)) || null : null;
-
   const topLeft = isAdmin
     ? { label: "관리자 페이지", iconName: "shield", color: "#ea580c" }
     : { label: dept?.label || "부서 미지정", iconName: dept?.icon || "shield", color: "#2563eb" };
@@ -254,24 +165,14 @@ export default function Header() {
 
   return (
     <header className="topbar">
-      <div className="topbar-left">
-        <span
-          className="ico"
-          style={{
-            background: topLeft.color,
-            color: "#fff",
-            display: "grid",
-            placeItems: "center",
-            borderRadius: 8,
-            width: 32,
-            height: 32,
-          }}
-          aria-hidden="true"
-        >
-          {icon(topLeft.iconName)}
-        </span>
-        <strong className="topbar-title">{topLeft.label}</strong>
-      </div>
+      {!isLoginPage && (
+        <div className="topbar-left">
+          <span className="ico" style={{ background: topLeft.color, color: "#fff", display: "grid", placeItems: "center", borderRadius: 8, width: 32, height: 32 }} aria-hidden="true">
+            {icon(topLeft.iconName)}
+          </span>
+          <strong className="topbar-title">{topLeft.label}</strong>
+        </div>
+      )}
 
       <div className="topbar-actions">
         <div className="search">
@@ -285,13 +186,7 @@ export default function Header() {
         </div>
 
         <div className="dropdown" ref={notifMenuRef}>
-          <button
-            className="icon-btn"
-            aria-label="알림"
-            data-dot={hasBadge ? "" : undefined}
-            style={bellBtnStyle}
-            onClick={() => setNotifOpen((v) => !v)}
-          >
+          <button className="icon-btn" aria-label="알림" data-dot={hasBadge ? "" : undefined} style={bellBtnStyle} onClick={() => setNotifOpen((v) => !v)}>
             <svg viewBox="0 0 24 24" style={{ color: bellColor }}>
               <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" fill="none" stroke="currentColor" strokeWidth="2" />
               <path d="M13.73 21a2 2 0 0 1-3.46 0" fill="none" stroke="currentColor" strokeWidth="2" />
@@ -300,73 +195,31 @@ export default function Header() {
 
           {notifOpen && (
             <ul className="menu" role="menu" style={{ minWidth: 320, paddingTop: 8, paddingBottom: 8 }}>
-              <li role="presentation" style={{ fontWeight: 700, padding: "8px 12px", pointerEvents: "none", opacity: 0.9 }}>
-                알림
-              </li>
-
+              <li role="presentation" style={{ fontWeight: 700, padding: "8px 12px", pointerEvents: "none", opacity: 0.9 }}>알림</li>
               {notifs.length === 0 ? (
                 <li role="menuitem" style={{ padding: "12px" }}>새 알림이 없습니다.</li>
               ) : (
                 <>
-                  <div
-                    style={{
-                      maxHeight: SCROLL_MAX_HEIGHT,
-                      overflowY: notifs.length > 5 ? "auto" : "visible",
-                      margin: "4px 0",
-                      paddingRight: 4,
-                    }}
-                  >
+                  <div style={{ maxHeight: SCROLL_MAX_HEIGHT, overflowY: notifs.length > 5 ? "auto" : "visible", margin: "4px 0", paddingRight: 4 }}>
                     {notifs.map((raw) => {
                       const n = normalizeNotice(raw);
                       return (
-                        <li
-                          key={n.id}
-                          role="menuitem"
-                          onClick={() => markAsRead(n.id)}
-                          style={{ display: "grid", gap: 6, padding: "10px 12px", opacity: n.read ? 0.6 : 1 }}
-                        >
+                        <li key={n.id} role="menuitem" onClick={() => markAsRead(n.id)} style={{ display: "grid", gap: 6, padding: "10px 12px", opacity: n.read ? 0.6 : 1 }}>
                           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                             <span style={{ fontWeight: 700 }}>{n.title}</span>
-                            <button
-                              type="button"
-                              aria-label="알림 삭제"
-                              title="삭제"
-                              onClick={(e) => { e.stopPropagation(); removeNotif(n.id); }}
-                              style={{ border: "none", background: "transparent", color: "#9ca3af", fontSize: 18, lineHeight: 1, cursor: "pointer", padding: 0 }}
-                            >
-                              ×
-                            </button>
+                            <button type="button" aria-label="알림 삭제" title="삭제" onClick={(e) => { e.stopPropagation(); removeNotif(n.id); }} style={{ border: "none", background: "transparent", color: "#9ca3af", fontSize: 18, lineHeight: 1, cursor: "pointer", padding: 0 }}>×</button>
                           </div>
                           <span style={{ fontSize: 12, opacity: 0.8 }}>{n.meta}</span>
                         </li>
                       );
                     })}
                   </div>
-
                   <li role="presentation" style={{ padding: "8px 12px", background: "transparent" }}>
                     <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                      <div
-                        role="group"
-                        aria-label="알림 일괄 액션"
-                        style={{ display: "inline-flex", alignItems: "center", border: "1px solid #e5e7eb", borderRadius: 10, overflow: "hidden" }}
-                      >
-                        <button
-                          type="button"
-                          onClick={markAllRead}
-                          className="link-btn"
-                          style={{ border: "none", background: "transparent", color: "#2563eb", padding: "8px 12px", fontWeight: 700, cursor: "pointer" }}
-                        >
-                          모두 읽음
-                        </button>
+                      <div role="group" aria-label="알림 일괄 액션" style={{ display: "inline-flex", alignItems: "center", border: "1px solid #e5e7eb", borderRadius: 10, overflow: "hidden" }}>
+                        <button type="button" onClick={markAllRead} className="link-btn" style={{ border: "none", background: "transparent", color: "#2563eb", padding: "8px 12px", fontWeight: 700, cursor: "pointer" }}>모두 읽음</button>
                         <span aria-hidden="true" style={{ width: 1, height: 18, background: "#e5e7eb" }} />
-                        <button
-                          type="button"
-                          onClick={clearAll}
-                          className="link-btn"
-                          style={{ border: "none", background: "transparent", color: "#ef4444", padding: "8px 12px", fontWeight: 700, cursor: "pointer" }}
-                        >
-                          모두 삭제
-                        </button>
+                        <button type="button" onClick={clearAll} className="link-btn" style={{ border: "none", background: "transparent", color: "#ef4444", padding: "8px 12px", fontWeight: 700, cursor: "pointer" }}>모두 삭제</button>
                       </div>
                     </div>
                   </li>
@@ -389,21 +242,20 @@ export default function Header() {
               <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2" />
             </svg>
           </button>
-
           {langOpen && (
             <ul className="menu" role="menu">
               {["한국어", "English", "日本語", "中文"].map((l) => (
-                <li key={l} role="menuitem" onClick={() => { setLang(l); setLangOpen(false); }}>
-                  {l}
-                </li>
+                <li key={l} role="menuitem" onClick={() => { setLang(l); setLangOpen(false); }}>{l}</li>
               ))}
             </ul>
           )}
         </div>
 
-        <button className="btn btn-ghost" type="button" onClick={handleLogout}>
-          로그아웃
-        </button>
+        {!isLoginPage && (
+          <button className="btn btn-ghost" type="button" onClick={handleLogout}>
+            로그아웃
+          </button>
+        )}
       </div>
     </header>
   );
@@ -414,10 +266,8 @@ function icon(name) {
     case "bulb":
       return (
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <path
-            d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"
-            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-          />
+          <path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       );
     case "globe":

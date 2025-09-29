@@ -5,16 +5,8 @@ const STORAGE_DEPT_KEY = "selected_dept";
 const AUTH_KEY = "auth_user";
 
 const DEPT_LABEL_BY_NUM = {
-  1: "R&D",
-  2: "해외영업",
-  3: "기본설계",
-  4: "미래사업개발",
-  5: "조선설계",
-  6: "해양설계",
-  7: "PM",
-  8: "구매",
-  9: "경영지원",
-  10: "안전",
+  1: "R&D", 2: "해외영업", 3: "기본설계", 4: "미래사업개발", 5: "조선설계",
+  6: "해양설계", 7: "PM", 8: "구매", 9: "경영지원", 10: "안전",
 };
 
 export default function Sidebar() {
@@ -33,19 +25,13 @@ export default function Sidebar() {
 
   const location = useLocation();
   const isCommunity = location.pathname.startsWith("/community");
+  const isLoginPage = location.pathname === "/login";
 
   const readAuth = () => {
-    try {
-      const raw = localStorage.getItem(AUTH_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch {
-      return null;
-    }
+    try { const raw = localStorage.getItem(AUTH_KEY); if (!raw) return null; return JSON.parse(raw); } catch { return null; }
   };
 
   const [auth, setAuth] = useState(readAuth);
-
   useEffect(() => {
     const onAuthChanged = () => setAuth(readAuth());
     window.addEventListener("auth:changed", onAuthChanged);
@@ -58,14 +44,11 @@ export default function Sidebar() {
 
   const role = String(auth?.role || "").toLowerCase();
   const isAdmin = role === "admin" || role === "manager";
-  const isEmployee = role === "employee";
 
-  const displayName = auth?.username || "username";
+  const displayName = isLoginPage ? "로그인해주세요" : (auth?.username || "username");
   const deptLabelFromAuth =
     auth?.department_name ??
-    (Number.isInteger(auth?.department_id)
-      ? DEPT_LABEL_BY_NUM[auth.department_id]
-      : null);
+    (Number.isInteger(auth?.department_id) ? DEPT_LABEL_BY_NUM[auth.department_id] : null);
   const deptLabelFromLocal = localStorage.getItem(STORAGE_DEPT_KEY) || null;
   const profileDeptLabel = deptLabelFromAuth || deptLabelFromLocal || "부서 미지정";
 
@@ -74,20 +57,14 @@ export default function Sidebar() {
       const saved = localStorage.getItem(STORAGE_DEPT_KEY);
       const found = departments.find((d) => d.label === saved);
       return found ? found.id : "rd";
-    } catch {
-      return "rd";
-    }
+    } catch { return "rd"; }
   });
 
   useEffect(() => {
     const current = departments.find((d) => d.id === selected);
     const label = current?.label ?? "";
-    try {
-      localStorage.setItem(STORAGE_DEPT_KEY, label);
-    } catch {}
-    window.dispatchEvent(
-      new CustomEvent("dept:changed", { detail: { dept: label } })
-    );
+    try { localStorage.setItem(STORAGE_DEPT_KEY, label); } catch {}
+    window.dispatchEvent(new CustomEvent("dept:changed", { detail: { dept: label } }));
   }, [selected]);
 
   return (
@@ -99,13 +76,16 @@ export default function Sidebar() {
 
         <section className="profile">
           <div className="profile-name">{displayName}</div>
-          <button className="link-btn" type="button">
-            edit
-          </button>
-          <div className="chip-row">
-            <span className="chip chip-primary">{profileDeptLabel}</span>
-            {isAdmin && <span className="chip chip-warn">관리자</span>}
-          </div>
+
+          {!isLoginPage && (
+            <>
+              <button className="link-btn" type="button">edit</button>
+              <div className="chip-row">
+                <span className="chip chip-primary">{profileDeptLabel}</span>
+                {isAdmin && <span className="chip chip-warn">관리자</span>}
+              </div>
+            </>
+          )}
         </section>
 
         <nav className="nav">
@@ -119,19 +99,14 @@ export default function Sidebar() {
             href="#"
             onClick={(e) => {
               e.preventDefault();
-              window.dispatchEvent(
-                new CustomEvent("dept:changed", { detail: { dept: "" } })
-              );
+              window.dispatchEvent(new CustomEvent("dept:changed", { detail: { dept: "" } }));
             }}
           >
             <span className="ico">{icon("doc")}</span>
             <span>Requirements</span>
           </a>
 
-          <NavLink
-            to="/community"
-            className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          >
+          <NavLink to="/community" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
             <span className="ico">{icon("chat")}</span>
             <span>Community</span>
           </NavLink>
@@ -143,11 +118,7 @@ export default function Sidebar() {
             <div className="dept-wrap">
               <ul className="dept-list">
                 {departments.map((d) => (
-                  <li
-                    key={d.id}
-                    className={`dept-item ${selected === d.id ? "selected" : ""}`}
-                    onClick={() => setSelected(d.id)}
-                  >
+                  <li key={d.id} className={`dept-item ${selected === d.id ? "selected" : ""}`} onClick={() => setSelected(d.id)}>
                     <span className="ico">{icon(d.icon)}</span>
                     <span>{d.label}</span>
                   </li>
@@ -166,60 +137,32 @@ function icon(name) {
     case "bars":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M3 21h18M7 10v8M12 5v13M17 13v5"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
+          <path d="M3 21h18M7 10v8M12 5v13M17 13v5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       );
     case "doc":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" strokeWidth="2" />
           <path d="M14 3v6h6" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "chat":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M21 12a8 8 0 0 1-8 8H7l-4 3 1-5A8 8 0 1 1 21 12z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinejoin="round"
-          />
+          <path d="M21 12a8 8 0 0 1-8 8H7l-4 3 1-5A8 8 0 1 1 21 12z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
         </svg>
       );
     case "shield":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "bulb":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-          />
+          <path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
         </svg>
       );
     case "globe":
@@ -244,12 +187,7 @@ function icon(name) {
     case "sea":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M2 18s4-6 10-6 10 6 10 6-4 4-10 4-10-4-10-4zm10-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M2 18s4-6 10-6 10 6 10 6-4 4-10 4-10-4-10-4zm10-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "user":
