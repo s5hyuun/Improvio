@@ -301,7 +301,7 @@ function MarketList({ boardKey }) {
 
   const isMarket = boardKey
     ? boardKey === "market"
-    : pathname.includes("/market");
+    : pathname.includes("/board/5");
   const boardMeta = isMarket
     ? { title: "장터게시판", count: 67, icon: "fa-solid fa-cart-shopping" }
     : { title: "자유게시판", count: 324, icon: "fa-solid fa-message" };
@@ -399,20 +399,20 @@ function MarketList({ boardKey }) {
     const curr = readStore()[id] || {};
     const next = patchStore(id, { views: (curr.views || 0) + 1 });
     setMeta((prev) => ({ ...prev, [id]: next }));
-    nav(`/community/market/${id}`);
+    nav(`/community/board/5/${id}`);
   };
 
   return (
     <>
       {/* 가운데 헤더 + 리스트 + 글쓰기 모달만 남김 */}
-      <div className={styles.header} style={{ position: "relative" }}>
+      <div className={styles.mkheader} style={{ position: "relative" }}>
         <i className={boardMeta.icon} aria-hidden="true" />
         {boardMeta.title}
         <span> ({boardMeta.count})</span>
 
         <button
           type="button"
-          className={styles.writeBtn}
+          className={styles.mkwriteBtn}
           onClick={() => setShowWrite(true)}
           style={{ cursor: "pointer", zIndex: 1 }}
         >
@@ -421,7 +421,7 @@ function MarketList({ boardKey }) {
         </button>
       </div>
 
-      <div className={styles.list}>
+      <div className={styles.mklist}>
         {base.map((it, idx) => {
           const m = meta[it.id] || {};
           const timeText = timeAgo(m.createdAt || Date.now());
@@ -434,7 +434,9 @@ function MarketList({ boardKey }) {
           return (
             <div
               key={it.id}
-              className={`${styles.card} ${idx === 0 ? styles.firstCard : ""}`}
+              className={`${styles.mkcard} ${
+                idx === 0 ? styles.mkfirstCard : ""
+              }`}
               onClick={() => goDetail(it.id)}
               role="button"
               tabIndex={0}
@@ -442,35 +444,35 @@ function MarketList({ boardKey }) {
                 (e.key === "Enter" || e.key === " ") && goDetail(it.id)
               }
             >
-              <div className={styles.cardContent}>
-                <div className={styles.titleRow}>
-                  <div className={styles.title}>{it.title}</div>
+              <div className={styles.mkcardContent}>
+                <div className={styles.mktitleRow}>
+                  <div className={styles.mktitle}>{it.title}</div>
                 </div>
 
-                <div className={styles.body}>{it.body}</div>
+                <div className={styles.mkbody}>{it.body}</div>
 
-                <div className={styles.metaRow}>
-                  <div className={styles.metaLeft}>
-                    <div className={styles.metaItem}>
+                <div className={styles.mkmetaRow}>
+                  <div className={styles.mkmetaLeft}>
+                    <div className={styles.mkmetaItem}>
                       익명 <strong>{it.id}</strong>
                     </div>
-                    <span className={styles.dot} aria-hidden="true" />
-                    <div className={styles.metaItem}>
+                    <span className={styles.mkdot} aria-hidden="true" />
+                    <div className={styles.mkmetaItem}>
                       <i className="fa-regular fa-clock" aria-hidden="true" />
                       {timeText}
                     </div>
                   </div>
 
-                  <div className={styles.metaRight}>
-                    <div className={styles.metaItem}>
+                  <div className={styles.mkmetaRight}>
+                    <div className={styles.mkmetaItem}>
                       <i className="fa-regular fa-comment" aria-hidden="true" />
                       {m.comments ?? 0}
                     </div>
-                    <div className={styles.metaItem}>
+                    <div className={styles.mkmetaItem}>
                       <i className="fa-regular fa-eye" aria-hidden="true" />
                       {m.views ?? 0}
                     </div>
-                    <div className={styles.metaItem}>
+                    <div className={styles.mkmetaItem}>
                       <i
                         className={heartClass}
                         aria-hidden="true"
@@ -483,7 +485,7 @@ function MarketList({ boardKey }) {
               </div>
 
               {showThumb && (
-                <div className={styles.thumb} aria-hidden="true">
+                <div className={styles.mkthumb} aria-hidden="true">
                   사진
                 </div>
               )}

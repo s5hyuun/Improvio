@@ -11,6 +11,7 @@ import SignupPage from "./pages/signup(employee)/signup.jsx";
 import SignupPage2 from "./pages/signup(admin)/signup4.jsx";
 import Dashboard from "./pages/main/main.jsx";
 import MarketList from "./pages/community/components/MarketList.jsx";
+import MarketDetail from "./pages/community/components/MarketDetail.jsx";
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(true);
@@ -32,6 +33,7 @@ export default function App() {
 
         <Route path="/community" element={<Community />}>
           <Route path="board/5" element={<MarketList />} />
+          <Route path="board/5/:postId" element={<MarketDetail />} />
           <Route path="board/:boardId" element={<PostList />} />
           <Route path=":postId" element={<PostDetail />} />
         </Route>

@@ -6,10 +6,10 @@
   height: calc(100vh - 98px);
 }
 
-i {
+.commContainer i {
   margin-right: 6px;
 }
-ul {
+.commContainer ul {
   padding: 0;
   list-style: none;
 }
@@ -506,12 +506,3 @@ ul {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
   padding: 0; /* PostWrite 내부에서 패딩 처리 */
 }
-
-/* (선택) PostWrite 내부 카드 느낌 줄이려면 다음처럼 조정 가능
-.modalContent .writeContainer {
-  margin: 0;
-  max-width: none;
-  border-radius: 0;
-  box-shadow: none;
-}
-*/

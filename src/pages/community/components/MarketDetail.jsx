@@ -220,30 +220,30 @@ export default function MarketDetail() {
   const timeText = timeAgo(meta.createdAt || Date.now());
 
   return (
-    <div className={styles.detailWrap}>
-      <div className={`${styles.metaRow} ${styles.detailTop}`}>
-        <button className={styles.backBtn} onClick={() => nav(-1)}>
+    <div className={styles.mkdetailWrap}>
+      <div className={`${styles.mkmetaRow} ${styles.mkdetailTop}`}>
+        <button className={styles.mkbackBtn} onClick={() => nav(-1)}>
           ← 목록
         </button>
       </div>
 
-      <div className={styles.detailTitle}>{post.title}</div>
-      <div className={styles.detailBody}>{post.body}</div>
+      <div className={styles.mkdetailTitle}>{post.title}</div>
+      <div className={styles.mkdetailBody}>{post.body}</div>
 
       {Array.isArray(post.images) && post.images.length > 0 && (
-        <div className={styles.imageWrap}>{post.images[0]}</div>
+        <div className={styles.mkimageWrap}>{post.images[0]}</div>
       )}
 
-      <div className={styles.metaRow} style={{ marginTop: 8 }}>
-        <div className={styles.metaLeft}>
-          <div className={styles.metaItem}>{post.author}</div>
-          <div className={styles.metaItem}>
+      <div className={styles.mkmetaRow} style={{ marginTop: 8 }}>
+        <div className={styles.mkmetaLeft}>
+          <div className={styles.mkmetaItem}>{post.author}</div>
+          <div className={styles.mkmetaItem}>
             <i className="fa-regular fa-clock" aria-hidden="true" />
             {timeText}
           </div>
 
           <button
-            className={`${styles.metaItem} ${meta.liked ? styles.liked : ""}`}
+            className={`${styles.mkmetaItem} ${meta.liked ? styles.liked : ""}`}
             onClick={togglePostLike}
             aria-pressed={!!meta.liked}
             title={meta.liked ? "좋아요 취소" : "좋아요"}
@@ -267,24 +267,24 @@ export default function MarketDetail() {
               }
               style={{ color: meta.liked ? "rgb(239, 68, 68)" : "#2563eb" }}
             />
-            <span className={styles.likeNum}>{meta.likes ?? 0}</span>
+            <span className={styles.mklikeNum}>{meta.likes ?? 0}</span>
           </button>
 
-          <div className={styles.metaItem}>
+          <div className={styles.mkmetaItem}>
             <i className="fa-regular fa-comment" />
             {totalComments}
           </div>
         </div>
       </div>
 
-      <div className={styles.commentsSection}>
-        <div className={styles.commentsHeader}>
-          댓글 <span className={styles.commentsCount}>{totalComments}</span>
+      <div className={styles.mkcommentsSection}>
+        <div className={styles.mkcommentsHeader}>
+          댓글 <span className={styles.mkcommentsCount}>{totalComments}</span>
         </div>
 
-        <div className={styles.commentDock}>
+        <div className={styles.mkcommentDock}>
           <input
-            className={styles.commentInputBar}
+            className={styles.mkcommentInputBar}
             type="text"
             placeholder="댓글을 입력하세요."
             value={newComment}
@@ -297,9 +297,9 @@ export default function MarketDetail() {
               }
             }}
           />
-          <div className={styles.commentSide}>
+          <div className={styles.mkcommentSide}>
             <button
-              className={styles.sendBtn}
+              className={styles.mksendBtn}
               type="button"
               onClick={submitRootComment}
               aria-label="댓글 등록"
@@ -309,40 +309,40 @@ export default function MarketDetail() {
           </div>
         </div>
 
-        <div className={styles.commentsList}>
+        <div className={styles.mkcommentsList}>
           {comments.map((c) =>
             c.deleted ? (
               <div
                 key={c.id}
-                className={`${styles.commentItem} ${styles.deletedItem}`}
+                className={`${styles.mkcommentItem} ${styles.mkdeletedItem}`}
               >
                 삭제된 댓글입니다.
               </div>
             ) : (
-              <div key={c.id} className={styles.commentItem}>
-                <div className={styles.commentHead}>
-                  <div className={styles.commentAvatar} />
-                  <div className={styles.commentMeta}>
-                    <div className={styles.commentAuthor}>{c.author}</div>
-                    <div className={styles.commentTime}>
+              <div key={c.id} className={styles.mkcommentItem}>
+                <div className={styles.mkcommentHead}>
+                  <div className={styles.mkcommentAvatar} />
+                  <div className={styles.mkcommentMeta}>
+                    <div className={styles.mkcommentAuthor}>{c.author}</div>
+                    <div className={styles.mkcommentTime}>
                       {timeAgo(c.createdAt)}
                     </div>
                   </div>
                 </div>
 
                 <div
-                  className={styles.commentBody}
+                  className={styles.mkcommentBody}
                   style={{ whiteSpace: "pre-wrap" }}
                 >
                   {c.text}
                 </div>
 
-                <div className={styles.commentFoot}>
+                <div className={styles.mkcommentFoot}>
                   <button
                     type="button"
                     onClick={() => toggleCommentLike(c.id)}
-                    className={`${styles.likeWrap} ${
-                      c.liked ? styles.liked : ""
+                    className={`${styles.mklikeWrap} ${
+                      c.liked ? styles.mkliked : ""
                     }`}
                     aria-pressed={!!c.liked}
                     title={c.liked ? "공감 취소" : "공감"}
@@ -358,7 +358,7 @@ export default function MarketDetail() {
                         c.liked ? "fa-solid fa-heart" : "fa-regular fa-heart"
                       }
                     />
-                    <em className={styles.likeCount}>{c.likes}</em>
+                    <em className={styles.mklikeCount}>{c.likes}</em>
                   </button>
                 </div>
               </div>
