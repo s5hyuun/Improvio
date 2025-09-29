@@ -41,6 +41,10 @@ function PostDetail() {
         {post.comments?.map((c) => (
           <PostComment key={c.postcomment_id} comment={c} />
         ))}
+        <div className={styles.detailInput}>
+          <input type="text" placeholder="대댓글을 입력하세요." />
+          <button>등록</button>
+        </div>
       </div>
     </div>
   );
