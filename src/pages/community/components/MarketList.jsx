@@ -83,35 +83,34 @@ function MarketWrite({ onClose }) {
       alert("필수 항목을 확인해주세요.");
       return;
     }
-    // 실제 저장 로직은 제외 (UI만 닫기)
     onClose?.();
   };
 
   if (!mounted) return null;
 
   const FieldLabel = ({ icon, text, req }) => (
-    <div className={styles.mwLabelRow}>
+    <div className={styles.mkmwLabelRow}>
       {icon && <i className={icon} aria-hidden="true" />}
       <span>{text}</span>
-      {req && <em className={styles.reqStar}>*</em>}
+      {req && <em className={styles.mkreqStar}>*</em>}
     </div>
   );
 
   const body = (
     <div
-      className={styles.modalOverlay}
+      className={styles.mkmodalOverlay}
       role="dialog"
       aria-modal="true"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose?.();
       }}
     >
-      <div className={styles.modalPanel} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.modalHeader}>
-          <h2 className={styles.modalTitle}>장터 글쓰기</h2>
+      <div className={styles.mkmodalPanel} onClick={(e) => e.stopPropagation()}>
+        <div className={styles.mkmodalHeader}>
+          <h2 className={styles.mkmodalTitle}>장터 글쓰기</h2>
           <button
             type="button"
-            className={styles.closeBtn}
+            className={styles.mkcloseBtn}
             onClick={onClose}
             aria-label="닫기"
           >
@@ -119,32 +118,32 @@ function MarketWrite({ onClose }) {
           </button>
         </div>
 
-        <form className={styles.writeForm} onSubmit={submit}>
-          <div className={styles.mwField}>
+        <form className={styles.mkwriteForm} onSubmit={submit}>
+          <div className={styles.mkmwField}>
             <FieldLabel icon="fa-solid fa-box" text="상품명" req />
             <input
-              className={styles.inputLike}
+              className={styles.mkinputLike}
               placeholder="판매하실 상품명을 입력해주세요"
               value={productName}
               onChange={(e) => setProductName(e.target.value)}
             />
           </div>
 
-          <div className={styles.mwField}>
+          <div className={styles.mkmwField}>
             <FieldLabel icon="fa-solid fa-tag" text="제목" req />
             <input
-              className={styles.inputLike}
+              className={styles.mkinputLike}
               placeholder="제목을 입력해주세요"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />
           </div>
 
-          <div className={styles.mwRow2}>
-            <div className={styles.mwField}>
+          <div className={styles.mkmwRow2}>
+            <div className={styles.mkmwField}>
               <FieldLabel text="카테고리" req />
               <select
-                className={styles.inputLike}
+                className={styles.mkinputLike}
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
               >
@@ -162,8 +161,8 @@ function MarketWrite({ onClose }) {
               </select>
             </div>
 
-            <div className={styles.mwField}>
-              <div className={styles.mwLabelRow}>
+            <div className={styles.mkmwField}>
+              <div className={styles.mkmwLabelRow}>
                 <span
                   style={{
                     display: "inline-flex",
@@ -173,11 +172,11 @@ function MarketWrite({ onClose }) {
                 >
                   <span style={{ fontWeight: 700 }}>$</span> 가격
                 </span>
-                <em className={styles.reqStar}>*</em>
+                <em className={styles.mkreqStar}>*</em>
               </div>
-              <div className={styles.mwPriceRow}>
+              <div className={styles.mkmwPriceRow}>
                 <input
-                  className={styles.inputLike}
+                  className={styles.mkinputLike}
                   type="number"
                   min="0"
                   step="1"
@@ -185,9 +184,9 @@ function MarketWrite({ onClose }) {
                   onChange={(e) => setPrice(e.target.value)}
                   placeholder="0"
                 />
-                <span className={styles.mwWon}>원</span>
+                <span className={styles.mkmwWon}>원</span>
               </div>
-              <label className={styles.mwCheckLine}>
+              <label className={styles.mkmwCheckLine}>
                 <input
                   type="checkbox"
                   checked={isNegotiable}
@@ -198,10 +197,10 @@ function MarketWrite({ onClose }) {
             </div>
           </div>
 
-          <div className={styles.mwField}>
+          <div className={styles.mkmwField}>
             <FieldLabel text="상품 상태" req />
             <select
-              className={styles.inputLike}
+              className={styles.mkinputLike}
               value={condition}
               onChange={(e) => setCondition(e.target.value)}
             >
@@ -214,10 +213,10 @@ function MarketWrite({ onClose }) {
             </select>
           </div>
 
-          <div className={styles.mwField}>
+          <div className={styles.mkmwField}>
             <FieldLabel text="상품 설명" req />
             <textarea
-              className={styles.inputLike}
+              className={styles.mkinputLike}
               rows={6}
               placeholder="상품에 대한 자세한 설명을 작성해주세요..."
               value={desc}
@@ -225,9 +224,9 @@ function MarketWrite({ onClose }) {
             />
           </div>
 
-          <div className={styles.mwField}>
+          <div className={styles.mkmwField}>
             <FieldLabel icon="fa-solid fa-camera" text="상품 사진" />
-            <label htmlFor="market-file" className={styles.fileDrop}>
+            <label htmlFor="market-file" className={styles.mkfileDrop}>
               <input
                 id="market-file"
                 type="file"
@@ -243,10 +242,10 @@ function MarketWrite({ onClose }) {
             </label>
           </div>
 
-          <div className={styles.mwField}>
+          <div className={styles.mkmwField}>
             <FieldLabel icon="fa-solid fa-truck" text="거래 방법" req />
-            <div className={styles.mwChecks}>
-              <label className={styles.mwCheckLine}>
+            <div className={styles.mkmwChecks}>
+              <label className={styles.mkmwCheckLine}>
                 <input
                   type="checkbox"
                   checked={dealDirect}
@@ -254,7 +253,7 @@ function MarketWrite({ onClose }) {
                 />
                 직거래
               </label>
-              <label className={styles.mwCheckLine}>
+              <label className={styles.mkmwCheckLine}>
                 <input
                   type="checkbox"
                   checked={dealParcel}
@@ -265,23 +264,27 @@ function MarketWrite({ onClose }) {
             </div>
           </div>
 
-          <div className={styles.mwField}>
+          <div className={styles.mkmwField}>
             <FieldLabel icon="fa-solid fa-phone" text="연락처" />
             <input
-              className={styles.inputLike}
+              className={styles.mkinputLike}
               placeholder="연락 가능한 번호나 이메일을 입력해주세요"
               value={contact}
               onChange={(e) => setContact(e.target.value)}
             />
           </div>
 
-          <div className={styles.actions}>
-            <button type="button" className={styles.backBtn} onClick={onClose}>
+          <div className={styles.mkactions}>
+            <button
+              type="button"
+              className={styles.mkbackBtn}
+              onClick={onClose}
+            >
               취소
             </button>
             <button
               type="submit"
-              className={styles.submitBtn}
+              className={styles.mksubmitBtn}
               disabled={!isValid}
             >
               등록하기
@@ -404,7 +407,6 @@ function MarketList({ boardKey }) {
 
   return (
     <>
-      {/* 가운데 헤더 + 리스트 + 글쓰기 모달만 남김 */}
       <div className={styles.mkheader} style={{ position: "relative" }}>
         <i className={boardMeta.icon} aria-hidden="true" />
         {boardMeta.title}
@@ -500,6 +502,5 @@ function MarketList({ boardKey }) {
 }
 
 export default function CommunityMarketOnly() {
-  // 사이드바/우측 핫게시물 바 제거 → 가운데만 렌더
   return <MarketList boardKey="market" />;
 }
