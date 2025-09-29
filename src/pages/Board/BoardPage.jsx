@@ -13,7 +13,7 @@ function BoardPage() {
   const [dept, setDept] = useState(""); // 선택된 부서 ("" = 전체)
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/suggestions")
+    fetch("http://localhost:5000/api/suggestions")
       .then((res) => res.json())
       .then((data) => setSuggestions(data))
       .catch((err) => console.error(err));
@@ -56,13 +56,13 @@ function BoardPage() {
                 onClose={() => setWrite(false)}
                 onSubmit={async (formData) => {
                   try {
-                    await fetch("http://localhost:3000/api/suggestions", {
+                    await fetch("http://localhost:5000/api/suggestions", {
                       method: "POST",
                       body: formData,
                     });
 
                     const res = await fetch(
-                      "http://localhost:3000/api/suggestions"
+                      "http://localhost:5000/api/suggestions"
                     );
                     const data = await res.json();
                     setSuggestions(data);

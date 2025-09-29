@@ -10,7 +10,7 @@ function PostDetail() {
   const [newComment, setNewComment] = useState("");
 
   useEffect(() => {
-    fetch(`http://localhost:3000/api/posts/${postId}`)
+    fetch(`http://localhost:5000/api/posts/${postId}`)
       .then((res) => res.json())
       .then((data) => setPost(data))
       .catch((err) => console.error(err));

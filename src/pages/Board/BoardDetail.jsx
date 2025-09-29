@@ -24,7 +24,7 @@ function BoardDetail({ suggestion, onClose }) {
   useEffect(() => {
     if (!suggestion) return;
     fetch(
-      `http://localhost:3000/api/suggestions/${suggestion.suggestion_id}/details`
+      `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/details`
     )
       .then((res) => res.json())
       .then((data) => {
@@ -43,7 +43,7 @@ function BoardDetail({ suggestion, onClose }) {
     if (!suggestion) return;
     try {
       const data = await fetch(
-        `http://localhost:3000/api/suggestions/${suggestion.suggestion_id}/details`
+        `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/details`
       ).then((res) => res.json());
       setDetail(data);
     } catch (err) {
@@ -75,7 +75,7 @@ function BoardDetail({ suggestion, onClose }) {
   const handleVote = async () => {
     try {
       await fetch(
-        `http://localhost:3000/api/suggestions/${suggestion.suggestion_id}/vote`,
+        `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/vote`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -93,7 +93,7 @@ function BoardDetail({ suggestion, onClose }) {
   const handleDislike = async () => {
     try {
       await fetch(
-        `http://localhost:3000/api/suggestions/${suggestion.suggestion_id}/dislike`,
+        `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/dislike`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -113,7 +113,7 @@ function BoardDetail({ suggestion, onClose }) {
 
     setSubmitting(true);
     try {
-      const res = await fetch("http://localhost:3000/api/comments", {
+      const res = await fetch("http://localhost:5000/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -198,7 +198,7 @@ function BoardDetail({ suggestion, onClose }) {
                     .map((att) => (
                       <img
                         key={att.attachment_id}
-                        src={`http://localhost:3000/uploads/${encodeURIComponent(
+                        src={`http://localhost:5000/uploads/${encodeURIComponent(
                           att.file_path
                         )}`}
                         alt="첨부 이미지"

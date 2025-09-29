@@ -12,7 +12,7 @@ export default function Member({ selectedDeptId = "all" }) {
       try {
         setLoading(true);
         setErr("");
-        const res = await fetch("http://localhost:3000/api/members", {});
+        const res = await fetch("http://localhost:5000/api/members", {});
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (alive) setMembers(Array.isArray(data) ? data : []);

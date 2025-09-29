@@ -11,14 +11,14 @@ function Community() {
   const nav = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/boards")
+    fetch("http://localhost:5000/api/boards")
       .then((res) => res.json())
       .then((data) => setBoards(data))
       .catch((err) => console.error(err));
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:3000/api/hot-posts")
+    fetch("http://localhost:5000/api/hot-posts")
       .then((res) => res.json())
       .then((data) => setHotPosts(data))
       .catch((err) => console.error(err));
@@ -29,7 +29,12 @@ function Community() {
       <Sidebar />
       <div
         className="main"
-        style={{ height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}
+        style={{
+          height: "100vh",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+        }}
       >
         <Header />
         <div className={styles.commContainer}>
