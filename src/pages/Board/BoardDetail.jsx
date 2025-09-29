@@ -10,6 +10,8 @@ function BoardDetail({ suggestion, onClose }) {
   const [disliked, setDisliked] = useState(false); // 내가 싫어요 눌렀는지
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [summary, setSummary] = useState(""); // AI 요약
+  const [loadingSummary, setLoadingSummary] = useState(false); // 요약 로딩
   const user_id = 1; // 실제 로그인한 user_id로 바꿔야 함
 
   // ESC 눌러도 닫히게
@@ -22,38 +24,27 @@ function BoardDetail({ suggestion, onClose }) {
   }, [onClose]);
 
   useEffect(() => {
-    if (!suggestion) return;
-    fetch(
-      `http://localhost:4000/api/suggestions/${suggestion.suggestion_id}/details`
-    )
-      .then((res) => res.json())
-      .then((data) => {
-        setDetail(data);
-        setVoteCount(data.vote_count || 0);
-        setDislikeCount(data.dislike_count || 0);
+  if (!suggestion) return;
 
-        // user_id 1이 이미 좋아요/싫어요 눌렀는지 확인
-        setVoted(data.votes?.some((v) => v.user_id === 1) || false);
-        setDisliked(data.dislikes?.some((d) => d.user_id === 1) || false);
-      });
-  }, [suggestion]);
-
-  // 상세 데이터 가져오기
-  const fetchDetail = async () => {
-    if (!suggestion) return;
+  const fetchData = async () => {
     try {
       const data = await fetch(
         `http://localhost:4000/api/suggestions/${suggestion.suggestion_id}/details`
       ).then((res) => res.json());
+
       setDetail(data);
+      setVoteCount(data.vote_count || 0);
+      setDislikeCount(data.dislike_count || 0);
+      setVoted(data.votes?.some((v) => v.user_id === 1) || false);
+      setDisliked(data.dislikes?.some((d) => d.user_id === 1) || false);
     } catch (err) {
       console.error(err);
     }
   };
 
-  useEffect(() => {
-    fetchDetail();
-  }, [suggestion]);
+  fetchData();
+}, [suggestion]);
+
 
   if (!suggestion) return null;
   if (!detail) return <div className={styles.overlay}>불러오는 중...</div>;
@@ -63,15 +54,11 @@ function BoardDetail({ suggestion, onClose }) {
     description,
     created_at,
     department_name,
-    vote_count,
-    dislike_count,
     comments,
     status,
-    user_id: author_id,
   } = detail;
 
   // 좋아요 클릭
-  // 좋아요 토글
   const handleVote = async () => {
     try {
       await fetch(
@@ -79,7 +66,7 @@ function BoardDetail({ suggestion, onClose }) {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: 1 }), // 토글
+          body: JSON.stringify({ user_id: 1 }),
         }
       );
       setVoted(!voted);
@@ -107,10 +94,10 @@ function BoardDetail({ suggestion, onClose }) {
     }
   };
 
+  // 댓글 작성
   const handleCommentSubmit = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-
     setSubmitting(true);
     try {
       const res = await fetch("http://localhost:4000/api/comments", {
@@ -118,15 +105,14 @@ function BoardDetail({ suggestion, onClose }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: newComment,
-          user_id, // 로그인한 user_id
+          user_id,
           suggestion_id: suggestion.suggestion_id,
         }),
       });
-
       const data = await res.json();
       if (res.ok) {
-        setNewComment(""); // 입력창 초기화
-        fetchDetail(); // 댓글 목록 새로고침
+        setNewComment("");
+        fetchDetail();
       } else {
         alert(data.error || "댓글 작성 실패");
       }
@@ -137,6 +123,38 @@ function BoardDetail({ suggestion, onClose }) {
       setSubmitting(false);
     }
   };
+
+  // AI 요약 요청
+ const handleSummarize = async () => {
+  if (!description) return;
+  setLoadingSummary(true);
+  setSummary("");
+
+  try {
+    const res = await fetch("/api/summarize", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ description }),
+    });
+
+    const data = await res.json();
+    if (data.error) {
+      console.error(data.error);
+      setSummary("요약 실패");
+    } else {
+      setSummary(data[0]?.summary_text || "요약 실패");
+    }
+  } catch (err) {
+    console.error(err);
+    setSummary("요약 실패");
+  } finally {
+    setLoadingSummary(false);
+  }
+};
+
+
 
   return (
     <div
@@ -184,35 +202,44 @@ function BoardDetail({ suggestion, onClose }) {
           <div className={styles.detailContent}>
             <div>
               <div>제안 내용</div>
-              {detail.attachments && detail.attachments.length > 0 && (
-                <div className={styles.detailImages}>
-                  {detail.attachments
-                    .filter((att) => {
-                      // ? 뒤에 쿼리 제거
-                      const cleanPath = att.file_path.split("?")[0];
-                      // 확장자 추출
-                      const ext = cleanPath.split(".").pop().toLowerCase();
-                      // jpg와 jpeg만 허용
-                      return ["jpg", "jpeg"].includes(ext);
-                    })
-                    .map((att) => (
-                      <img
-                        key={att.attachment_id}
-                        src={`http://localhost:5000/uploads/${encodeURIComponent(
-                          att.file_path
-                        )}`}
-                        alt="첨부 이미지"
-                        style={{ maxWidth: "100%", marginBottom: "8px" }}
-                        onError={(e) => {
-                          e.target.style.display = "none"; // 깨진 이미지 숨기기
-                        }}
-                      />
-                    ))}
+              {detail.attachments &&
+                detail.attachments.length > 0 &&
+                detail.attachments
+                  .filter((att) => {
+                    const cleanPath = att.file_path.split("?")[0];
+                    const ext = cleanPath.split(".").pop().toLowerCase();
+                    return ["jpg", "jpeg"].includes(ext);
+                  })
+                  .map((att) => (
+                    <img
+                      key={att.attachment_id}
+                      src={`http://localhost:4000/uploads/${encodeURIComponent(
+                        att.file_path
+                      )}`}
+                      alt="첨부 이미지"
+                      style={{ maxWidth: "100%", marginBottom: "8px" }}
+                      onError={(e) => (e.target.style.display = "none")}
+                    />
+                  ))}
+              <div className={styles.description}>{description}</div>
+
+              {/* AI 요약 */}
+              <div style={{ marginTop: "12px" }}>
+               <button
+                onClick={handleSummarize}
+                disabled={loadingSummary || !description}
+                style={{ padding: "6px 12px" }}
+               >
+                {loadingSummary ? "요약 중..." : "AI 요약"}
+              </button>
+              {summary && (
+                <div style={{ marginTop: "8px", fontStyle: "italic", color: "#555" }}>
+                  {summary}
                 </div>
               )}
-
-              <div className={styles.description}>{description}</div>
             </div>
+      </div>
+
             <div className={styles.detailThumb}>
               <div onClick={handleVote} style={{ cursor: "pointer" }}>
                 <i
