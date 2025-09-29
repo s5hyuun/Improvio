@@ -1,9 +1,8 @@
 // src/pages/Community/PostList.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-// PostWrite는 쓰지 않지만, 나중을 위해 import 남겨도 되고 제거해도 됩니다.
-// import PostWrite from "./PostWrite";
 import styles from "../../../styles/Market.module.css"; // ✅ mk 스타일 사용
+import PostWrite from "./PostWrite"; // ✅ 모달 컴포넌트 임포트 (경로 확인)
 
 function PostList() {
   const { boardId } = useParams();
@@ -12,11 +11,9 @@ function PostList() {
   const [posts, setPosts] = useState([]);
   const [isWriting, setIsWriting] = useState(false);
 
-  // ✅ 숫자 → 키 매핑 + 문자열 매핑
+  // ✅ 숫자/문자 → 키 매핑
   const norm = (id = "") => {
     const s = String(id).toLowerCase();
-
-    // 숫자 라우트 대응 (원하는 규칙에 맞게 수정 가능)
     const numMap = {
       1: "free",
       2: "rookie",
@@ -50,7 +47,7 @@ function PostList() {
     return "etc";
   };
 
-  // ✅ boardMeta: 제목 + 아이콘
+  // ✅ 보드 메타(아이콘 + 타이틀)
   const boardMeta = useMemo(() => {
     const key = norm(boardId);
     const map = {
@@ -65,7 +62,7 @@ function PostList() {
     return map[key] || map.etc;
   }, [boardId]);
 
-  // ✅ 게시글 목록 API 호출
+  // ✅ 목록 API
   useEffect(() => {
     fetch(`http://localhost:5000/api/posts?board_id=${boardId}`)
       .then((res) => res.json())
@@ -73,7 +70,7 @@ function PostList() {
       .catch((err) => console.error(err));
   }, [boardId]);
 
-  // ✅ 게시글 등록 API (모달 내용 없음, 로직만 보관)
+  // ✅ 등록 API (PostWrite에서 onSubmit 호출 시 사용)
   const handleSubmit = async (newPost) => {
     const res = await fetch("http://localhost:5000/api/posts", {
       method: "POST",
@@ -102,7 +99,7 @@ function PostList() {
 
   return (
     <>
-      {/* ✅ mkheader: 아이콘 + 제목 + 글쓰기 버튼 */}
+      {/* 헤더 */}
       <div className={styles.mkheader} style={{ position: "relative" }}>
         {boardMeta.icon && <i className={boardMeta.icon} aria-hidden="true" />}
         {boardMeta.title}
@@ -113,11 +110,12 @@ function PostList() {
           onClick={() => setIsWriting(true)}
           style={{ cursor: "pointer", zIndex: 1 }}
         >
+          <i className="fa-solid fa-pen" aria-hidden="true" />
           글쓰기
         </button>
       </div>
 
-      {/* ✅ mk 카드 리스트 */}
+      {/* 리스트 */}
       <div className={styles.mklist}>
         {posts.map((post, idx) => {
           const title = post.title ?? "";
@@ -171,34 +169,19 @@ function PostList() {
                   </div>
                 </div>
               </div>
-              {/* 필요하면 썸네일 표시 */}
-              {/* <div className={styles.mkthumb} aria-hidden="true">사진</div> */}
+              {/* 필요 시 썸네일:
+              <div className={styles.mkthumb} aria-hidden="true">사진</div> */}
             </div>
           );
         })}
       </div>
 
-      {/* ✅ 모달 (내용은 비워둠) */}
+      {/* 글쓰기 모달: PostWrite 자체가 오버레이/모달을 포함 */}
       {isWriting && (
-        <div
-          className={styles.mkmodalOverlay}
-          onClick={(e) => e.target === e.currentTarget && setIsWriting(false)}
-        >
-          <div className={styles.mkmodalPanel}>
-            <div className={styles.mkmodalHeader}>
-              <h2 className={styles.mkmodalTitle}>글쓰기</h2>
-              <button
-                type="button"
-                className={styles.mkcloseBtn}
-                onClick={() => setIsWriting(false)}
-                aria-label="닫기"
-              >
-                ✕
-              </button>
-            </div>
-            {/* PostWrite 넣으면 됨 */}
-          </div>
-        </div>
+        <PostWrite
+          onSubmit={handleSubmit}
+          onCancel={() => setIsWriting(false)}
+        />
       )}
     </>
   );

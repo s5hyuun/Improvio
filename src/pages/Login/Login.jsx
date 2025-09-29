@@ -88,7 +88,6 @@ export default function Login() {
                       autoComplete="username"
                     />
 
-                    {/* 비밀번호 입력 + 아이콘 */}
                     <div className={styles.passwordWrap}>
                       <input
                         className={styles.input}
