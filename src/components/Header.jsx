@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom"; 
+import { useNavigate } from "react-router-dom";
 
 const NOTIFS_STORAGE_KEY = "header_notifs_v1";
 const STORAGE_DEPT_KEY = "selected_dept";
@@ -40,22 +40,16 @@ function deptByLabel(label) {
 
 function resolveDeptIdFromServer(deptRaw) {
   if (!deptRaw && deptRaw !== 0) return null;
-
-  if (typeof deptRaw === "number") {
-    return DEPT_NUM_TO_ID[deptRaw] || null;
-  }
-
+  if (typeof deptRaw === "number") return DEPT_NUM_TO_ID[deptRaw] || null;
   if (typeof deptRaw === "string" && /^\d+$/.test(deptRaw)) {
     const num = parseInt(deptRaw, 10);
     return DEPT_NUM_TO_ID[num] || null;
   }
-
   if (typeof deptRaw === "string") {
     if (deptById(deptRaw)) return deptRaw;
     const byLabel = deptByLabel(deptRaw);
     return byLabel ? byLabel.id : null;
   }
-
   if (typeof deptRaw === "object") {
     const numId = Number(
       deptRaw.department_id ?? deptRaw.id ?? deptRaw.departmentId
@@ -71,7 +65,6 @@ function resolveDeptIdFromServer(deptRaw) {
       if (byLabel) return byLabel.id;
     }
   }
-
   return null;
 }
 
@@ -85,7 +78,6 @@ function loadUserOnce() {
     const raw = localStorage.getItem(AUTH_KEY);
     if (raw) base = { ...base, ...JSON.parse(raw) };
   } catch {}
-
   const role = String(
     base.role ?? base.user_role ?? base.position ?? ""
   ).toLowerCase();
@@ -125,7 +117,7 @@ function normalizeNotice(n) {
 
 export default function Header() {
   const [user, setUser] = useState(loadUserOnce());
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onAuthChanged = () => setUser(loadUserOnce());
@@ -207,8 +199,10 @@ export default function Header() {
 
   const markAsRead = (id) =>
     setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  const markAllRead = () => setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-  const removeNotif = (id) => setNotifs((prev) => prev.filter((n) => n.id !== id));
+  const markAllRead = () =>
+    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+  const removeNotif = (id) =>
+    setNotifs((prev) => prev.filter((n) => n.id !== id));
   const clearAll = () => setNotifs([]);
 
   const initialDeptId = useMemo(() => {
@@ -221,7 +215,6 @@ export default function Header() {
   }, [user.deptId]);
 
   const [deptId, setDeptId] = useState(initialDeptId);
-
   useEffect(() => {
     function onDeptChanged(e) {
       const id = e?.detail?.id;
@@ -290,30 +283,6 @@ export default function Header() {
           </span>
           <input type="text" placeholder="검색" />
         </div>
-
-        {isEmployee && dept && (
-          <div
-            aria-label="현재 부서"
-            title={dept.label}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "8px 12px",
-              borderRadius: 12,
-              border: "1px solid #2563EB",
-              color: "#2563EB",
-              background: "rgba(37,99,235,0.06)",
-              fontWeight: 800,
-              whiteSpace: "nowrap",
-            }}
-          >
-            <span className="ico" style={{ color: "#2563EB" }}>
-              {icon(dept.icon)}
-            </span>
-            <span>{dept.label}</span>
-          </div>
-        )}
 
         <div className="dropdown" ref={notifMenuRef}>
           <button
@@ -445,8 +414,10 @@ function icon(name) {
     case "bulb":
       return (
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"
-            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+          <path
+            d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"
+            fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+          />
         </svg>
       );
     case "globe":
