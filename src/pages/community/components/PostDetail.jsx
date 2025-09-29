@@ -1,12 +1,13 @@
+// src/pages/Community/PostDetail.jsx
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import PostComment from "../components/PostComment";
-import styles from "../../../styles/Community.module.css";
+import { useEffect, useState, useMemo } from "react";
+import styles from "../../../styles/Market.module.css"; // ✅ mk 스타일
 
 function PostDetail() {
   const { postId } = useParams();
   const nav = useNavigate();
   const [post, setPost] = useState(null);
+  const [newComment, setNewComment] = useState("");
 
   useEffect(() => {
     fetch(`http://localhost:5000/api/posts/${postId}`)
@@ -15,38 +16,133 @@ function PostDetail() {
       .catch((err) => console.error(err));
   }, [postId]);
 
+  // 간단한 timeAgo (created_at 있을 때 사용)
+  const timeAgo = (ts) => {
+    if (!ts) return "";
+    const t = new Date(ts).getTime();
+    const diff = Date.now() - t;
+    const m = 60 * 1000,
+      h = 60 * m,
+      d = 24 * h;
+    if (diff < m) return "방금 전";
+    if (diff < h) return `${Math.floor(diff / m)}분 전`;
+    if (diff < d) return `${Math.floor(diff / h)}시간 전`;
+    return `${Math.floor(diff / d)}일 전`;
+  };
+
+  const totalComments = post?.comment_count ?? post?.comments?.length ?? 0;
+
   if (!post) return <div>Loading...</div>;
 
   return (
-    <div className={styles.postDetailContainer}>
-      <button onClick={() => nav(-1)} className={styles.backButton}>
-        <i className="fa-solid fa-arrow-left"></i>자유게시판 목록
+    <>
+      <button className={styles.mkbackBtn} onClick={() => nav(-1)}>
+        ← {post.board_title ?? "게시판"} 목록
       </button>
 
-      <div className={styles.postDetailContent}>
-        <h2>{post.title}</h2>
-        <p>{post.content}</p>
-      </div>
+      <div className={styles.mkdetailWrap}>
+        <div className={`${styles.mkmetaRow} ${styles.mkdetailTop}`} />
 
-      <div className={styles.postDetailIcons}>
-        <i className="fa-solid fa-message"></i>
-        <span>댓글 {post.comment_count}</span>
-        <i className="fa-regular fa-heart"></i>
-        <span>좋아요 {post.like_count}</span>
-      </div>
+        {/* 제목/본문 */}
+        <div className={styles.mkdetailTitle}>{post.title}</div>
+        <div className={styles.mkdetailBody}>{post.content}</div>
 
-      <div className={styles.postAd}>광고자리</div>
+        {/* 메타(작성자/시간/댓글/좋아요 수) — 아이콘/카운트만 표시 */}
+        <div className={styles.mkmetaRow} style={{ marginTop: 8 }}>
+          <div className={styles.mkmetaLeft}>
+            {post.author && (
+              <div className={styles.mkmetaItem}>{post.author}</div>
+            )}
+            {post.created_at && (
+              <div className={styles.mkmetaItem}>
+                <i className="fa-regular fa-clock" aria-hidden="true" />
+                {timeAgo(post.created_at)}
+              </div>
+            )}
+            <div className={styles.mkmetaItem}>
+              <i className="fa-regular fa-comment" aria-hidden="true" />
+              {totalComments}
+            </div>
+            <div className={styles.mkmetaItem}>
+              <i className="fa-regular fa-heart" aria-hidden="true" />
+              {post.like_count ?? 0}
+            </div>
+          </div>
+        </div>
 
-      <div className={styles.postDetailComments}>
-        {post.comments?.map((c) => (
-          <PostComment key={c.postcomment_id} comment={c} />
-        ))}
-        <div className={styles.detailInput}>
-          <input type="text" placeholder="대댓글을 입력하세요." />
-          <button>등록</button>
+        {/* 댓글 섹션 */}
+        <div className={styles.mkcommentsSection}>
+          <div className={styles.mkcommentsHeader}>
+            댓글 <span className={styles.mkcommentsCount}>{totalComments}</span>
+          </div>
+
+          {/* 댓글 입력 (동작 로직은 기존처럼 미구현 상태) */}
+          <div className={styles.mkcommentDock}>
+            <input
+              className={styles.mkcommentInputBar}
+              type="text"
+              placeholder="댓글을 입력하세요."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.isComposing) return;
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  // 필요 시 여기서 등록 로직 연결
+                  setNewComment("");
+                }
+              }}
+            />
+            <div className={styles.mkcommentSide}>
+              <button
+                className={styles.mksendBtn}
+                type="button"
+                onClick={() => {
+                  // 필요 시 여기서 등록 로직 연결
+                  setNewComment("");
+                }}
+                aria-label="댓글 등록"
+              >
+                <i className="fa-solid fa-pen" />
+              </button>
+            </div>
+          </div>
+
+          {/* 댓글 리스트: mk 구조로 렌더링 */}
+          <div className={styles.mkcommentsList}>
+            {(post.comments ?? []).map((c) => (
+              <div key={c.postcomment_id} className={styles.mkcommentItem}>
+                <div className={styles.mkcommentHead}>
+                  <div className={styles.mkcommentAvatar} />
+                  <div className={styles.mkcommentMeta}>
+                    <div className={styles.mkcommentAuthor}>
+                      {c.author ?? c.user_name ?? "익명"}
+                    </div>
+                    <div className={styles.mkcommentTime}>
+                      {timeAgo(c.created_at)}
+                    </div>
+                  </div>
+                </div>
+
+                <div
+                  className={styles.mkcommentBody}
+                  style={{ whiteSpace: "pre-wrap" }}
+                >
+                  {c.content ?? c.text}
+                </div>
+
+                <div className={styles.mkcommentFoot}>
+                  <div className={styles.mklikeWrap}>
+                    <i className="fa-regular fa-heart" />
+                    <em className={styles.mklikeCount}>{c.like_count ?? 0}</em>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

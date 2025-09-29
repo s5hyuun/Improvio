@@ -320,6 +320,9 @@
   align-items: center;
   justify-content: center;
 }
+.mksendBtn i {
+  color: #2563eb;
+}
 
 .mkcommentsList {
   display: flex;

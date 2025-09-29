@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
 
 const STORAGE_DEPT_KEY = "selected_dept";
 
@@ -15,6 +16,9 @@ export default function Sidebar() {
     { id: "ops", label: "경영지원", icon: "monitor" },
     { id: "safety", label: "안전", icon: "shield" },
   ];
+
+  const location = useLocation();
+  const isCommunity = location.pathname.startsWith("/community");
 
   const [selected, setSelected] = useState(() => {
     try {
@@ -64,11 +68,12 @@ export default function Sidebar() {
             <span className="ico">{icon("bars")}</span>
             <span>Main Chart</span>
           </a>
+
           <a
             className="nav-item"
             href="#"
-            onClick={() => {
-              // 모든 부서 보기 (빈 문자열 전달)
+            onClick={(e) => {
+              e.preventDefault();
               window.dispatchEvent(
                 new CustomEvent("dept:changed", { detail: { dept: "" } })
               );
@@ -77,28 +82,36 @@ export default function Sidebar() {
             <span className="ico">{icon("doc")}</span>
             <span>Requirements</span>
           </a>
-          <a className="nav-item" href="#">
+          <NavLink
+            to="/community"
+            className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          >
             <span className="ico">{icon("chat")}</span>
             <span>Community</span>
-          </a>
+          </NavLink>
         </nav>
 
-        <div className="section-title">부서 선택</div>
-
-        <div className="dept-wrap">
-          <ul className="dept-list">
-            {departments.map((d) => (
-              <li
-                key={d.id}
-                className={`dept-item ${selected === d.id ? "selected" : ""}`}
-                onClick={() => setSelected(d.id)}
-              >
-                <span className="ico">{icon(d.icon)}</span>
-                <span>{d.label}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
+        {!isCommunity && (
+          <>
+            <div className="section-title">부서 선택</div>
+            <div className="dept-wrap">
+              <ul className="dept-list">
+                {departments.map((d) => (
+                  <li
+                    key={d.id}
+                    className={`dept-item ${
+                      selected === d.id ? "selected" : ""
+                    }`}
+                    onClick={() => setSelected(d.id)}
+                  >
+                    <span className="ico">{icon(d.icon)}</span>
+                    <span>{d.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
+        )}
       </div>
     </aside>
   );
