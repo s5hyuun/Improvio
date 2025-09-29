@@ -279,22 +279,14 @@ i {
   color: #1e3a8a;
   margin-top: 36px;
 }
-.detailThumb > div:first-child {
-  margin-right: 15px;
-}
-.detailThumb > div:last-child {
-  margin-left: 15px;
-}
-.detailThumb div {
+.detailThumb button {
   font-size: 18px;
-  /* font-weight: 600; */
-  color: black;
-  cursor: pointer;
 }
-.detailThumb span {
-  border: 2px solid #bfdbfe;
-  padding: 5px 10px;
-  border-radius: 10px;
+.detailThumb > button:first-child {
+  margin-right: 7px;
+}
+.detailThumb > button:last-child {
+  margin-left: 7px;
 }
 .detailComment {
   padding-top: 10px;
