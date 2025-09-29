@@ -1,20 +1,21 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom"; 
 
 const NOTIFS_STORAGE_KEY = "header_notifs_v1";
-const STORAGE_DEPT_KEY = "selected_dept"; 
+const STORAGE_DEPT_KEY = "selected_dept";
 const AUTH_KEY = "auth_user";
 
 const DEPARTMENTS = [
-  { id: "rd",            label: "R&D",       icon: "bulb"    },
-  { id: "globalSales",   label: "해외영업",   icon: "globe"   },
-  { id: "basicDesign",   label: "기본설계",   icon: "doc"     },
-  { id: "futureBiz",     label: "미래사업개발", icon: "flag"  },
-  { id: "shipDesign",    label: "조선설계",   icon: "triangle"},
-  { id: "marineDesign",  label: "해양설계",   icon: "sea"     },
-  { id: "pm",            label: "PM",        icon: "user"    },
-  { id: "purchase",      label: "구매",       icon: "list"    },
-  { id: "ops",           label: "경영지원",   icon: "monitor" },
-  { id: "safety",        label: "안전",       icon: "shield"  },
+  { id: "rd", label: "R&D", icon: "bulb" },
+  { id: "globalSales", label: "해외영업", icon: "globe" },
+  { id: "basicDesign", label: "기본설계", icon: "doc" },
+  { id: "futureBiz", label: "미래사업개발", icon: "flag" },
+  { id: "shipDesign", label: "조선설계", icon: "triangle" },
+  { id: "marineDesign", label: "해양설계", icon: "sea" },
+  { id: "pm", label: "PM", icon: "user" },
+  { id: "purchase", label: "구매", icon: "list" },
+  { id: "ops", label: "경영지원", icon: "monitor" },
+  { id: "safety", label: "안전", icon: "shield" },
 ];
 
 const DEPT_NUM_TO_ID = {
@@ -50,7 +51,7 @@ function resolveDeptIdFromServer(deptRaw) {
   }
 
   if (typeof deptRaw === "string") {
-    if (deptById(deptRaw)) return deptRaw; 
+    if (deptById(deptRaw)) return deptRaw;
     const byLabel = deptByLabel(deptRaw);
     return byLabel ? byLabel.id : null;
   }
@@ -78,7 +79,7 @@ function loadUserOnce() {
   let base = {
     role: localStorage.getItem("user_role") || "admin",
     username: localStorage.getItem("username") || "username",
-    deptId: localStorage.getItem("user_dept") || null, 
+    deptId: localStorage.getItem("user_dept") || null,
   };
   try {
     const raw = localStorage.getItem(AUTH_KEY);
@@ -92,17 +93,18 @@ function loadUserOnce() {
   const deptRaw =
     base.deptId ??
     base.user_dept ??
-    base.department ??  
-    base.department_id ?? 
-    base.department_name ?? 
-    base.departmentId ?? null; 
+    base.department ??
+    base.department_id ??
+    base.department_name ??
+    base.departmentId ??
+    null;
 
   const deptId = resolveDeptIdFromServer(deptRaw);
 
   return {
     role,
     username: base.username || base.name || "username",
-    deptId, 
+    deptId,
   };
 }
 
@@ -123,11 +125,12 @@ function normalizeNotice(n) {
 
 export default function Header() {
   const [user, setUser] = useState(loadUserOnce());
+  const navigate = useNavigate(); 
 
   useEffect(() => {
     const onAuthChanged = () => setUser(loadUserOnce());
     window.addEventListener("auth:changed", onAuthChanged);
-    window.addEventListener("storage", onAuthChanged); 
+    window.addEventListener("storage", onAuthChanged);
     return () => {
       window.removeEventListener("auth:changed", onAuthChanged);
       window.removeEventListener("storage", onAuthChanged);
@@ -202,15 +205,17 @@ export default function Header() {
     };
   }, []);
 
-  const markAsRead   = (id) => setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
-  const markAllRead  = () => setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
-  const removeNotif  = (id) => setNotifs((prev) => prev.filter((n) => n.id !== id));
-  const clearAll     = () => setNotifs([]);
+  const markAsRead = (id) =>
+    setNotifs((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
+  const markAllRead = () => setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+  const removeNotif = (id) => setNotifs((prev) => prev.filter((n) => n.id !== id));
+  const clearAll = () => setNotifs([]);
+
   const initialDeptId = useMemo(() => {
     try {
       const saved = localStorage.getItem(STORAGE_DEPT_KEY);
-      if (saved && deptById(saved)) return saved;  
-      if (saved && deptByLabel(saved)) return deptByLabel(saved).id; 
+      if (saved && deptById(saved)) return saved;
+      if (saved && deptByLabel(saved)) return deptByLabel(saved).id;
     } catch {}
     return user.deptId || null;
   }, [user.deptId]);
@@ -241,13 +246,26 @@ export default function Header() {
 
   const SCROLL_MAX_HEIGHT = 64 * 5;
 
+  const handleLogout = () => {
+    try {
+      localStorage.removeItem("auth_user");
+      localStorage.removeItem("user_role");
+      localStorage.removeItem("username");
+      localStorage.removeItem("user_dept");
+      localStorage.removeItem("selected_dept");
+    } catch {}
+    window.dispatchEvent(new CustomEvent("auth:changed"));
+    window.dispatchEvent(new CustomEvent("dept:changed", { detail: { id: "all" } }));
+    navigate("/login", { replace: true });
+  };
+
   return (
     <header className="topbar">
       <div className="topbar-left">
         <span
           className="ico"
           style={{
-            background: topLeft.color, // 관리자: #ea580c, 직원: #2563eb
+            background: topLeft.color,
             color: "#fff",
             display: "grid",
             placeItems: "center",
@@ -414,7 +432,9 @@ export default function Header() {
           )}
         </div>
 
-        <button className="btn btn-ghost" type="button">로그아웃</button>
+        <button className="btn btn-ghost" type="button" onClick={handleLogout}>
+          로그아웃
+        </button>
       </div>
     </header>
   );
