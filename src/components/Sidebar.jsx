@@ -2,6 +2,20 @@ import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 const STORAGE_DEPT_KEY = "selected_dept";
+const AUTH_KEY = "auth_user";
+
+const DEPT_LABEL_BY_NUM = {
+  1: "R&D",
+  2: "해외영업",
+  3: "기본설계",
+  4: "미래사업개발",
+  5: "조선설계",
+  6: "해양설계",
+  7: "PM",
+  8: "구매",
+  9: "경영지원",
+  10: "안전",
+};
 
 export default function Sidebar() {
   const departments = [
@@ -19,6 +33,41 @@ export default function Sidebar() {
 
   const location = useLocation();
   const isCommunity = location.pathname.startsWith("/community");
+
+  const readAuth = () => {
+    try {
+      const raw = localStorage.getItem(AUTH_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
+  };
+
+  const [auth, setAuth] = useState(readAuth);
+
+  useEffect(() => {
+    const onAuthChanged = () => setAuth(readAuth());
+    window.addEventListener("auth:changed", onAuthChanged);
+    window.addEventListener("storage", onAuthChanged);
+    return () => {
+      window.removeEventListener("auth:changed", onAuthChanged);
+      window.removeEventListener("storage", onAuthChanged);
+    };
+  }, []);
+
+  const role = String(auth?.role || "").toLowerCase();
+  const isAdmin = role === "admin" || role === "manager";
+  const isEmployee = role === "employee";
+
+  const displayName = auth?.username || "username";
+  const deptLabelFromAuth =
+    auth?.department_name ??
+    (Number.isInteger(auth?.department_id)
+      ? DEPT_LABEL_BY_NUM[auth.department_id]
+      : null);
+  const deptLabelFromLocal = localStorage.getItem(STORAGE_DEPT_KEY) || null;
+  const profileDeptLabel = deptLabelFromAuth || deptLabelFromLocal || "부서 미지정";
 
   const [selected, setSelected] = useState(() => {
     try {
@@ -45,21 +94,17 @@ export default function Sidebar() {
     <aside className="sidebar">
       <div className="sidebar-inner">
         <div className="logo-wrap">
-          <img
-            src="src/assets/logo.png"
-            alt="Company Logo"
-            className="logo-img"
-          />
+          <img src="src/assets/logo.png" alt="Company Logo" className="logo-img" />
         </div>
 
         <section className="profile">
-          <div className="profile-name">username</div>
+          <div className="profile-name">{displayName}</div>
           <button className="link-btn" type="button">
             edit
           </button>
           <div className="chip-row">
-            <span className="chip chip-primary">R&amp;D</span>
-            <span className="chip chip-warn">관리자</span>
+            <span className="chip chip-primary">{profileDeptLabel}</span>
+            {isAdmin && <span className="chip chip-warn">관리자</span>}
           </div>
         </section>
 
@@ -82,6 +127,7 @@ export default function Sidebar() {
             <span className="ico">{icon("doc")}</span>
             <span>Requirements</span>
           </a>
+
           <NavLink
             to="/community"
             className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
@@ -99,9 +145,7 @@ export default function Sidebar() {
                 {departments.map((d) => (
                   <li
                     key={d.id}
-                    className={`dept-item ${
-                      selected === d.id ? "selected" : ""
-                    }`}
+                    className={`dept-item ${selected === d.id ? "selected" : ""}`}
                     onClick={() => setSelected(d.id)}
                   >
                     <span className="ico">{icon(d.icon)}</span>
@@ -140,12 +184,7 @@ function icon(name) {
             stroke="currentColor"
             strokeWidth="2"
           />
-          <path
-            d="M14 3v6h6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M14 3v6h6" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "chat":
@@ -186,42 +225,20 @@ function icon(name) {
     case "globe":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <circle
-            cx="12"
-            cy="12"
-            r="9"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <path
-            d="M2 12h20M12 2a15 15 0 0 1 0 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M2 12h20M12 2a15 15 0 0 1 0 20" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "flag":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M12 2v6l5 3-5 3v8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M12 2v6l5 3-5 3v8" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "triangle":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M3 18l9-12 9 12H3z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M3 18l9-12 9 12H3z" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "sea":
@@ -238,34 +255,19 @@ function icon(name) {
     case "user":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22c0-5 4-8 9-8s9 3 9 8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22c0-5 4-8 9-8s9 3 9 8" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "list":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M3 6h18M3 12h18M3 18h18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "monitor":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M4 4h16v12H4z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M4 4h16v12H4z" fill="none" stroke="currentColor" strokeWidth="2" />
           <path d="M8 20h8" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
