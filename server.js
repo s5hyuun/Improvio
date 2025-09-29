@@ -429,7 +429,7 @@ app.get("/api/suggestions/:id/details", async (req, res) => {
     const [suggestionRows] = await pool.query(
       `
       SELECT 
-        s.suggestion_id, s.title, s.description, s.status, s.created_at, u.user_id,
+        s.suggestion_id, s.title, s.description, s.status, s.created_at, s.expected_effect, u.user_id,
         u.name AS user_name, d.department_name,
         p.expected_reduction_rate, p.actual_reduction_rate,
         p.expected_productivity, p.actual_productivity,
@@ -912,24 +912,39 @@ app.get("/api/hot-posts", async (req, res) => {
   }
 });
 // POST /api/posts
-app.post("/api/posts", async (req, res) => {
-  const { board_id, user_id, title, content, department_id } = req.body;
-
-  if (!board_id || !user_id || !title || !content) {
-    return res.status(400).json({ error: "필수 항목 누락" });
-  }
-
+app.post("/api/posts", upload.array("images", 10), async (req, res) => {
+  const conn = await pool.getConnection();
   try {
-    const [result] = await pool.query(
-      `INSERT INTO post (board_id, user_id, title, content, department_id)
+    const { board_id, user_id, title, content, department_id } = req.body;
+
+    await conn.beginTransaction();
+
+    // 1. post 저장
+    const [result] = await conn.query(
+      `INSERT INTO post (board_id, user_id, title, content, department_id) 
        VALUES (?, ?, ?, ?, ?)`,
-      [board_id, user_id, title, content, department_id || null]
+      [board_id, user_id, title, content, department_id]
     );
 
-    res.json({ success: true, post_id: result.insertId });
+    const postId = result.insertId;
+
+    // 2. 첨부파일 저장
+    if (req.files && req.files.length > 0) {
+      const values = req.files.map((f) => [postId, `/uploads/${f.filename}`]);
+      await conn.query(
+        `INSERT INTO postattachment (post_id, file_path) VALUES ?`,
+        [values]
+      );
+    }
+
+    await conn.commit();
+    res.json({ success: true, post_id: postId });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: "DB 저장 오류" });
+    await conn.rollback();
+    console.error("❌ Insert Error:", err);
+    res.status(500).json({ error: "DB 오류" });
+  } finally {
+    conn.release();
   }
 });
 
