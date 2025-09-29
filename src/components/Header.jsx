@@ -35,10 +35,7 @@ function loadUser() {
   };
 }
 
-/** 공지 알림 정규화
- * - 제목이 '공지 게시 재개'로 들어오는 기존 구조까지 자동 치환
- * - 결과: title = 글 제목, meta = '관리자 · 시간'
- */
+/** 공지 알림 정규화 */
 function normalizeNotice(n) {
   const isNotice =
     n.kind === "notice" ||
@@ -46,9 +43,8 @@ function normalizeNotice(n) {
 
   if (!isNotice) return n;
 
-  // meta 예: "생산라인 자동화 제안 검토 필요 · 19:38"
   const metaStr = String(n.meta ?? "");
-  const [descRaw, timeRaw] = metaStr.split("·"); // 앞: 설명(=실제 글제목), 뒤: 시간
+  const [descRaw, timeRaw] = metaStr.split("·");
   const desc = (descRaw ?? "").trim();
   const time = (timeRaw ?? "").trim();
 
@@ -79,7 +75,7 @@ export default function Header() {
     } catch {}
   }, [notifs]);
 
-  // 기존 이벤트 방식 유지(프로듀서 변경 불필요)
+  // Notice.jsx 등에서 쏘는 이벤트 수신
   useEffect(() => {
     const onAdd = (e) => {
       const { id, title, meta, kind, postTitle, actor } = e.detail || {};
@@ -87,7 +83,6 @@ export default function Header() {
         {
           id: id ?? Date.now(),
           kind: kind || "generic",
-          // 원본을 그대로 저장(렌더링 단계에서 normalize)
           title: postTitle || title || "",
           meta: actor || meta || "",
           read: false,
@@ -173,6 +168,9 @@ export default function Header() {
   const dept = deptById(deptId || (isEmployee ? user.deptId : null));
   const [hoverAct, setHoverAct] = useState(null);
 
+  // 스크롤 컨테이너: 아이템 최대 5개 높이(대략 64px * 5)
+  const SCROLL_MAX_HEIGHT = 64 * 5;
+
   return (
     <header className="topbar">
       <div className="topbar-left">
@@ -243,98 +241,114 @@ export default function Header() {
               {notifs.length === 0 ? (
                 <li role="menuitem" style={{ padding: "12px" }}>새 알림이 없습니다.</li>
               ) : (
-                notifs.map((raw) => {
-                  const n = normalizeNotice(raw);
-                  return (
-                    <li
-                      key={n.id}
-                      role="menuitem"
-                      onClick={() => markAsRead(n.id)}
-                      style={{ display: "grid", gap: 6, padding: "10px 12px", opacity: n.read ? 0.6 : 1 }}
-                    >
-                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
-                        <span style={{ fontWeight: 700 }}>{n.title}</span>
-                        <button
-                          type="button"
-                          aria-label="알림 삭제"
-                          title="삭제"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            removeNotif(n.id);
-                          }}
+                <>
+                  {/* 스크롤 되는 영역 */}
+                  <div
+                    style={{
+                      maxHeight: SCROLL_MAX_HEIGHT,
+                      overflowY: notifs.length > 5 ? "auto" : "visible",
+                      margin: "4px 0",
+                      paddingRight: 4,
+                    }}
+                  >
+                    {notifs.map((raw) => {
+                      const n = normalizeNotice(raw);
+                      return (
+                        <li
+                          key={n.id}
+                          role="menuitem"
+                          onClick={() => markAsRead(n.id)}
                           style={{
-                            border: "none",
-                            background: "transparent",
-                            color: "#9ca3af",
-                            fontSize: 18,
-                            lineHeight: 1,
-                            cursor: "pointer",
-                            padding: 0,
+                            display: "grid",
+                            gap: 6,
+                            padding: "10px 12px",
+                            opacity: n.read ? 0.6 : 1,
                           }}
                         >
-                          ×
+                          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                            <span style={{ fontWeight: 700 }}>{n.title}</span>
+                            <button
+                              type="button"
+                              aria-label="알림 삭제"
+                              title="삭제"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeNotif(n.id);
+                              }}
+                              style={{
+                                border: "none",
+                                background: "transparent",
+                                color: "#9ca3af",
+                                fontSize: 18,
+                                lineHeight: 1,
+                                cursor: "pointer",
+                                padding: 0,
+                              }}
+                            >
+                              ×
+                            </button>
+                          </div>
+                          <span style={{ fontSize: 12, opacity: 0.8 }}>{n.meta}</span>
+                        </li>
+                      );
+                    })}
+                  </div>
+
+                  {/* 하단 고정 액션 */}
+                  <li role="presentation" style={{ padding: "8px 12px", background: "transparent" }}>
+                    <div style={{ display: "flex", justifyContent: "flex-end" }}>
+                      <div
+                        role="group"
+                        aria-label="알림 일괄 액션"
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          border: "1px solid #e5e7eb",
+                          borderRadius: 10,
+                          overflow: "hidden",
+                        }}
+                      >
+                        <button
+                          type="button"
+                          onClick={markAllRead}
+                          onMouseEnter={() => setHoverAct("read")}
+                          onMouseLeave={() => setHoverAct(null)}
+                          className="link-btn"
+                          style={{
+                            border: "none",
+                            background: hoverAct === "read" ? "rgba(37,99,235,.08)" : "transparent",
+                            color: "#2563eb",
+                            padding: "8px 12px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          모두 읽음
+                        </button>
+
+                        <span aria-hidden="true" style={{ width: 1, height: 18, background: "#e5e7eb" }} />
+
+                        <button
+                          type="button"
+                          onClick={clearAll}
+                          onMouseEnter={() => setHoverAct("delete")}
+                          onMouseLeave={() => setHoverAct(null)}
+                          className="link-btn"
+                          style={{
+                            border: "none",
+                            background: hoverAct === "delete" ? "rgba(239,68,68,.08)" : "transparent",
+                            color: "#ef4444",
+                            padding: "8px 12px",
+                            fontWeight: 700,
+                            cursor: "pointer",
+                          }}
+                        >
+                          모두 삭제
                         </button>
                       </div>
-                      <span style={{ fontSize: 12, opacity: 0.8 }}>{n.meta}</span>
-                    </li>
-                  );
-                })
-              )}
-
-              {notifs.length > 0 && (
-                <li role="presentation" style={{ padding: "8px 12px", background: "transparent" }}>
-                  <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                    <div
-                      role="group"
-                      aria-label="알림 일괄 액션"
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        border: "1px solid #e5e7eb",
-                        borderRadius: 10,
-                        overflow: "hidden",
-                      }}
-                    >
-                      <button
-                        type="button"
-                        onClick={markAllRead}
-                        onMouseEnter={() => setHoverAct("read")}
-                        onMouseLeave={() => setHoverAct(null)}
-                        className="link-btn"
-                        style={{
-                          border: "none",
-                          background: hoverAct === "read" ? "rgba(37,99,235,.08)" : "transparent",
-                          color: "#2563eb",
-                          padding: "8px 12px",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                        }}
-                      >
-                        모두 읽음
-                      </button>
-
-                      <span aria-hidden="true" style={{ width: 1, height: 18, background: "#e5e7eb" }} />
-
-                      <button
-                        type="button"
-                        onClick={clearAll}
-                        onMouseEnter={() => setHoverAct("delete")}
-                        onMouseLeave={() => setHoverAct(null)}
-                        className="link-btn"
-                        style={{
-                          border: "none",
-                          background: hoverAct === "delete" ? "rgba(239,68,68,.08)" : "transparent",
-                          color: "#ef4444",
-                          padding: "8px 12px",
-                          fontWeight: 700,
-                          cursor: "pointer",
-                        }}
-                      >
-                        모두 삭제
-                      </button>
                     </div>
-                  </div>
-                </li>
+                  </li>
+                </>
               )}
             </ul>
           )}

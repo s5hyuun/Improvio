@@ -1,12 +1,14 @@
+// Notice.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/Notice.module.css";
 
 const STORAGE_KEY = "notices_v1";
 
+// ── localStorage helpers ─────────────────────────────────
 function loadNotices() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null; 
+    return raw ? JSON.parse(raw) : null; // 캐시가 없으면 null
   } catch {
     return null;
   }
@@ -23,6 +25,13 @@ function broadcast(list) {
     new CustomEvent("notice:changed", { detail: { list, activeCount } })
   );
 }
+// HH:MM 포맷
+function clockStr(d = new Date()) {
+  const hh = String(d.getHours()).padStart(2, "0");
+  const mm = String(d.getMinutes()).padStart(2, "0");
+  return `${hh}:${mm}`;
+}
+// ─────────────────────────────────────────────────────────
 
 export default function Notice() {
   const [list, setList] = useState([]);
@@ -34,6 +43,7 @@ export default function Notice() {
   const [body, setBody] = useState("");
   const [urgent, setUrgent] = useState(false);
 
+  // 최초 로딩
   useEffect(() => {
     const cached = loadNotices();
 
@@ -67,6 +77,7 @@ export default function Notice() {
     broadcast(seed);
   }, []);
 
+  // 정렬된 표시용 목록
   const view = useMemo(() => {
     return list
       .slice()
@@ -128,6 +139,19 @@ export default function Notice() {
       setList(next);
       broadcast(next);
 
+      // 🔔 헤더 알림 발행: 게시 즉시 종 알림에 노출
+      window.dispatchEvent(
+        new CustomEvent("header:notif:add", {
+          detail: {
+            id: Date.now(),
+            kind: "notice",                       // Header에서 공지로 인식
+            title: "공지 게시",                    // normalize에서 실제 글제목으로 치환
+            meta: `${item.title} · ${clockStr()}`, // "<공지제목> · HH:MM"
+          },
+        })
+      );
+
+      // (선택) 기존 created 이벤트도 유지
       window.dispatchEvent(
         new CustomEvent("notice:created", {
           detail: { id: item.id, title: item.title },
@@ -137,6 +161,7 @@ export default function Notice() {
     }
   };
 
+  // 게시 중단 / 재개
   const toggleActive = (id) => {
     const target = list.find((n) => n.id === id);
     if (!target) return;
@@ -149,14 +174,27 @@ export default function Notice() {
     broadcast(next);
 
     if (willActive) {
+      // 기존 이벤트(필요시 사용)
       window.dispatchEvent(
         new CustomEvent("notice:resumed", {
           detail: { id, title: target.title },
         })
       );
+      // ✅ 헤더 알림으로도 발행
+      window.dispatchEvent(
+        new CustomEvent("header:notif:add", {
+          detail: {
+            id: Date.now(),
+            kind: "notice",
+            title: "공지 게시 재개",               // Header에서 정규화됨
+            meta: `${target.title} · ${clockStr()}`, // "<공지제목> · HH:MM"
+          },
+        })
+      );
     }
   };
 
+  // 즉시 삭제 + 영구 반영(localStorage 저장)
   const removeNotice = () => {
     if (editId === null) return;
     const target = list.find((n) => n.id === editId);
@@ -164,14 +202,13 @@ export default function Notice() {
 
     const next = list.filter((n) => n.id !== editId);
     setList(next);
-    broadcast(next); 
+    broadcast(next);
 
     window.dispatchEvent(
       new CustomEvent("notice:deleted", {
         detail: { id: target.id, title: target.title },
       })
     );
-
     closeModal();
   };
 
@@ -288,7 +325,7 @@ export default function Notice() {
                 {editId !== null && (
                   <button
                     type="button"
-                    className={styles.stopBtn} 
+                    className={styles.stopBtn}
                     onClick={removeNotice}
                     title="공지 삭제"
                   >
