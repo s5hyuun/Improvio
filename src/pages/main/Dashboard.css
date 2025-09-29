@@ -1,36 +1,24 @@
 .dashboard-container {
   display: grid;
-  grid-template-columns: repeat(3, 1fr); /* 3열 */
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
-  padding: 20px;
-  background-color: #eaf2fb;
+  padding: 30px;
+  background-color: #eef5ff; /* 전체 배경 */
 }
 
 .card {
-  background-color: #f9fbfe;
-  border: 1px solid #d4e2f0;
-  border-radius: 8px;
-  padding: 20px;
-  min-height: 430px;
+  background-color: #ffffff;
+  border: 2px dashed #cce0ff;
+  border-radius: 10px;
+  height: 400px;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-}
-
-.card-title {
-  font-size: 23px;
-  font-weight: bold;
-  margin-bottom: 12px;
-  color: #333;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
 }
 
 .card-content {
-  font-size: 14px;
-  color: #444;
-  border: 1px dashed #bcd2e4;
-  padding: 40px;
+  font-size: 16px;
+  color: #333;
   text-align: center;
-  border-radius: 6px;
-  background-color: #fff;
-  height: 100%;
 }

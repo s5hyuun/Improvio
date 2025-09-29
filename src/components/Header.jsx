@@ -152,7 +152,7 @@ export default function Header({ isLoggedIn, setIsLoggedIn }) {
             <Link to="/login" className="btn btn-ghost">
               로그인
             </Link>
-            <Link to="/signupall" className="btn btn-ghost">
+            <Link to="/login" className="btn btn-ghost">
               회원가입
             </Link>
           </>
