@@ -9,7 +9,7 @@ function PostDetail() {
   const [post, setPost] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/posts/${postId}`)
+    fetch(`http://localhost:4000/api/posts/${postId}`)
       .then((res) => res.json())
       .then((data) => setPost(data))
       .catch((err) => console.error(err));

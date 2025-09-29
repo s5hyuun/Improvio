@@ -11,14 +11,14 @@ function Community() {
   const nav = useNavigate();
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/boards")
+    fetch("http://localhost:4000/api/boards")
       .then((res) => res.json())
       .then((data) => setBoards(data))
       .catch((err) => console.error(err));
   }, []);
 
   useEffect(() => {
-    fetch("http://localhost:5000/api/hot-posts")
+    fetch("http://localhost:4000/api/hot-posts")
       .then((res) => res.json())
       .then((data) => setHotPosts(data))
       .catch((err) => console.error(err));

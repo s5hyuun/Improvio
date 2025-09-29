@@ -22,7 +22,7 @@ export default function SignupStep2({ onComplete }) {
 
   // 🔥 컴포넌트 로드 시 부서 목록 API 호출
   useEffect(() => {
-    fetch("http://localhost:5000/api/departments")
+    fetch("http://localhost:4000/api/departments")
       .then((res) => res.json())
       .then((data) => setDepartments(data))
       .catch((err) => console.error("부서 불러오기 실패:", err));
@@ -62,7 +62,7 @@ export default function SignupStep2({ onComplete }) {
     }
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/register", {
+      const res = await fetch("http://localhost:4000/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -141,11 +141,7 @@ export default function SignupStep2({ onComplete }) {
                 className="absolute inset-y-0 right-3 flex items-center text-gray-500"
               >
                 <img
-                  src={
-                    showPassword
-                      ? "/close-eye.png"
-                      : "/open-eye.png"
-                  }
+                  src={showPassword ? "/close-eye.png" : "/open-eye.png"}
                   alt="비밀번호 보기 토글"
                   style={{ width: "15px", height: "15px" }}
                 />
@@ -171,11 +167,7 @@ export default function SignupStep2({ onComplete }) {
                 className="absolute inset-y-0 right-3 flex items-center bg-white rounded px-2"
               >
                 <img
-                  src={
-                    showConfirmPassword
-                      ? "/close-eye.png"
-                      : "/open-eye.png"
-                  }
+                  src={showConfirmPassword ? "/close-eye.png" : "/open-eye.png"}
                   alt="비밀번호 확인 보기 토글"
                   style={{ width: "15px", height: "15px" }}
                 />

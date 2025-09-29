@@ -19,7 +19,7 @@ function BoardContent({ suggestion, onClick }) {
   const handleVote = async (score) => {
     try {
       const res = await fetch(
-        `http://localhost:5000/api/suggestions/${suggestion_id}/vote`,
+        `http://localhost:4000/api/suggestions/${suggestion_id}/vote`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

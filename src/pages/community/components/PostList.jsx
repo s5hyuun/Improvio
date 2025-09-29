@@ -9,7 +9,7 @@ function PostList() {
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    fetch(`http://localhost:5000/api/posts?board_id=${boardId}`)
+    fetch(`http://localhost:4000/api/posts?board_id=${boardId}`)
       .then((res) => res.json())
       .then((data) => setPosts(data))
       .catch((err) => console.error(err));
