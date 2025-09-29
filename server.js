@@ -8,12 +8,14 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import mime from "mime"; // npm install mime
+import performanceRouter from "./routes/performance.js";
 
 const SECRET_KEY = "secret_key";
 
 const app = express();
 app.use(cors({}));
 app.use(express.json());
+app.use("/api/performance", performanceRouter);
 app.use("/uploads", express.static("uploads"));
 const uploadDir = "uploads";
 if (!fs.existsSync(uploadDir)) {
@@ -241,7 +243,6 @@ app.post("/api/performance", async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 });
-
 // POST /api/comments/:id/like (좋아요 추가)
 app.post("/api/comments/:id/like", async (req, res) => {
   try {
@@ -429,7 +430,7 @@ app.get("/api/suggestions/:id/details", async (req, res) => {
     const [suggestionRows] = await pool.query(
       `
       SELECT 
-        s.suggestion_id, s.title, s.description, s.status, s.created_at, s.expected_effect, u.user_id,
+        s.suggestion_id, s.title, s.description, s.status, s.created_at, u.user_id,
         u.name AS user_name, d.department_name,
         p.expected_reduction_rate, p.actual_reduction_rate,
         p.expected_productivity, p.actual_productivity,
@@ -494,6 +495,18 @@ app.get("/api/suggestions/:id/details", async (req, res) => {
     res.json(suggestion);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+// GET /api/performance/counts
+app.get("/api/performance/counts", async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      "SELECT COUNT(*) AS count FROM Performance"
+    );
+    res.json({ count: rows[0].count });
+  } catch (err) {
+    console.error("Error fetching performance count:", err);
+    res.status(500).json({ error: "Failed to fetch performance count" });
   }
 });
 
