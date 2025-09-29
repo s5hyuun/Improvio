@@ -825,9 +825,9 @@ app.get("/api/posts/:id", async (req, res) => {
 
     // 1. 게시글 기본 정보 + 작성자
     const [[post]] = await pool.query(
-      `SELECT p.*, u.username
+      `SELECT p.*, u.username, b.name as board_title
        FROM post p
-       LEFT JOIN user u ON p.user_id = u.user_id
+       LEFT JOIN user u ON p.user_id = u.user_id left join board b on b.board_id=p.board_id
        WHERE post_id = ?`,
       [id]
     );
