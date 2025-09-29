@@ -823,12 +823,13 @@ app.get("/api/posts/:id", async (req, res) => {
   try {
     const { id } = req.params;
 
-    // 1. 게시글 기본 정보 + 작성자
+    // 1. 게시글 기본 정보 + 작성자 + 게시판
     const [[post]] = await pool.query(
-      `SELECT p.*, u.username, b.name as board_title
+      `SELECT p.*, u.username AS author, b.name AS board_title
        FROM post p
-       LEFT JOIN user u ON p.user_id = u.user_id left join board b on b.board_id=p.board_id
-       WHERE post_id = ?`,
+       LEFT JOIN user u ON p.user_id = u.user_id
+       LEFT JOIN board b ON b.board_id = p.board_id
+       WHERE p.post_id = ?`,
       [id]
     );
 
@@ -836,10 +837,10 @@ app.get("/api/posts/:id", async (req, res) => {
 
     // 2. 댓글 가져오기
     const [comments] = await pool.query(
-      `SELECT c.*, u.username 
-       FROM postcomment c 
-       LEFT JOIN user u ON c.user_id = u.user_id 
-       WHERE c.post_id = ? 
+      `SELECT c.*, u.username AS author
+       FROM postcomment c
+       LEFT JOIN user u ON c.user_id = u.user_id
+       WHERE c.post_id = ?
        ORDER BY c.created_at ASC`,
       [id]
     );
@@ -858,6 +859,15 @@ app.get("/api/posts/:id", async (req, res) => {
       [id]
     );
     post.like_count = like_count;
+
+    // 5. 첨부 이미지 가져오기
+    const [attachments] = await pool.query(
+      `SELECT attachment_id, file_path 
+       FROM postattachment 
+       WHERE post_id = ?`,
+      [id]
+    );
+    post.attachments = attachments;
 
     res.json(post);
   } catch (err) {
