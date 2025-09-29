@@ -128,7 +128,7 @@ export default function SignupStep5({ onComplete }) {
               <button
                 type="button"
                 onClick={toggleShowPassword}
-                className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                className="absolute inset-y-0 right-3 flex items-center"
               >
                 <img
                   src={

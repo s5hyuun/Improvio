@@ -3,6 +3,7 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import SignupStep5 from "./signup5";
 import SignupStep6 from "./signup6";
+import "../../styles/signup4.css";
 
 export default function Signup4() {
   const [step, setStep] = useState(1);
@@ -31,7 +32,8 @@ export default function Signup4() {
         <Header />
 
         {step === 1 && (
-          <section className="content flex justify-center items-center min-h-screen bg-gray-100">
+          /* 기존: <section className="content flex justify-center items-center min-h-screen bg-gray-100"> */
+          <section className="content">
             <h1 className="signup-title">회원가입(관리자용)</h1>
 
             <div className="big-block">

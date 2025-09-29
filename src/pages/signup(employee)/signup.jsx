@@ -3,7 +3,7 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import SignupStep2 from "./signup2";
 import SignupStep3 from "./signup3";
-import "./signup.css";
+import "../../styles/signup.css";
 
 export default function Signup() {
   const [step, setStep] = useState(1);
