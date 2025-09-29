@@ -27,7 +27,10 @@ function Community() {
   return (
     <div className="app">
       <Sidebar />
-      <div className="main">
+      <div
+        className="main"
+        style={{ height: "100vh", display: "flex", flexDirection: "column", overflow: "hidden" }}
+      >
         <Header />
         <div className={styles.commContainer}>
           <div className={styles.commBoards}>

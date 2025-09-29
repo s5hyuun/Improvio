@@ -1,28 +1,22 @@
-// src/pages/Community/CommunityMarketOnly.jsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
-import { createPortal } from "react-dom";
 import styles from "../../../styles/Market.module.css";
+import PostWrite from "./PostWrite"; 
 
 const LS_KEY = "market_meta_v1";
 const SCHEMA_V = 2;
 const HEART_COLOR = "rgb(239, 68, 68)";
 
 const readStore = () => {
-  try {
-    return JSON.parse(localStorage.getItem(LS_KEY)) || {};
-  } catch {
-    return {};
-  }
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || {}; }
+  catch { return {}; }
 };
 const writeStore = (obj) => localStorage.setItem(LS_KEY, JSON.stringify(obj));
 const patchStore = (id, patch) => {
   const store = readStore();
   store[id] = { ...(store[id] || {}), ...patch };
   writeStore(store);
-  window.dispatchEvent(
-    new CustomEvent("market_meta_updated", { detail: { id, meta: store[id] } })
-  );
+  window.dispatchEvent(new CustomEvent("market_meta_updated", { detail: { id, meta: store[id] } }));
   return store[id];
 };
 
@@ -42,269 +36,11 @@ const parseRel = (s) => {
   return Date.now() - ms;
 };
 
-function MarketWrite({ onClose }) {
-  const [mounted, setMounted] = useState(false);
-
-  const [productName, setProductName] = useState("");
-  const [title, setTitle] = useState("");
-  const [category, setCategory] = useState("");
-  const [price, setPrice] = useState("0");
-  const [isNegotiable, setIsNegotiable] = useState(false);
-  const [condition, setCondition] = useState("");
-  const [desc, setDesc] = useState("");
-  const [dealDirect, setDealDirect] = useState(false);
-  const [dealParcel, setDealParcel] = useState(false);
-  const [contact, setContact] = useState("");
-  const [files, setFiles] = useState([]);
-
-  useEffect(() => {
-    setMounted(true);
-    return () => setMounted(false);
-  }, []);
-  useEffect(() => {
-    const onKey = (e) => {
-      if (e.key === "Escape") onClose?.();
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [onClose]);
-
-  const isValid =
-    productName.trim() &&
-    title.trim() &&
-    category &&
-    condition &&
-    price !== "" &&
-    (dealDirect || dealParcel);
-
-  const submit = (e) => {
-    e.preventDefault();
-    if (!isValid) {
-      alert("필수 항목을 확인해주세요.");
-      return;
-    }
-    onClose?.();
-  };
-
-  if (!mounted) return null;
-
-  const FieldLabel = ({ icon, text, req }) => (
-    <div className={styles.mkmwLabelRow}>
-      {icon && <i className={icon} aria-hidden="true" />}
-      <span>{text}</span>
-      {req && <em className={styles.mkreqStar}>*</em>}
-    </div>
-  );
-
-  const body = (
-    <div
-      className={styles.mkmodalOverlay}
-      role="dialog"
-      aria-modal="true"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose?.();
-      }}
-    >
-      <div className={styles.mkmodalPanel} onClick={(e) => e.stopPropagation()}>
-        <div className={styles.mkmodalHeader}>
-          <h2 className={styles.mkmodalTitle}>장터 글쓰기</h2>
-          <button
-            type="button"
-            className={styles.mkcloseBtn}
-            onClick={onClose}
-            aria-label="닫기"
-          >
-            ✕
-          </button>
-        </div>
-
-        <form className={styles.mkwriteForm} onSubmit={submit}>
-          <div className={styles.mkmwField}>
-            <FieldLabel icon="fa-solid fa-box" text="상품명" req />
-            <input
-              className={styles.mkinputLike}
-              placeholder="판매하실 상품명을 입력해주세요"
-              value={productName}
-              onChange={(e) => setProductName(e.target.value)}
-            />
-          </div>
-
-          <div className={styles.mkmwField}>
-            <FieldLabel icon="fa-solid fa-tag" text="제목" req />
-            <input
-              className={styles.mkinputLike}
-              placeholder="제목을 입력해주세요"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
-          <div className={styles.mkmwRow2}>
-            <div className={styles.mkmwField}>
-              <FieldLabel text="카테고리" req />
-              <select
-                className={styles.mkinputLike}
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-              >
-                <option value="">카테고리를 선택해주세요</option>
-                <option>디지털/가전</option>
-                <option>가구/인테리어</option>
-                <option>생활/주방</option>
-                <option>남성패션</option>
-                <option>여성패션</option>
-                <option>스포츠/레저</option>
-                <option>취미/게임/음반</option>
-                <option>도서</option>
-                <option>반려동물</option>
-                <option>기타</option>
-              </select>
-            </div>
-
-            <div className={styles.mkmwField}>
-              <div className={styles.mkmwLabelRow}>
-                <span
-                  style={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    gap: 6,
-                  }}
-                >
-                  <span style={{ fontWeight: 700 }}>$</span> 가격
-                </span>
-                <em className={styles.mkreqStar}>*</em>
-              </div>
-              <div className={styles.mkmwPriceRow}>
-                <input
-                  className={styles.mkinputLike}
-                  type="number"
-                  min="0"
-                  step="1"
-                  value={price}
-                  onChange={(e) => setPrice(e.target.value)}
-                  placeholder="0"
-                />
-                <span className={styles.mkmwWon}>원</span>
-              </div>
-              <label className={styles.mkmwCheckLine}>
-                <input
-                  type="checkbox"
-                  checked={isNegotiable}
-                  onChange={(e) => setIsNegotiable(e.target.checked)}
-                />
-                가격 협의 가능
-              </label>
-            </div>
-          </div>
-
-          <div className={styles.mkmwField}>
-            <FieldLabel text="상품 상태" req />
-            <select
-              className={styles.mkinputLike}
-              value={condition}
-              onChange={(e) => setCondition(e.target.value)}
-            >
-              <option value="">상품 상태를 선택해주세요</option>
-              <option>미개봉</option>
-              <option>거의 새것</option>
-              <option>좋음</option>
-              <option>보통</option>
-              <option>사용감 있음</option>
-            </select>
-          </div>
-
-          <div className={styles.mkmwField}>
-            <FieldLabel text="상품 설명" req />
-            <textarea
-              className={styles.mkinputLike}
-              rows={6}
-              placeholder="상품에 대한 자세한 설명을 작성해주세요..."
-              value={desc}
-              onChange={(e) => setDesc(e.target.value)}
-            />
-          </div>
-
-          <div className={styles.mkmwField}>
-            <FieldLabel icon="fa-solid fa-camera" text="상품 사진" />
-            <label htmlFor="market-file" className={styles.mkfileDrop}>
-              <input
-                id="market-file"
-                type="file"
-                accept="image/*"
-                multiple
-                hidden
-                onChange={(e) =>
-                  setFiles(Array.from(e.target.files || []).slice(0, 5))
-                }
-              />
-              <i className="fa-solid fa-upload" aria-hidden="true" />
-              <span>사진 업로드 (최대 5장)</span>
-            </label>
-          </div>
-
-          <div className={styles.mkmwField}>
-            <FieldLabel icon="fa-solid fa-truck" text="거래 방법" req />
-            <div className={styles.mkmwChecks}>
-              <label className={styles.mkmwCheckLine}>
-                <input
-                  type="checkbox"
-                  checked={dealDirect}
-                  onChange={(e) => setDealDirect(e.target.checked)}
-                />
-                직거래
-              </label>
-              <label className={styles.mkmwCheckLine}>
-                <input
-                  type="checkbox"
-                  checked={dealParcel}
-                  onChange={(e) => setDealParcel(e.target.checked)}
-                />
-                택배거래
-              </label>
-            </div>
-          </div>
-
-          <div className={styles.mkmwField}>
-            <FieldLabel icon="fa-solid fa-phone" text="연락처" />
-            <input
-              className={styles.mkinputLike}
-              placeholder="연락 가능한 번호나 이메일을 입력해주세요"
-              value={contact}
-              onChange={(e) => setContact(e.target.value)}
-            />
-          </div>
-
-          <div className={styles.mkactions}>
-            <button
-              type="button"
-              className={styles.mkbackBtn}
-              onClick={onClose}
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              className={styles.mksubmitBtn}
-              disabled={!isValid}
-            >
-              등록하기
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
-  );
-
-  return createPortal(body, document.body);
-}
-
 function MarketList({ boardKey }) {
   const nav = useNavigate();
   const { pathname } = useLocation();
 
-  const isMarket = boardKey
-    ? boardKey === "market"
-    : pathname.includes("/board/5");
+  const isMarket = boardKey ? boardKey === "market" : pathname.includes("/board/5");
   const boardMeta = isMarket
     ? { title: "장터게시판", count: 67, icon: "fa-solid fa-cart-shopping" }
     : { title: "자유게시판", count: 324, icon: "fa-solid fa-message" };
@@ -314,33 +50,9 @@ function MarketList({ boardKey }) {
 
   const base = useMemo(
     () => [
-      {
-        id: 88156,
-        title: "제목 자리 입니다..",
-        body: "내용 자리 입니다….",
-        time: "6시간 전",
-        comments: 0,
-        likes: 0,
-        views: 0,
-      },
-      {
-        id: 81113,
-        title: "제목 자리 입니다..",
-        body: "내용 자리 입니다….",
-        time: "12시간 전",
-        comments: 0,
-        likes: 0,
-        views: 0,
-      },
-      {
-        id: 80421,
-        title: "제목 자리 입니다..",
-        body: "내용 자리 입니다….",
-        time: "2일 전",
-        comments: 0,
-        likes: 0,
-        views: 0,
-      },
+      { id: 88156, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "6시간 전", comments: 0, likes: 0, views: 0 },
+      { id: 81113, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "12시간 전", comments: 0, likes: 0, views: 0 },
+      { id: 80421, title: "제목 자리 입니다..", body: "내용 자리 입니다….", time: "2일 전",   comments: 0, likes: 0, views: 0 },
     ],
     []
   );
@@ -349,13 +61,7 @@ function MarketList({ boardKey }) {
     if (store.__v === SCHEMA_V) return store;
     const next = { ...store };
     for (const it of base) {
-      next[it.id] = {
-        createdAt: parseRel(it.time),
-        likes: 0,
-        comments: 0,
-        views: 0,
-        liked: false,
-      };
+      next[it.id] = { createdAt: parseRel(it.time), likes: 0, comments: 0, views: 0, liked: false };
     }
     next.__v = SCHEMA_V;
     writeStore(next);
@@ -368,13 +74,7 @@ function MarketList({ boardKey }) {
     const next = { ...seeded };
     for (const it of base) {
       if (!next[it.id]) {
-        next[it.id] = {
-          createdAt: parseRel(it.time),
-          likes: 0,
-          comments: 0,
-          views: 0,
-          liked: false,
-        };
+        next[it.id] = { createdAt: parseRel(it.time), likes: 0, comments: 0, views: 0, liked: false };
         dirty = true;
       }
     }
@@ -405,6 +105,34 @@ function MarketList({ boardKey }) {
     nav(`/community/board/5/${id}`);
   };
 
+  const handleSubmit = async ({ title, content, images = [], anonymous = false }) => {
+    try {
+      const form = new FormData();
+      form.append("board_id", "5"); 
+      form.append("title", title);
+      form.append("content", content);
+      form.append("anonymous", String(anonymous));
+      for (const f of images) form.append("images", f);
+
+      const res = await fetch("http://localhost:3000/api/posts", { method: "POST", body: form });
+      if (!res.ok) throw new Error(`POST /api/posts failed: ${res.status}`);
+
+      const saved = await res.json();
+      setShowWrite(false);
+      alert("등록되었습니다.");
+    } catch (e) {
+      console.error(e);
+      alert("등록에 실패했습니다. 잠시 후 다시 시도해주세요.");
+    }
+  };
+
+  useEffect(() => {
+    if (!showWrite) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => { document.body.style.overflow = prev; };
+  }, [showWrite]);
+
   return (
     <>
       <div className={styles.mkheader} style={{ position: "relative" }}>
@@ -428,23 +156,17 @@ function MarketList({ boardKey }) {
           const m = meta[it.id] || {};
           const timeText = timeAgo(m.createdAt || Date.now());
           const liked = !!m.liked;
-          const heartClass = liked
-            ? "fa-solid fa-heart"
-            : "fa-regular fa-heart";
+          const heartClass = liked ? "fa-solid fa-heart" : "fa-regular fa-heart";
           const heartStyle = liked ? { color: HEART_COLOR } : undefined;
 
           return (
             <div
               key={it.id}
-              className={`${styles.mkcard} ${
-                idx === 0 ? styles.mkfirstCard : ""
-              }`}
+              className={`${styles.mkcard} ${idx === 0 ? styles.mkfirstCard : ""}`}
               onClick={() => goDetail(it.id)}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) =>
-                (e.key === "Enter" || e.key === " ") && goDetail(it.id)
-              }
+              onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && goDetail(it.id)}
             >
               <div className={styles.mkcardContent}>
                 <div className={styles.mktitleRow}>
@@ -475,28 +197,25 @@ function MarketList({ boardKey }) {
                       {m.views ?? 0}
                     </div>
                     <div className={styles.mkmetaItem}>
-                      <i
-                        className={heartClass}
-                        aria-hidden="true"
-                        style={heartStyle}
-                      />
+                      <i className={heartClass} aria-hidden="true" style={heartStyle} />
                       {m.likes ?? 0}
                     </div>
                   </div>
                 </div>
               </div>
 
-              {showThumb && (
-                <div className={styles.mkthumb} aria-hidden="true">
-                  사진
-                </div>
-              )}
+              {showThumb && <div className={styles.mkthumb} aria-hidden="true">사진</div>}
             </div>
           );
         })}
       </div>
 
-      {showWrite && <MarketWrite onClose={() => setShowWrite(false)} />}
+      {showWrite && (
+        <PostWrite
+          onSubmit={handleSubmit}
+          onCancel={() => setShowWrite(false)}
+        />
+      )}
     </>
   );
 }
