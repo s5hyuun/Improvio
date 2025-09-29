@@ -33,15 +33,14 @@ app.use("/api/performance", performanceRouter);
 app.use(express.static(path.join(__dirname, "dist")));
 
 // SPA 라우팅 (React 라우터 지원)
-app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
 
 app.use("/uploads", express.static("uploads"));
 const uploadDir = "uploads";
 if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
+
+
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -97,7 +96,6 @@ app.post("/api/suggestions", upload.array("files"), async (req, res) => {
 });
 
 // 업로드된 파일 제공
-app.use("/uploads", express.static("uploads"));
 // GET /api/suggestions
 app.get("/api/suggestions", async (req, res) => {
   try {
@@ -950,7 +948,13 @@ app.get("/api/hot-posts", async (req, res) => {
     res.status(500).json({ message: "서버 오류" });
   }
 });
-
+app.get("*", (req, res) => {
+  if (req.path.startsWith("/api")) {
+    // API 요청이면 404
+    return res.status(404).json({ error: "API endpoint not found" });
+  }
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
 const PORT = 4000;
 app.listen(PORT, () => {
     console.log(`Server running at http://localhost:${PORT}`);
