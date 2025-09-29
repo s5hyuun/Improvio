@@ -8,6 +8,7 @@ import SignupAll from "../signupall/signupall";
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false); // 👈 비밀번호 표시 여부
   const [tab, setTab] = useState("signin"); // "signin" | "signup"
   const navigate = useNavigate();
 
@@ -39,9 +40,8 @@ export default function Login() {
         <Header />
 
         <section className={styles.shell}>
-          {/* data-tab 로 스타일 제어 */}
           <form className={styles.form} data-tab={tab} onSubmit={handleLogin}>
-            {/* 탭 라디오 (Reset 제거) */}
+            {/* 탭 선택 */}
             <input
               id="signin"
               className={styles.radio}
@@ -72,13 +72,12 @@ export default function Login() {
               SIGN UP
             </label>
 
-            {/* 화살표 + 카드 */}
             <div className={styles.cardArea} data-card-area>
               <div className={styles.arrow} />
               <div className={styles.wrapper} data-wrapper>
                 {tab === "signin" ? (
                   <>
-                    {/* <h2 style={{ margin: "4px 0 8px 0" }}>로그인</h2> */}
+                    {/* 아이디 입력 */}
                     <input
                       className={styles.input}
                       type="text"
@@ -88,17 +87,35 @@ export default function Login() {
                       required
                       autoComplete="username"
                     />
-                    <input
-                      className={styles.input}
-                      type="password"
-                      placeholder="비밀번호 입력"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      autoComplete="current-password"
-                    />
 
-                    {/* 버튼 (signin에서만 노출) */}
+                    {/* 비밀번호 입력 + 아이콘 */}
+                    <div className={styles.passwordWrap}>
+                      <input
+                        className={styles.input}
+                        type={showPassword ? "text" : "password"}
+                        placeholder="비밀번호 입력"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        required
+                        autoComplete="current-password"
+                      />
+                      <button
+                        type="button"
+                        className={styles.eyeBtn}
+                        onClick={() => setShowPassword((prev) => !prev)}
+                        aria-label={
+                          showPassword ? "비밀번호 숨기기" : "비밀번호 보기"
+                        }
+                      >
+                        {showPassword ? (
+                          <i className="fa-solid fa-eye-slash"></i>
+                        ) : (
+                          <i className="fa-solid fa-eye"></i>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* 로그인 버튼 */}
                     <div className={styles.actions}>
                       <button
                         type="submit"
@@ -106,17 +123,9 @@ export default function Login() {
                       >
                         <span>로그인</span>
                       </button>
-                      {/* <button
-                        type="button"
-                        className={`${styles.button} ${styles.ghost} ${styles.signupBtn}`}
-                        onClick={() => setTab("signup")}
-                      >
-                        회원가입
-                      </button> */}
                     </div>
                   </>
                 ) : (
-                  // ✅ SIGN UP 탭: 바로 signupall 렌더 (흰 화면 없이 즉시 전환)
                   <SignupAll onBack={() => setTab("signin")} />
                 )}
               </div>
