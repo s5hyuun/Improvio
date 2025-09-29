@@ -195,7 +195,7 @@ export default function MarketDetail() {
       <div className={styles.detailWrap}>
         <div className={`${styles.metaRow} ${styles.detailTop}`}>
           <button className={styles.backBtn} onClick={() => nav(-1)}>
-            ← 목록
+            ← 장터게시판 목록
           </button>
         </div>
         <div className={styles.detailBody}>불러오는 중…</div>
@@ -207,7 +207,7 @@ export default function MarketDetail() {
       <div className={styles.detailWrap}>
         <div className={`${styles.metaRow} ${styles.detailTop}`}>
           <button className={styles.backBtn} onClick={() => nav(-1)}>
-            ← 목록
+            ← 장터게시판 목록
           </button>
         </div>
         <div className={styles.detailBody} style={{ color: "crimson" }}>
@@ -220,152 +220,155 @@ export default function MarketDetail() {
   const timeText = timeAgo(meta.createdAt || Date.now());
 
   return (
-    <div className={styles.mkdetailWrap}>
-      <div className={`${styles.mkmetaRow} ${styles.mkdetailTop}`}>
-        <button className={styles.mkbackBtn} onClick={() => nav(-1)}>
-          ← 목록
-        </button>
-      </div>
+    <>
+      <button className={styles.mkbackBtn} onClick={() => nav(-1)}>
+        ← 장터게시판 목록
+      </button>
+      <div className={styles.mkdetailWrap}>
+        <div className={`${styles.mkmetaRow} ${styles.mkdetailTop}`}></div>
 
-      <div className={styles.mkdetailTitle}>{post.title}</div>
-      <div className={styles.mkdetailBody}>{post.body}</div>
+        <div className={styles.mkdetailTitle}>{post.title}</div>
+        <div className={styles.mkdetailBody}>{post.body}</div>
 
-      {Array.isArray(post.images) && post.images.length > 0 && (
-        <div className={styles.mkimageWrap}>{post.images[0]}</div>
-      )}
+        {Array.isArray(post.images) && post.images.length > 0 && (
+          <div className={styles.mkimageWrap}>{post.images[0]}</div>
+        )}
 
-      <div className={styles.mkmetaRow} style={{ marginTop: 8 }}>
-        <div className={styles.mkmetaLeft}>
-          <div className={styles.mkmetaItem}>{post.author}</div>
-          <div className={styles.mkmetaItem}>
-            <i className="fa-regular fa-clock" aria-hidden="true" />
-            {timeText}
-          </div>
+        <div className={styles.mkmetaRow} style={{ marginTop: 8 }}>
+          <div className={styles.mkmetaLeft}>
+            <div className={styles.mkmetaItem}>{post.author}</div>
+            <div className={styles.mkmetaItem}>
+              <i className="fa-regular fa-clock" aria-hidden="true" />
+              {timeText}
+            </div>
 
-          <button
-            className={`${styles.mkmetaItem} ${meta.liked ? styles.liked : ""}`}
-            onClick={togglePostLike}
-            aria-pressed={!!meta.liked}
-            title={meta.liked ? "좋아요 취소" : "좋아요"}
-            type="button"
-            style={{
-              background: "none",
-              border: 0,
-              cursor: "pointer",
-              padding: 0,
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 4,
-              font: "inherit",
-              color: "inherit",
-              lineHeight: 1,
-            }}
-          >
-            <i
-              className={
-                meta.liked ? "fa-solid fa-heart" : "fa-regular fa-heart"
-              }
-              style={{ color: meta.liked ? "rgb(239, 68, 68)" : "#2563eb" }}
-            />
-            <span className={styles.mklikeNum}>{meta.likes ?? 0}</span>
-          </button>
-
-          <div className={styles.mkmetaItem}>
-            <i className="fa-regular fa-comment" />
-            {totalComments}
-          </div>
-        </div>
-      </div>
-
-      <div className={styles.mkcommentsSection}>
-        <div className={styles.mkcommentsHeader}>
-          댓글 <span className={styles.mkcommentsCount}>{totalComments}</span>
-        </div>
-
-        <div className={styles.mkcommentDock}>
-          <input
-            className={styles.mkcommentInputBar}
-            type="text"
-            placeholder="댓글을 입력하세요."
-            value={newComment}
-            onChange={(e) => setNewComment(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.isComposing) return;
-              if (e.key === "Enter") {
-                e.preventDefault();
-                submitRootComment();
-              }
-            }}
-          />
-          <div className={styles.mkcommentSide}>
             <button
-              className={styles.mksendBtn}
+              className={`${styles.mkmetaItem} ${
+                meta.liked ? styles.liked : ""
+              }`}
+              onClick={togglePostLike}
+              aria-pressed={!!meta.liked}
+              title={meta.liked ? "좋아요 취소" : "좋아요"}
               type="button"
-              onClick={submitRootComment}
-              aria-label="댓글 등록"
+              style={{
+                background: "none",
+                border: 0,
+                cursor: "pointer",
+                padding: 0,
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 4,
+                font: "inherit",
+                color: "inherit",
+                lineHeight: 1,
+              }}
             >
-              <i className="fa-solid fa-pen"></i>
+              <i
+                className={
+                  meta.liked ? "fa-solid fa-heart" : "fa-regular fa-heart"
+                }
+                style={{ color: meta.liked ? "rgb(239, 68, 68)" : "#2563eb" }}
+              />
+              <span className={styles.mklikeNum}>{meta.likes ?? 0}</span>
             </button>
+
+            <div className={styles.mkmetaItem}>
+              <i className="fa-regular fa-comment" />
+              {totalComments}
+            </div>
           </div>
         </div>
 
-        <div className={styles.mkcommentsList}>
-          {comments.map((c) =>
-            c.deleted ? (
-              <div
-                key={c.id}
-                className={`${styles.mkcommentItem} ${styles.mkdeletedItem}`}
+        <div className={styles.mkcommentsSection}>
+          <div className={styles.mkcommentsHeader}>
+            댓글 <span className={styles.mkcommentsCount}>{totalComments}</span>
+          </div>
+
+          <div className={styles.mkcommentDock}>
+            <input
+              className={styles.mkcommentInputBar}
+              type="text"
+              placeholder="댓글을 입력하세요."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.isComposing) return;
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  submitRootComment();
+                }
+              }}
+            />
+            <div className={styles.mkcommentSide}>
+              <button
+                className={styles.mksendBtn}
+                type="button"
+                onClick={submitRootComment}
+                aria-label="댓글 등록"
               >
-                삭제된 댓글입니다.
-              </div>
-            ) : (
-              <div key={c.id} className={styles.mkcommentItem}>
-                <div className={styles.mkcommentHead}>
-                  <div className={styles.mkcommentAvatar} />
-                  <div className={styles.mkcommentMeta}>
-                    <div className={styles.mkcommentAuthor}>{c.author}</div>
-                    <div className={styles.mkcommentTime}>
-                      {timeAgo(c.createdAt)}
+                <i className="fa-solid fa-pen"></i>
+              </button>
+            </div>
+          </div>
+
+          <div className={styles.mkcommentsList}>
+            {comments.map((c) =>
+              c.deleted ? (
+                <div
+                  key={c.id}
+                  className={`${styles.mkcommentItem} ${styles.mkdeletedItem}`}
+                >
+                  삭제된 댓글입니다.
+                </div>
+              ) : (
+                <div key={c.id} className={styles.mkcommentItem}>
+                  <div className={styles.mkcommentHead}>
+                    <div className={styles.mkcommentAvatar} />
+                    <div className={styles.mkcommentMeta}>
+                      <div className={styles.mkcommentAuthor}>{c.author}</div>
+                      <div className={styles.mkcommentTime}>
+                        {timeAgo(c.createdAt)}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div
-                  className={styles.mkcommentBody}
-                  style={{ whiteSpace: "pre-wrap" }}
-                >
-                  {c.text}
-                </div>
-
-                <div className={styles.mkcommentFoot}>
-                  <button
-                    type="button"
-                    onClick={() => toggleCommentLike(c.id)}
-                    className={`${styles.mklikeWrap} ${
-                      c.liked ? styles.mkliked : ""
-                    }`}
-                    aria-pressed={!!c.liked}
-                    title={c.liked ? "공감 취소" : "공감"}
-                    style={{
-                      cursor: "pointer",
-                      background: "none",
-                      border: 0,
-                      padding: 0,
-                    }}
+                  <div
+                    className={styles.mkcommentBody}
+                    style={{ whiteSpace: "pre-wrap" }}
                   >
-                    <i
-                      className={
-                        c.liked ? "fa-solid fa-heart" : "fa-regular fa-heart"
-                      }
-                    />
-                    <em className={styles.mklikeCount}>{c.likes}</em>
-                  </button>
+                    {c.text}
+                  </div>
+
+                  <div className={styles.mkcommentFoot}>
+                    <button
+                      type="button"
+                      onClick={() => toggleCommentLike(c.id)}
+                      className={`${styles.mklikeWrap} ${
+                        c.liked ? styles.mkliked : ""
+                      }`}
+                      aria-pressed={!!c.liked}
+                      title={c.liked ? "공감 취소" : "공감"}
+                      style={{
+                        cursor: "pointer",
+                        background: "none",
+                        border: 0,
+                        padding: 0,
+                      }}
+                    >
+                      <i
+                        className={
+                          c.liked ? "fa-solid fa-heart" : "fa-regular fa-heart"
+                        }
+                      />
+                      <em className={styles.mklikeCount}>{c.likes}</em>
+                    </button>
+                  </div>
                 </div>
-              </div>
-            )
-          )}
+              )
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
