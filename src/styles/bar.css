@@ -97,7 +97,7 @@ body {
 .nav {
   display: flex;
   flex-direction: column;
-  margin: 30px 0 0;
+  margin: 10px 0 0;
 }
 .nav-item {
   display: flex;
@@ -128,7 +128,7 @@ body {
 }
 
 .section-title {
-  margin: 30px 6px 0;
+  margin: 6px 6px 0;
   font-weight: 700;
 }
 
@@ -404,7 +404,7 @@ body {
   border-radius: 8px;
   display: grid;
   place-items: center;
-  background: #ea580c; /* #2563EB */
+  background: #ea580c;
   color: #fff;
 }
 .topbar-left .ico svg {
@@ -824,6 +824,7 @@ body {
     transform: rotate(180deg);
   }
 }
+/* Sidebar: keep only the custom .dept-list scrollbar */
 .sidebar {
   overflow: hidden;
 }
@@ -831,13 +832,15 @@ body {
   overflow: hidden !important;
 }
 .dept-wrap {
-  overflow: hidden !important; 
-  scrollbar-width: none; 
+  overflow: hidden !important; /* .dept-wrap, .sidebar 쪽 스크롤 숨김 */
+  scrollbar-width: none; /* Firefox 숨김 */
 }
 .dept-wrap::-webkit-scrollbar {
+  /* WebKit 숨김 */
   width: 0 !important;
   height: 0 !important;
 }
 .dept-list {
-  overflow: auto !important; 
+  /* 커스텀 스크롤 컨테이너 */
+  overflow: auto !important; /* ✅ 이것만 스크롤 */
 }

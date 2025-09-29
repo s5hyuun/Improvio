@@ -1,15 +1,19 @@
+import React, { useEffect, useState } from "react";
 import styles from "../../../styles/Community.module.css";
-function HotPost() {
+
+function HotPost({ post }) {
   return (
     <div className={styles.commHotPost}>
-      <div>핫한 게시글 제목입니다요</div>
+      <div>{post.title}</div>
       <div>
-        <span>익룡101</span>
+        <span>{post.username}</span>
         <span>
-          <i class="fa-solid fa-message"></i>23
+          <i className="fa-solid fa-message"></i>
+          {post.comment_count}
         </span>
         <span>
-          <i class="fa-solid fa-heart"></i>45
+          <i className="fa-solid fa-heart"></i>
+          {post.like_count}
         </span>
       </div>
     </div>

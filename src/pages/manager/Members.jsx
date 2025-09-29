@@ -1,37 +1,18 @@
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/Members.module.css";
 
-const DEPT_MAP = {
-  rd: "R&D",
-  globalSales: "해외영업",
-  basicDesign: "기본설계",
-  futureBiz: "미래사업개발",
-  shipDesign: "조선설계",
-  marineDesign: "해양설계",
-  pm: "PM",
-  purchase: "구매",
-  ops: "경영지원",
-  safety: "안전",
-};
-
-export default function Members() {
+export default function Member({ selectedDeptId = "all" }) {
   const [members, setMembers] = useState([]);
-  const [selectedDept, setSelectedDept] = useState("all");
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState("");
-
-  useEffect(() => {
-    const handler = (e) => setSelectedDept(e.detail.id || "all");
-    window.addEventListener("dept:changed", handler);
-    return () => window.removeEventListener("dept:changed", handler);
-  }, []);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       try {
         setLoading(true);
-        const res = await fetch("http://localhost:5000/api/members");
+        setErr("");
+        const res = await fetch("http://localhost:3000/api/members", {});
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (alive) setMembers(Array.isArray(data) ? data : []);
@@ -47,34 +28,10 @@ export default function Members() {
     };
   }, []);
 
-  const toggleStatus = async (userId, currentStatus) => {
-    const newStatus = currentStatus === "활성" ? "비활성" : "활성";
-    try {
-      const res = await fetch(
-        `http://localhost:5000/api/members/${userId}/status`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ status: newStatus }),
-        }
-      );
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      setMembers((prev) =>
-        prev.map((m) =>
-          m.user_id === userId ? { ...m, status: newStatus } : m
-        )
-      );
-    } catch (e) {
-      console.error("상태 업데이트 실패:", e);
-      alert("상태 변경 중 오류가 발생했습니다.");
-    }
-  };
-
   const filtered = useMemo(() => {
-    if (selectedDept === "all") return members;
-    const targetDept = DEPT_MAP[selectedDept];
-    return members.filter((m) => m.department_name === targetDept);
-  }, [members, selectedDept]);
+    if (!selectedDeptId || selectedDeptId === "all") return members;
+    return members.filter((m) => m.department_id === selectedDeptId);
+  }, [members, selectedDeptId]);
 
   return (
     <div className={styles.wrap}>
@@ -87,6 +44,7 @@ export default function Members() {
         </div>
 
         {loading && <div className={styles.empty}>불러오는 중…</div>}
+
         {!loading && !err && filtered.length === 0 && (
           <div className={styles.empty}>
             선택된 조건에 해당하는 직원이 없습니다.
@@ -102,12 +60,7 @@ export default function Members() {
                 {m.department_name ?? m.department_id}
               </div>
               <div className={styles.dateCell}>{formatDate(m.join_date)}</div>
-              <div
-                className={styles.statusCell}
-                onClick={() => toggleStatus(m.user_id, m.status)}
-                style={{ cursor: "pointer" }}
-                title="클릭하여 상태 변경"
-              >
+              <div className={styles.statusCell}>
                 <span
                   className={
                     m.status === "활성"
@@ -129,10 +82,11 @@ function formatDate(s) {
   if (!s) return "-";
   try {
     const d = new Date(s);
-    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
-      2,
-      "0"
-    )}-${String(d.getDate()).padStart(2, "0")}`;
+    if (Number.isNaN(d.getTime())) return s;
+    const yyyy = d.getFullYear();
+    const mm = `${d.getMonth() + 1}`.padStart(2, "0");
+    const dd = `${d.getDate()}`.padStart(2, "0");
+    return `${yyyy}-${mm}-${dd}`;
   } catch {
     return s;
   }

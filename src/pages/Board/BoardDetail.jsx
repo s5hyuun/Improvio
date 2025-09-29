@@ -14,9 +14,17 @@ function BoardDetail({ suggestion, onClose }) {
 
   // ESC 눌러도 닫히게
   useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  useEffect(() => {
     if (!suggestion) return;
     fetch(
-      `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/details`
+      `http://localhost:3000/api/suggestions/${suggestion.suggestion_id}/details`
     )
       .then((res) => res.json())
       .then((data) => {
@@ -35,7 +43,7 @@ function BoardDetail({ suggestion, onClose }) {
     if (!suggestion) return;
     try {
       const data = await fetch(
-        `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/details`
+        `http://localhost:3000/api/suggestions/${suggestion.suggestion_id}/details`
       ).then((res) => res.json());
       setDetail(data);
     } catch (err) {
@@ -67,7 +75,7 @@ function BoardDetail({ suggestion, onClose }) {
   const handleVote = async () => {
     try {
       await fetch(
-        `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/vote`,
+        `http://localhost:3000/api/suggestions/${suggestion.suggestion_id}/vote`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -85,7 +93,7 @@ function BoardDetail({ suggestion, onClose }) {
   const handleDislike = async () => {
     try {
       await fetch(
-        `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/dislike`,
+        `http://localhost:3000/api/suggestions/${suggestion.suggestion_id}/dislike`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -105,7 +113,7 @@ function BoardDetail({ suggestion, onClose }) {
 
     setSubmitting(true);
     try {
-      const res = await fetch("http://localhost:5000/api/comments", {
+      const res = await fetch("http://localhost:3000/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -174,9 +182,37 @@ function BoardDetail({ suggestion, onClose }) {
           </div>
 
           <div className={styles.detailContent}>
-            <div>제안 내용</div>
-            <div>{description}</div>
+            <div>
+              <div>제안 내용</div>
+              {detail.attachments && detail.attachments.length > 0 && (
+                <div className={styles.detailImages}>
+                  {detail.attachments
+                    .filter((att) => {
+                      // ? 뒤에 쿼리 제거
+                      const cleanPath = att.file_path.split("?")[0];
+                      // 확장자 추출
+                      const ext = cleanPath.split(".").pop().toLowerCase();
+                      // jpg와 jpeg만 허용
+                      return ["jpg", "jpeg"].includes(ext);
+                    })
+                    .map((att) => (
+                      <img
+                        key={att.attachment_id}
+                        src={`http://localhost:3000/uploads/${encodeURIComponent(
+                          att.file_path
+                        )}`}
+                        alt="첨부 이미지"
+                        style={{ maxWidth: "100%", marginBottom: "8px" }}
+                        onError={(e) => {
+                          e.target.style.display = "none"; // 깨진 이미지 숨기기
+                        }}
+                      />
+                    ))}
+                </div>
+              )}
 
+              <div className={styles.description}>{description}</div>
+            </div>
             <div className={styles.detailThumb}>
               <div onClick={handleVote} style={{ cursor: "pointer" }}>
                 <i
@@ -201,9 +237,11 @@ function BoardDetail({ suggestion, onClose }) {
             <i className="fa-regular fa-comment"></i>
             <span>댓글 ({comments.length})</span>
           </div>
-          {comments.map((c) => (
-            <BoardComment key={c.comment_id} comment={c} />
-          ))}
+          <div className={styles.detailCommentList}>
+            {comments.map((c) => (
+              <BoardComment key={c.comment_id} comment={c} />
+            ))}
+          </div>
           <form
             className={styles.detailCommentInput}
             onSubmit={handleCommentSubmit}

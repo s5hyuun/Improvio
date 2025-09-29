@@ -1,0 +1,61 @@
+.signup-container {
+  max-width: 500px;
+  margin: 40px auto;
+  padding: 20px;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.big-block {
+  background-color: white;
+  padding: 20px;
+}
+
+.signup-title {
+  text-align: left;
+  margin-bottom: 20px;
+  font-size: 22px;
+  font-weight: bold;
+  color: #333;
+}
+
+.signup-section {
+  margin-bottom: 24px;
+}
+
+.signup-terms-box {
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  padding: 12px;
+  max-height: 120px;
+  overflow-y: auto;
+  margin: 8px 0;
+  font-size: 14px;
+  color: #555;
+  background: #fafafa;
+}
+
+.signup-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 14px;
+}
+
+.signup-btn {
+  width: 100%;
+  padding: 12px;
+  background-color: #007bff;
+  border: none;
+  border-radius: 8px;
+  color: #fff;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background 0.2s;
+  margin-top: 15px;
+}
+
+.signup-btn:hover {
+  background-color: #0056b3;
+}

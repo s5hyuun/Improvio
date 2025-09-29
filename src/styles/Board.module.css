@@ -183,18 +183,38 @@ h3 {
   justify-content: center;
   z-index: 9999;
 }
-
+.modalWrite {
+  background: white;
+  padding: 26px 26px 16px 26px;
+  border-radius: 10px;
+  width: min(530px, 92vw);
+  max-height: 90vh;
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  position: relative;
+}
 .modal {
   background: white;
-  padding: 26px 26px 40px 26px;
+  padding: 26px 26px 16px 26px;
   border-radius: 10px;
-  /* width: 40%; */
-  width: min(530px, 92vw);
-  /* 내용 많을 때 스크롤 대비... */
+  width: min(1100px, 92vw);
   max-height: 90vh;
-  overflow: auto;
-
+  display: grid;
+  /* grid-template-rows: auto 1fr auto; */
+  grid-template-columns: minmax(0, 1.6fr) 380px;
+  gap: 20px;
+  height: 84vh;
+  max-height: 84vh;
+  overflow: hidden;
   position: relative;
+}
+.detailIPost {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 6px;
 }
 i {
   margin-right: 5px;
@@ -231,12 +251,21 @@ i {
   background-color: white;
   cursor: pointer;
 }
+.writeBody {
+  overflow-y: auto;
+  padding-right: 6px;
+  padding-bottom: 12px;
+}
 
 .detailContent {
   background-color: #eff6ff;
   padding: 20px;
   border-radius: 10px;
   margin-bottom: 20px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
 }
 .detailContent > div:first-child {
   color: #1e3a8a;
@@ -268,20 +297,32 @@ i {
   border-radius: 10px;
 }
 .detailComment {
-  border-top: 2px solid #eceff2;
-  padding-top: 20px;
+  padding-top: 10px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  border-left: 1px solid #eceff2;
+  padding-left: 12px;
 }
 .detailComment > div:first-child {
   font-size: 18px;
 }
 .detailComment > div {
-  margin-bottom: 20px;
+  margin-bottom: 10px;
   /* color: #1e3a8a; */
 }
 .detailCommentInput {
-  position: relative;
+  /* position: relative; */
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 .detailCommentInput input:first-child {
+  flex: 1;
   color: #1e3a8a;
   background-color: #f9fbff;
   border: 1px solid #d6e2f3;
@@ -299,16 +340,21 @@ i {
   padding: 8px 16px;
   border-radius: 10px;
   cursor: pointer;
-  position: absolute;
+  position: static;
   right: 10px;
   bottom: 8px;
 }
-
+.detailCommentList {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  margin-bottom: 10px;
+  min-height: 0;
+}
 /* ======================comment============== */
 .commentContainer {
   background-color: #eff6ff;
-  /* margin-bottom: 14px; */
-  padding: 18px;
+  margin-bottom: 10px;
+  padding: 14px;
   border-radius: 10px;
 }
 .commentTop {
@@ -316,7 +362,7 @@ i {
   justify-content: space-between;
   color: #1e3a8a;
   align-items: center;
-  font-size: 14px;
+  font-size: 12px;
 }
 .commentTop div:first-child {
   display: flex;
@@ -325,7 +371,7 @@ i {
 .commentTop div:first-child i {
   background-color: #2563eb;
   color: white;
-  padding: 7px;
+  padding: 5px;
   border-radius: 50px;
   margin-right: 10px;
 }
@@ -334,15 +380,14 @@ i {
 }
 .commentTop .dept {
   color: #3b82f6;
-  font-size: 14px;
+  font-size: 11px;
 }
 .commentContent {
-  padding: 10px 0;
-  margin: 5px 0;
+  padding: 5px 0;
 }
 .commentLike {
   color: #2563eb;
-  font-size: 14px;
+  font-size: 12px;
 }
 .commentLike i {
   margin: 0;
@@ -410,31 +455,73 @@ i {
   /* font-weight: bold; */
   margin-bottom: 4px;
 }
-.writeTitle > input,
-.writeContent > textarea,
-.dropzone {
+
+.writeContent > textarea {
   border: none;
   width: 100%;
   border: 2px solid #eceff2;
+  min-height: 120px;
   border-radius: 10px;
   margin: 6px 0 18px 0;
+}
+.dropzone {
+  border: 2px solid #eceff2;
+  width: 100%;
+  border-radius: 10px;
+  margin: 6px 0 18px 0;
+  height: 40px;
+  min-height: 0;
+  padding: 24px 12px !important;
+  font-size: 15px;
+  line-height: 1.4;
+  box-sizing: border-box;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.writeTitle > input {
+  border: 2px solid #eceff2;
+  width: 100%;
+  border-radius: 10px;
+  margin: 6px 0 18px 0;
+  height: 40px;
+  padding: 8px 12px;
+  font-size: 15px;
+  box-sizing: border-box;
 }
 .writeTitle > input,
 .writeContent > textarea {
   padding: 18px 15px;
   font-size: 16px;
 }
+.writeSubmit {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding-top: 10px;
+  margin-top: 8px;
+  border-top: 1px solid #eceff2;
+  z-index: 10;
+}
+.writeSubmit {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding-top: 10px;
+  margin-top: 8px;
+  border-top: 1px solid #eceff2;
+  z-index: 10;
+  /* box-shadow: 0 -8px 16px rgba(2, 6, 23, 0.06); */
+}
 .writeSubmit > button {
-  position: absolute;
-  right: 10px;
-  bottom: 10px;
-  margin-top: 20px;
   background-color: #1e3a8a;
   color: white;
-  padding: 8px 16px;
+  padding: 10px 16px;
   border: none;
   border-radius: 10px;
   cursor: pointer;
+  display: inline-block;
+  margin-left: auto;
 }
 /* =============file =========================*/
 .hiddenFileInput {
@@ -471,6 +558,11 @@ i {
   width: 100%;
   padding-left: 0;
   list-style: none;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f9fafb;
+  padding: 8px;
+  margin-bottom: 16px;
 }
 
 .fileItem {
@@ -478,16 +570,62 @@ i {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  padding: 6px 10px;
+  padding: 8px 10px;
   border-radius: 8px;
-  background: #f9f9f9;
-  /* width: 100%; */
+  background: #ffffff;
+  border: 1px solid #eef2ff;
 }
+.fileItem span {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .fileItem button {
   background-color: #374151;
   border: none;
   color: white;
-  padding: 8px 14px;
-  border-radius: 10px;
+  padding: 6px 12px;
+  border-radius: 8px;
   cursor: pointer;
+  font-size: 13px;
+}
+
+.detailImages {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  overflow-x: auto;
+  max-height: 50vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.detailImage {
+  max-height: 200px;
+  border-radius: 5px;
+  object-fit: cover;
+}
+.detailImages {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 10px;
+  overflow-x: auto;
+}
+
+@media (max-width: 1100px) {
+  .modal {
+    grid-template-columns: 1fr;
+    width: min(680px, 95vw);
+  }
+  .detailComment {
+    border-left: 0;
+    border-top: 1px solid #eceff2;
+    padding-left: 0;
+    padding-top: 10px;
+  }
+}
+.description {
+  color: black;
 }

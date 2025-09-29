@@ -1,6 +1,7 @@
+import React from "react";
 import styles from "../../../styles/Community.module.css";
 
-function Post({ onClick }) {
+function Post({ post, onClick }) {
   return (
     <div
       className={styles.postContainer}
@@ -11,25 +12,18 @@ function Post({ onClick }) {
     >
       <div>
         <span>HOT</span>
-        <h1>제목 자리 입니다 ..</h1>
+        <h1>{post.title}</h1>
       </div>
-      <div>내용 자리 입니다 ....</div>
+      <div>{post.content}</div>
       <div className={styles.postIcons}>
-        <span>익룡 888</span>
+        <span>{post.username}</span>
         <span>
-          <i class="fa-solid fa-clock"></i>2시간 전
-        </span>
-        <span>
-          <i class="fa-solid fa-message"></i>23
-        </span>
-        <span>
-          <i class="fa-solid fa-eye"></i>567
-        </span>
-        <span>
-          <i class="fa-solid fa-heart"></i>45
+          <i className="fa-solid fa-clock"></i>{" "}
+          {new Date(post.created_at).toLocaleString()}
         </span>
       </div>
     </div>
   );
 }
+
 export default Post;

@@ -6,7 +6,7 @@ import { SuggestionList, adaptFromDB } from "./Proposal";
 import Notice from "./Notice";
 import Member from "./Members";
 
-const API = "http://localhost:5000";
+const API = "http://localhost:3000";
 const STORAGE_KEY = "proposal_items_cache_v1";
 const NOTICE_STORAGE_KEY = "notices_v1";
 
@@ -19,51 +19,37 @@ function loadFromStorage() {
   }
 }
 
-function pickUrgentNotices(list) {
-  return (Array.isArray(list) ? list : []).filter((n) => n?.urgent && n?.active);
-}
-
 export default function Manager() {
-  const [active, setActive] = useState(
-    localStorage.getItem("active_view") || "dashboard"
-  );
+  const [active, setActive] = useState("dashboard");
+
   const [currentDeptId, setCurrentDeptId] = useState("all");
 
   const [items, setItems] = useState([]);
-  const [urgentItems, setUrgentItems] = useState([]); 
+  const [urgentItems, setUrgentItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [activeNoticeCount, setActiveNoticeCount] = useState(0);
-  const [urgentNotices, setUrgentNotices] = useState([]);
 
   useEffect(() => {
     try {
       const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
       const list = raw ? JSON.parse(raw) : [];
       setActiveNoticeCount(list.filter((n) => n.active).length);
-      setUrgentNotices(pickUrgentNotices(list));
     } catch {}
   }, []);
 
   useEffect(() => {
     function onNoticeChanged(e) {
       const { activeCount, list } = e.detail || {};
-      if (Array.isArray(list)) {
-        setActiveNoticeCount(list.filter((n) => n.active).length);
-        setUrgentNotices(pickUrgentNotices(list));
-      } else if (typeof activeCount === "number") {
+      if (typeof activeCount === "number") {
         setActiveNoticeCount(activeCount);
-        try {
-          const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
-          const cur = raw ? JSON.parse(raw) : [];
-          setUrgentNotices(pickUrgentNotices(cur));
-        } catch {}
+      } else if (Array.isArray(list)) {
+        setActiveNoticeCount(list.filter((n) => n.active).length);
       }
     }
     window.addEventListener("notice:changed", onNoticeChanged);
     return () => window.removeEventListener("notice:changed", onNoticeChanged);
   }, []);
-
   useEffect(() => {
     const handler = (e) => {
       const next = e?.detail?.id ?? "all";
@@ -72,7 +58,6 @@ export default function Manager() {
     window.addEventListener("dept:changed", handler);
     return () => window.removeEventListener("dept:changed", handler);
   }, []);
-
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -139,7 +124,6 @@ export default function Manager() {
       mounted = false;
     };
   }, []);
-
   useEffect(() => {
     function onUrgentChanged(e) {
       const { id, urgent, item } = e.detail || {};
@@ -160,37 +144,6 @@ export default function Manager() {
     return () =>
       window.removeEventListener("suggestion:urgent", onUrgentChanged);
   }, []);
-
-  const pushHeaderNotif = (label, title) => {
-    const now = new Date();
-    const hh = String(now.getHours()).padStart(2, "0");
-    const mm = String(now.getMinutes()).padStart(2, "0");
-    window.dispatchEvent(
-      new CustomEvent("header:notif:add", {
-        detail: { title: label, meta: `${title || "제목 없음"} · ${hh}:${mm}` },
-      })
-    );
-  };
-
-  const unmarkNoticeUrgent = (notice) => {
-    try {
-      const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
-      const list = raw ? JSON.parse(raw) : [];
-      const next = list.map((n) =>
-        n.id === notice.id ? { ...n, urgent: false } : n
-      );
-      localStorage.setItem(NOTICE_STORAGE_KEY, JSON.stringify(next));
-
-      setUrgentNotices(pickUrgentNotices(next));
-      setActiveNoticeCount(next.filter((n) => n.active).length);
-
-      window.dispatchEvent(
-        new CustomEvent("notice:changed", { detail: { list: next } })
-      );
-
-      pushHeaderNotif("공지 긴급 해제", notice.title);
-    } catch {}
-  };
 
   const unmarkUrgent = async (u) => {
     const id = u.id;
@@ -254,19 +207,6 @@ export default function Manager() {
   };
   const labelStyle = { fontSize: "14px", color: "#4b5563" };
 
-  const handleClick = (view) => {
-    localStorage.setItem("active_view", view);
-    setActive(view);
-    setTimeout(() => window.location.reload(), 0);
-  };
-
-  const noticeMeta = (n) => {
-    const dept = n?.dept || n?.deptLabel || "공지";
-    const dt =
-      (n?.updated_at || n?.created_at || n?.date || "").toString().slice(0, 10);
-    return `${dept} · ${dt}`;
-  };
-
   return (
     <div className="app">
       <Sidebar
@@ -280,29 +220,41 @@ export default function Manager() {
           <div className={styles.btn}>
             <button
               type="button"
-              className={`${styles.button} ${active === "dashboard" ? styles.active : ""}`}
-              onClick={() => handleClick("dashboard")}
+              className={`${styles.button} ${
+                active === "dashboard" ? styles.active : ""
+              }`}
+              onClick={() => setActive("dashboard")}
+              aria-pressed={active === "dashboard"}
             >
               관리자 대시보드
             </button>
             <button
               type="button"
-              className={`${styles.button} ${active === "employee" ? styles.active : ""}`}
-              onClick={() => handleClick("employee")}
+              className={`${styles.button} ${
+                active === "employee" ? styles.active : ""
+              }`}
+              onClick={() => setActive("employee")}
+              aria-pressed={active === "employee"}
             >
               직원 관리
             </button>
             <button
               type="button"
-              className={`${styles.button} ${active === "suggestion" ? styles.active : ""}`}
-              onClick={() => handleClick("suggestion")}
+              className={`${styles.button} ${
+                active === "suggestion" ? styles.active : ""
+              }`}
+              onClick={() => setActive("suggestion")}
+              aria-pressed={active === "suggestion"}
             >
               제안 관리
             </button>
             <button
               type="button"
-              className={`${styles.button} ${active === "notice" ? styles.active : ""}`}
-              onClick={() => handleClick("notice")}
+              className={`${styles.button} ${
+                active === "notice" ? styles.active : ""
+              }`}
+              onClick={() => setActive("notice")}
+              aria-pressed={active === "notice"}
             >
               공지 관리
             </button>
@@ -310,21 +262,33 @@ export default function Manager() {
 
           {active === "dashboard" && (
             <>
-              <div style={gridStyle}>
+              <div style={gridStyle} aria-label="대시보드 통계">
                 {stats.map((s, i) => (
-                  <div key={i} style={cardStyle}>
+                  <div
+                    key={i}
+                    style={cardStyle}
+                    role="status"
+                    aria-live="polite"
+                  >
                     <div style={valueStyle}>{s.value}</div>
                     <div style={labelStyle}>{s.label}</div>
                   </div>
                 ))}
               </div>
 
-              <div className={styles.urgentPanel}>
+              <div
+                className={styles.urgentPanel}
+                role="region"
+                aria-label="긴급 제안"
+              >
                 <div className={styles.urgentPanelHeader}>⚠ 긴급 제안</div>
 
                 {loading ? (
                   <div className={styles.urgentCards}>
-                    <div className={`${styles.urgentCard} ${styles.empty}`}>
+                    <div
+                      className={styles.urgentCard}
+                      style={{ color: "#c2410c" }}
+                    >
                       현재 긴급 제안이 없습니다.
                     </div>
                   </div>
@@ -333,8 +297,8 @@ export default function Manager() {
                     {urgentItems
                       .slice()
                       .sort((a, b) =>
-                        String(b.title || "").localeCompare(
-                          String(a.title || ""),
+                        String(a.title || "").localeCompare(
+                          String(b.title || ""),
                           "ko",
                           { sensitivity: "base", numeric: true }
                         )
@@ -342,9 +306,12 @@ export default function Manager() {
                       .map((u) => (
                         <div key={u.id} className={styles.urgentCard}>
                           <div className={styles.urgentCardText}>
-                            <div className={styles.rowTitle}>{u.title || "제목"}</div>
+                            <div className={styles.rowTitle}>
+                              {u.title || "제목"}
+                            </div>
                             <div className={styles.rowMeta}>
-                              {u.dept ?? "부서 미상"} · {String(u.created_at).slice(0, 10)}
+                              {u.dept ?? "부서 미상"} ·{" "}
+                              {String(u.created_at).slice(0, 10)}
                             </div>
                           </div>
                           <button
@@ -359,48 +326,13 @@ export default function Manager() {
                   </div>
                 )}
               </div>
-
-              <div className={styles.urgentPanel}>
-                <div className={styles.urgentPanelHeader}>⚠ 긴급 공지</div>
-
-                {urgentNotices.length === 0 ? (
-                  <div className={styles.urgentCards}>
-      
-                  </div>
-                ) : (
-                  <div className={styles.urgentCards}>
-                    {urgentNotices
-                      .slice()
-                      .sort((a, b) =>
-                        String(b.title || "").localeCompare(
-                          String(a.title || ""),
-                          "ko",
-                          { sensitivity: "base", numeric: true }
-                        )
-                      )
-                      .map((n) => (
-                        <div key={n.id} className={styles.urgentCard}>
-                          <div className={styles.urgentCardText}>
-                            <div className={styles.rowTitle}>{n.title || "제목"}</div>
-                            <div className={styles.rowMeta}>{noticeMeta(n)}</div>
-                          </div>
-                          <button
-                            type="button"
-                            className={styles.urgentRowBtn}
-                            onClick={() => unmarkNoticeUrgent(n)}
-                          >
-                            긴급 해제
-                          </button>
-                        </div>
-                      ))}
-                  </div>
-                )}
-              </div>
             </>
           )}
 
           {active === "suggestion" && <SuggestionList />}
+
           {active === "employee" && <Member selectedDeptId={currentDeptId} />}
+
           {active === "notice" && <Notice />}
         </section>
       </main>
