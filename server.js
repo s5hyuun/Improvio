@@ -132,22 +132,6 @@ app.get("/api/suggestions/:id", async (req, res) => {
 });
 
 // POST /api/suggestions
-app.post("/api/suggestions", async (req, res) => {
-  try {
-    const { title, description, expected_effect, user_id, department_id } =
-      req.body;
-    const [result] = await pool.query(
-      `
-      INSERT INTO Suggestion (title, description, expected_effect, user_id, department_id)
-      VALUES (?, ?, ?, ?, ?)
-      `,
-      [title, description, expected_effect, user_id, department_id]
-    );
-    res.status(201).json({ suggestion_id: result.insertId });
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
-});
 
 // POST /api/suggestions/:id/status
 // This endpoint specifically updates the status of a suggestion.
@@ -925,6 +909,27 @@ app.get("/api/hot-posts", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버 오류" });
+  }
+});
+// POST /api/posts
+app.post("/api/posts", async (req, res) => {
+  const { board_id, user_id, title, content, department_id } = req.body;
+
+  if (!board_id || !user_id || !title || !content) {
+    return res.status(400).json({ error: "필수 항목 누락" });
+  }
+
+  try {
+    const [result] = await pool.query(
+      `INSERT INTO post (board_id, user_id, title, content, department_id)
+       VALUES (?, ?, ?, ?, ?)`,
+      [board_id, user_id, title, content, department_id || null]
+    );
+
+    res.json({ success: true, post_id: result.insertId });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "DB 저장 오류" });
   }
 });
 
