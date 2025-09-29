@@ -65,7 +65,7 @@ app.post("/api/summarize", async (req, res) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer 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"
+          "Authorization": "Bearer "
         },
         body: JSON.stringify({
           inputs: description
