@@ -25,10 +25,17 @@ export default function Sidebar() {
 
   const location = useLocation();
   const isCommunity = location.pathname.startsWith("/community");
-  const isLoginPage = location.pathname === "/login";
+
+  const isAuthPage = /\/login|\/signup/i.test(location.pathname);
 
   const readAuth = () => {
-    try { const raw = localStorage.getItem(AUTH_KEY); if (!raw) return null; return JSON.parse(raw); } catch { return null; }
+    try {
+      const raw = localStorage.getItem(AUTH_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch {
+      return null;
+    }
   };
 
   const [auth, setAuth] = useState(readAuth);
@@ -45,10 +52,15 @@ export default function Sidebar() {
   const role = String(auth?.role || "").toLowerCase();
   const isAdmin = role === "admin" || role === "manager";
 
-  const displayName = isLoginPage ? "로그인해주세요" : (auth?.username || "username");
+  const isLoggedIn = !!auth;
+  const showAnonProfile = !isLoggedIn || isAuthPage;
+
+  const displayName = showAnonProfile ? "로그인해주세요" : (auth?.username || "username");
   const deptLabelFromAuth =
     auth?.department_name ??
-    (Number.isInteger(auth?.department_id) ? DEPT_LABEL_BY_NUM[auth.department_id] : null);
+    (Number.isInteger(auth?.department_id)
+      ? DEPT_LABEL_BY_NUM[auth.department_id]
+      : null);
   const deptLabelFromLocal = localStorage.getItem(STORAGE_DEPT_KEY) || null;
   const profileDeptLabel = deptLabelFromAuth || deptLabelFromLocal || "부서 미지정";
 
@@ -57,7 +69,9 @@ export default function Sidebar() {
       const saved = localStorage.getItem(STORAGE_DEPT_KEY);
       const found = departments.find((d) => d.label === saved);
       return found ? found.id : "rd";
-    } catch { return "rd"; }
+    } catch {
+      return "rd";
+    }
   });
 
   useEffect(() => {
@@ -77,7 +91,7 @@ export default function Sidebar() {
         <section className="profile">
           <div className="profile-name">{displayName}</div>
 
-          {!isLoginPage && (
+          {!showAnonProfile && (
             <>
               <button className="link-btn" type="button">edit</button>
               <div className="chip-row">
@@ -118,7 +132,11 @@ export default function Sidebar() {
             <div className="dept-wrap">
               <ul className="dept-list">
                 {departments.map((d) => (
-                  <li key={d.id} className={`dept-item ${selected === d.id ? "selected" : ""}`} onClick={() => setSelected(d.id)}>
+                  <li
+                    key={d.id}
+                    className={`dept-item ${selected === d.id ? "selected" : ""}`}
+                    onClick={() => setSelected(d.id)}
+                  >
                     <span className="ico">{icon(d.icon)}</span>
                     <span>{d.label}</span>
                   </li>
