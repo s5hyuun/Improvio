@@ -22,12 +22,16 @@ const DEPARTMENTS = [
 function deptById(id) {
   return DEPARTMENTS.find((d) => d.id === id) || null;
 }
+function deptByLabel(label) {
+  return DEPARTMENTS.find((d) => d.label === label) || null;
+}
 
 function loadUser() {
   try {
     const raw = localStorage.getItem(AUTH_KEY);
     if (raw) return JSON.parse(raw);
   } catch {}
+  // 기본값(개발 편의)
   return {
     role: localStorage.getItem("user_role") || "admin",
     username: localStorage.getItem("username") || "username",
@@ -56,7 +60,9 @@ function normalizeNotice(n) {
 
 export default function Header() {
   const user = useMemo(loadUser, []);
-  const isEmployee = String(user.role).toLowerCase() === "employee";
+  const role = String(user.role || "").toLowerCase();
+  const isEmployee = role === "employee";
+  const isAdmin = role === "admin" || role === "manager"; // ✅ 관리자 가입(role: admin/manager) 모두 인식
 
   // --- 알림 상태 ---
   const [notifs, setNotifs] = useState(() => {
@@ -140,53 +146,74 @@ export default function Header() {
     setNotifs((prev) => prev.filter((n) => n.id !== id));
   const clearAll = () => setNotifs([]);
 
-  // --- 부서 칩: 직원에게만 표시 ---
+  // --- 부서 칩/헤더용 부서: 직원일 때만 의미 있음 ---
   const [deptId, setDeptId] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_DEPT_KEY);
+      // Sidebar가 label을 저장하는 경우도 있어서 둘 다 허용
       if (saved && deptById(saved)) return saved;
-      if (isEmployee && user.deptId && deptById(user.deptId))
-        return user.deptId;
+      if (saved && deptByLabel(saved)) return deptByLabel(saved).id;
+      if (isEmployee && user.deptId && deptById(user.deptId)) return user.deptId;
       return null;
     } catch {
       return isEmployee ? user.deptId || null : null;
     }
   });
 
-  // Sidebar에서 발생시키는 dept:changed 이벤트 수신
+  // Sidebar에서 발생시키는 dept:changed 이벤트(label 또는 id 둘 다 허용)
   useEffect(() => {
     function onDeptChanged(e) {
       const id = e?.detail?.id;
-      if (!id || id === "all") {
-        setDeptId(null);
-      } else if (deptById(id)) {
+      const label = e?.detail?.dept;
+      if (id && deptById(id)) {
         setDeptId(id);
+      } else if (label && deptByLabel(label)) {
+        setDeptId(deptByLabel(label).id);
+      } else if (label === "" || id === "all") {
+        setDeptId(null);
       }
     }
     window.addEventListener("dept:changed", onDeptChanged);
     return () => window.removeEventListener("dept:changed", onDeptChanged);
   }, []);
 
-  const dept = deptById(deptId || (isEmployee ? user.deptId : null));
-  const [hoverAct, setHoverAct] = useState(null);
+  const dept = isEmployee
+    ? deptById(deptId) || (user.deptId && deptById(user.deptId)) || null
+    : null;
 
-  // 스크롤 컨테이너: 아이템 최대 5개 높이(대략 64px * 5)
+  const [hoverAct, setHoverAct] = useState(null);
   const SCROLL_MAX_HEIGHT = 64 * 5;
+
+  // ✅ topbar-left 표시 내용(관리자/직원 분기)
+  const topLeft = isAdmin
+    ? { label: "관리자 페이지", iconName: "shield", color: "#ea580c" }
+    : {
+        label: dept?.label || "부서 미지정",
+        iconName: dept?.icon || "shield",
+        color: "#2563eb",
+      };
 
   return (
     <header className="topbar">
+      {/* ✅ topbar-left: 분기 적용 */}
       <div className="topbar-left">
-        <span className="ico shield">
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-          </svg>
+        <span
+          className="ico"
+          /* CSS에 .topbar-left .ico 배경색 기본값이 있어도 inline style이 우선 적용됩니다. */
+          style={{
+            background: topLeft.color,
+            color: "#fff",
+            display: "grid",
+            placeItems: "center",
+            borderRadius: 8,
+            width: 32,
+            height: 32,
+          }}
+          aria-hidden="true"
+        >
+          {icon(topLeft.iconName)}
         </span>
-        <strong className="topbar-title">관리자 페이지</strong>
+        <strong className="topbar-title">{topLeft.label}</strong>
       </div>
 
       <div className="topbar-actions">
@@ -212,7 +239,7 @@ export default function Header() {
           <input type="text" placeholder="검색" />
         </div>
 
-        {/* 직원일 때만: 선택된 부서 아이콘+텍스트 칩 */}
+        {/* 직원일 때만: 선택된 부서 칩(우측 액션 영역) */}
         {isEmployee && dept && (
           <div
             aria-label="현재 부서"
@@ -285,7 +312,6 @@ export default function Header() {
                 </li>
               ) : (
                 <>
-                  {/* 스크롤 되는 영역 */}
                   <div
                     style={{
                       maxHeight: SCROLL_MAX_HEIGHT,
@@ -346,7 +372,6 @@ export default function Header() {
                     })}
                   </div>
 
-                  {/* 하단 고정 액션 */}
                   <li
                     role="presentation"
                     style={{ padding: "8px 12px", background: "transparent" }}
@@ -503,115 +528,58 @@ function icon(name) {
     case "globe":
       return (
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <circle
-            cx="12"
-            cy="12"
-            r="9"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <path
-            d="M2 12h20M12 2a15 15 0 0 1 0 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M2 12h20M12 2a15 15 0 0 1 0 20" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "doc":
       return (
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <path
-            d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <path
-            d="M14 3v6h6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M14 3v6h6" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "flag":
       return (
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <path
-            d="M12 2v6l5 3-5 3v8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M12 2v6l5 3-5 3v8" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "triangle":
       return (
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <path
-            d="M3 18l9-12 9 12H3z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M3 18l9-12 9 12H3z" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "sea":
       return (
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <path
-            d="M2 18s4-6 10-6 10 6 10 6-4 4-10 4-10-4-10-4zm10-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M2 18s4-6 10-6 10 6 10 6-4 4-10 4-10-4-10-4zm10-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "user":
       return (
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <path
-            d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22c0-5 4-8 9-8s9 3 9 8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22c0-5 4-8 9-8s9 3 9 8" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "list":
       return (
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <path
-            d="M3 6h18M3 12h18M3 18h18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "monitor":
       return (
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <path
-            d="M4 4h16v12H4z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M4 4h16v12H4z" fill="none" stroke="currentColor" strokeWidth="2" />
           <path d="M8 20h8" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "shield":
       return (
         <svg viewBox="0 0 24 24" width="18" height="18">
-          <path
-            d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     default:
