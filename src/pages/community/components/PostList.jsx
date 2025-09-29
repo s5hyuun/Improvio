@@ -12,9 +12,21 @@ function PostList() {
   const [posts, setPosts] = useState([]);
   const [isWriting, setIsWriting] = useState(false);
 
-  // 원본의 보드 타이틀 로직 유지(아이콘 제거, 숫자만 표시)
+  // ✅ 숫자 → 키 매핑 + 문자열 매핑
   const norm = (id = "") => {
     const s = String(id).toLowerCase();
+
+    // 숫자 라우트 대응 (원하는 규칙에 맞게 수정 가능)
+    const numMap = {
+      1: "free",
+      2: "rookie",
+      3: "secret",
+      4: "info",
+      5: "market",
+      6: "issue",
+    };
+    if (numMap[s]) return numMap[s];
+
     if (["free", "자유", "자유게시판"].includes(s)) return "free";
     if (["rookie", "newbie", "new", "junior", "신입", "신입게시판"].includes(s))
       return "rookie";
@@ -38,21 +50,22 @@ function PostList() {
     return "etc";
   };
 
+  // ✅ boardMeta: 제목 + 아이콘
   const boardMeta = useMemo(() => {
     const key = norm(boardId);
     const map = {
-      free: { title: "자유게시판" },
-      rookie: { title: "신입게시판" },
-      secret: { title: "비밀게시판" },
-      info: { title: "정보게시판" },
-      market: { title: "장터게시판" },
-      issue: { title: "시사/이슈" },
-      etc: { title: "게시판" },
+      free: { title: "자유게시판", icon: "fa-solid fa-message" },
+      rookie: { title: "신입게시판", icon: "fa-solid fa-user-graduate" },
+      secret: { title: "비밀게시판", icon: "fa-solid fa-lock" },
+      info: { title: "정보게시판", icon: "fa-solid fa-circle-info" },
+      market: { title: "장터게시판", icon: "fa-solid fa-cart-shopping" },
+      issue: { title: "시사/이슈", icon: "fa-solid fa-newspaper" },
+      etc: { title: "게시판", icon: "fa-solid fa-rectangle-list" },
     };
     return map[key] || map.etc;
   }, [boardId]);
 
-  // ✅ 원본 로직 그대로: 목록 API
+  // ✅ 게시글 목록 API 호출
   useEffect(() => {
     fetch(`http://localhost:5000/api/posts?board_id=${boardId}`)
       .then((res) => res.json())
@@ -60,7 +73,7 @@ function PostList() {
       .catch((err) => console.error(err));
   }, [boardId]);
 
-  // ✅ 원본 로직 그대로: 등록 API (모달 내용이 없으므로 지금은 호출되지 않지만 로직은 보관)
+  // ✅ 게시글 등록 API (모달 내용 없음, 로직만 보관)
   const handleSubmit = async (newPost) => {
     const res = await fetch("http://localhost:5000/api/posts", {
       method: "POST",
@@ -74,7 +87,7 @@ function PostList() {
     }
   };
 
-  // 시간 표기(원본에는 없었지만 카드 UI엔 필요하니 간단히 처리)
+  // ✅ 시간 표기
   const timeAgo = (ts) => {
     const t = new Date(ts || Date.now()).getTime();
     const diff = Date.now() - t;
@@ -89,8 +102,9 @@ function PostList() {
 
   return (
     <>
-      {/* ✅ mk 스타일 헤더 (구조/클래스네임 변경) */}
+      {/* ✅ mkheader: 아이콘 + 제목 + 글쓰기 버튼 */}
       <div className={styles.mkheader} style={{ position: "relative" }}>
+        {boardMeta.icon && <i className={boardMeta.icon} aria-hidden="true" />}
         {boardMeta.title}
         <span> ({posts?.length ?? 0})</span>
         <button
@@ -103,10 +117,9 @@ function PostList() {
         </button>
       </div>
 
-      {/* ✅ mk 카드 리스트 (구조/클래스네임 변경) */}
+      {/* ✅ mk 카드 리스트 */}
       <div className={styles.mklist}>
         {posts.map((post, idx) => {
-          // 백엔드 필드명 그대로 사용 (원본 로직 유지)
           const title = post.title ?? "";
           const body = post.content ?? post.body ?? "";
           const created = post.created_at ?? post.createdAt ?? Date.now();
@@ -142,7 +155,6 @@ function PostList() {
                       {timeAgo(created)}
                     </div>
                   </div>
-
                   <div className={styles.mkmetaRight}>
                     <div className={styles.mkmetaItem}>
                       <i className="fa-regular fa-comment" aria-hidden="true" />
@@ -159,17 +171,14 @@ function PostList() {
                   </div>
                 </div>
               </div>
-
-              {/* 썸네일이 필요하면 mkthumb 영역 사용
-              <div className={styles.mkthumb} aria-hidden="true">
-                사진
-              </div> */}
+              {/* 필요하면 썸네일 표시 */}
+              {/* <div className={styles.mkthumb} aria-hidden="true">사진</div> */}
             </div>
           );
         })}
       </div>
 
-      {/* ✅ 빈 모달(내용 불필요 요구) — 필요 시 PostWrite 넣으면 됨 */}
+      {/* ✅ 모달 (내용은 비워둠) */}
       {isWriting && (
         <div
           className={styles.mkmodalOverlay}
@@ -187,8 +196,7 @@ function PostList() {
                 ✕
               </button>
             </div>
-            {/* 여기 내용은 비워둠(요청 사항). 필요하면 PostWrite로 교체 */}
-            {/* <PostWrite onSubmit={handleSubmit} onCancel={() => setIsWriting(false)} /> */}
+            {/* PostWrite 넣으면 됨 */}
           </div>
         </div>
       )}
