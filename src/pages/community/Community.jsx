@@ -1,4 +1,3 @@
-// Community.jsx
 import { Outlet, Link, useLocation } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
@@ -7,11 +6,10 @@ import styles from "../../styles/Community.module.css";
 
 function Boards() {
   return (
-    <div className={`${styles.commBoards} ${styles.stickyCol} ${styles.stickyScroll}`}>
+    <div className={styles.commBoards}>
       <div className={styles.sectionTitle}>게시판 목록</div>
 
       <ul className={styles.boardList}>
-        {/* 자유게시판: 클릭 시 /community 로 이동 */}
         <li>
           <Link to="/community" className={styles.commBoardsName}>
             <i className="fa-solid fa-message" />
@@ -66,7 +64,7 @@ function Boards() {
 
 function Rightbar() {
   return (
-    <aside className={`${styles.commRightbar} ${styles.stickyCol} ${styles.stickyScroll}`}>
+    <aside className={styles.commRightbar}>
       <div className={styles.commHot}>
         <div className={styles.sectionTitle}>🔥HOT 게시글</div>
         <HotPost />
