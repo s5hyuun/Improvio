@@ -11,6 +11,54 @@ export default function Login() {
   const [tab, setTab] = useState("signin"); // "signin" | "signup"
   const navigate = useNavigate();
 
+  const DEPT_LABEL_BY_NUM = {
+    1: "R&D",
+    2: "해외영업",
+    3: "기본설계",
+    4: "미래사업개발",
+    5: "조선설계",
+    6: "해양설계",
+    7: "PM",
+    8: "구매",
+    9: "경영지원",
+    10: "안전",
+  };
+
+  const persistAuth = (userFromServer) => {
+    const u = userFromServer || {};
+
+    const role = String(u.role || "").toLowerCase(); // "employee" | "admin" | "manager"
+    const deptId =
+      typeof u.department_id === "number"
+        ? u.department_id
+        : typeof u.department === "number"
+        ? u.department
+        : null;
+
+    const deptName =
+      u.department_name ||
+      (Number.isInteger(deptId) ? DEPT_LABEL_BY_NUM[deptId] : null) ||
+      null;
+
+    const authPayload = {
+      role: u.role, 
+      username: u.username ?? u.employeeId ?? username, 
+      department: deptId ?? u.department ?? null, 
+      department_id: deptId ?? null,
+      department_name: deptName,
+    };
+
+    localStorage.setItem("auth_user", JSON.stringify(authPayload));
+
+    if (role === "employee") {
+      if (deptName) localStorage.setItem("selected_dept", deptName);
+    } else {
+      localStorage.removeItem("selected_dept");
+    }
+
+    window.dispatchEvent(new CustomEvent("auth:changed"));
+  };
+
   const handleLogin = async (e) => {
     e.preventDefault();
     try {
@@ -19,8 +67,12 @@ export default function Login() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ employeeId: username, password }),
       });
+
       const data = await response.json();
+
       if (data.success) {
+        persistAuth(data.user);
+
         alert("로그인 성공!");
         navigate("/main");
       } else {
@@ -39,9 +91,7 @@ export default function Login() {
         <Header />
 
         <section className={styles.shell}>
-          {/* data-tab 로 스타일 제어 */}
           <form className={styles.form} data-tab={tab} onSubmit={handleLogin}>
-            {/* 탭 라디오 (Reset 제거) */}
             <input
               id="signin"
               className={styles.radio}
@@ -72,13 +122,11 @@ export default function Login() {
               SIGN UP
             </label>
 
-            {/* 화살표 + 카드 */}
             <div className={styles.cardArea} data-card-area>
               <div className={styles.arrow} />
               <div className={styles.wrapper} data-wrapper>
                 {tab === "signin" ? (
                   <>
-                    {/* <h2 style={{ margin: "4px 0 8px 0" }}>로그인</h2> */}
                     <input
                       className={styles.input}
                       type="text"
@@ -98,7 +146,6 @@ export default function Login() {
                       autoComplete="current-password"
                     />
 
-                    {/* 버튼 (signin에서만 노출) */}
                     <div className={styles.actions}>
                       <button
                         type="submit"
@@ -106,17 +153,9 @@ export default function Login() {
                       >
                         <span>로그인</span>
                       </button>
-                      {/* <button
-                        type="button"
-                        className={`${styles.button} ${styles.ghost} ${styles.signupBtn}`}
-                        onClick={() => setTab("signup")}
-                      >
-                        회원가입
-                      </button> */}
                     </div>
                   </>
                 ) : (
-                  // ✅ SIGN UP 탭: 바로 signupall 렌더 (흰 화면 없이 즉시 전환)
                   <SignupAll onBack={() => setTab("signin")} />
                 )}
               </div>
