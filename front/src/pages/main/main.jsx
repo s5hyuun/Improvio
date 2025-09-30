@@ -39,7 +39,124 @@ const COLORS = [
 // ];
 
 
+const CustomLegend = ({ payload }) => {
+  return (
+    <ul
+      style={{
+        listStyle: "none",
+        display: "flex",
+        justifyContent: "center",
+        paddingLeft: 0,
+        marginTop: 10,
+        marginBottom: 10,
+        gap: "16px",
+      }}
+    >
+      {payload.map((entry, index) => (
+        <li
+          key={`item-${index}`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            color: "#333",
+            fontWeight: "bold",
+          }}
+        >
+          <span
+            style={{
+              display: "inline-block",
+              width: 12,
+              height: 12,
+              backgroundColor: entry.color,
+              borderRadius: "50%",
+              marginRight: 6,
+            }}
+          />
+          {entry.value}
+        </li>
+      ))}
+    </ul>
+  );
+};
+const CustomLineLegend = ({ payload }) => {
+  return (
+    <ul
+      style={{
+        listStyle: "none",
+        display: "flex",
+        justifyContent: "center",
+        paddingLeft: 0,
+        marginTop: 10,
+        marginBottom: 10,
+        gap: "16px",
+      }}
+    >
+      {payload.map((entry, index) => (
+        <li
+          key={`line-item-${index}`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            color: "#333",
+            fontWeight: "bold",
+          }}
+        >
+          <span
+            style={{
+              display: "inline-block",
+              width: 20,
+              height: 4,
+              backgroundColor: entry.color,
+              marginRight: 8,
+              borderRadius: 2,
+            }}
+          />
+          {entry.value}
+        </li>
+      ))}
+    </ul>
+  );
+};
 
+const CustomBarLegend = ({ payload }) => {
+  return (
+    <ul
+      style={{
+        listStyle: "none",
+        display: "flex",
+        justifyContent: "center",
+        paddingLeft: 0,
+        marginTop: 10,
+        marginBottom: 0,
+        gap: "16px",
+      }}
+    >
+      {payload.map((entry, index) => (
+        <li
+          key={`bar-item-${index}`}
+          style={{
+            display: "flex",
+            alignItems: "center",
+            color: "#333",
+            fontWeight: "bold",
+          }}
+        >
+          <span
+            style={{
+              display: "inline-block",
+              width: 12,
+              height: 12,
+              backgroundColor: entry.color,
+              borderRadius: 2,
+              marginRight: 6,
+            }}
+          />
+          {entry.value}
+        </li>
+      ))}
+    </ul>
+  );
+};
 
 
 
@@ -128,7 +245,7 @@ const Dashboard = () => {
                   <XAxis dataKey="day" stroke="#333" />
                   <YAxis stroke="#333" />
                   <Tooltip />
-                  <Legend />
+                  <Legend content={<CustomBarLegend />}/>
                   {/* <Bar dataKey="total" fill="#4a6cf7" name="총 건의" />
                   <Bar dataKey="solved" fill="#69bff8" name="완료 건의" /> */}
                 <Bar dataKey="total" fill="#1e40af" name="총 건의" />   {/* navy blue (blue-800) */}
@@ -150,7 +267,7 @@ const Dashboard = () => {
                   <XAxis dataKey="day" stroke="#333" />
                   <YAxis stroke="#333" />
                   <Tooltip />
-                  <Legend />
+                  <Legend content={<CustomLineLegend />}/>
                   {/* <Line type="monotone" dataKey="total" stroke="#4a6cf7" strokeWidth={3} />
                   <Line type="monotone" dataKey="solved" stroke="#69bff8" strokeWidth={3} /> */}
                 <Line
@@ -207,7 +324,7 @@ const Dashboard = () => {
                       <Cell key={index} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Legend verticalAlign="bottom" height={3} wrapperStyle={{ marginTop: 10 }} />
+                  <Legend   content={<CustomLegend />} />
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
@@ -225,7 +342,7 @@ const Dashboard = () => {
                       <Cell key={index} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Legend verticalAlign="bottom" height={3} wrapperStyle={{ marginTop: 10 }} />
+                  <Legend content={<CustomLegend />} />
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
@@ -240,7 +357,7 @@ const Dashboard = () => {
   <li className="effect-item efficiency">
     <div className="effect-label">작업 효율성 평균</div>
     <div className="effect-box">
-      {/* <span className="effect-icon">📈</span> */}
+      <span className="effect-icon"><i class="fa-solid fa-gear"></i></span>
       <div className="effect-value">
         {effects.avg_productivity ? Number(effects.avg_productivity).toFixed(2) : "데이터 없음"}%
       </div>
@@ -249,14 +366,14 @@ const Dashboard = () => {
   <li className="effect-item safety">
     <div className="effect-label">안전 개선 완료 건수</div>
     <div className="effect-box">
-      {/* <span className="effect-icon">🛡️</span> */}
+      <span className="effect-icon"><i class="fa-solid fa-helmet-safety"></i></span>
       <div className="effect-value">{effects.safety_improvements ?? 0} 건</div>
     </div>
   </li>
   <li className="effect-item saving">
     <div className="effect-label">총 원가 절감</div>
     <div className="effect-box">
-      {/* <span className="effect-icon">💰</span> */}
+      <span className="effect-icon"><i class="fa-solid fa-sack-dollar"></i></span>
       <div className="effect-value">
         {effects.total_cost_saving ? Number(effects.total_cost_saving).toLocaleString() : 0} 원
       </div>
