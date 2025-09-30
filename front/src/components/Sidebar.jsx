@@ -34,7 +34,7 @@ export default function Sidebar() {
 
   const location = useLocation();
   const isCommunity = location.pathname.startsWith("/community");
-  const isAuthPage = /\/(login|signup)/i.test(location.pathname); // ✅ 로그인/회원가입 페이지 감지
+  const isAuthPage = /\/(login|signup)/i.test(location.pathname);
 
   const readAuth = () => {
     try {
@@ -119,33 +119,54 @@ export default function Sidebar() {
   const profileDeptLabel =
     deptLabelFromAuth || deptLabelFromLocal || "부서 미지정";
 
+  // ✅ 초기 선택: 저장된 값이 없으면 "선택 안 함"(null) → 전체 보기
   const [selected, setSelected] = useState(() => {
     try {
       const saved = localStorage.getItem(STORAGE_DEPT_KEY);
       const found = departments.find((d) => d.label === saved);
-      return found ? found.id : "rd";
+      return found ? found.id : null; // 기존 'rd' 기본값 제거
     } catch {
-      return "rd";
+      return null;
     }
   });
 
+  // ✅ 부서 선택 변경 시 브로드캐스트 + 저장/초기화
   useEffect(() => {
-    // 인증 페이지에서는 부서 선택 이벤트/저장은 굳이 하지 않아도 되므로 가드(선택)
-    if (isAuthPage) return;
-    const current = departments.find((d) => d.id === selected);
-    const label = current?.label ?? "";
+    if (isAuthPage) return; // 로그인/회원가입 페이지에서는 동작 안 함
     try {
-      localStorage.setItem(STORAGE_DEPT_KEY, label);
+      if (selected) {
+        const current = departments.find((d) => d.id === selected);
+        const label = current?.label ?? "";
+        localStorage.setItem(STORAGE_DEPT_KEY, label);
+        window.dispatchEvent(
+          new CustomEvent("dept:changed", { detail: { dept: label } })
+        );
+      } else {
+        // 선택 안 함 → 전체 보기
+        localStorage.removeItem(STORAGE_DEPT_KEY);
+        window.dispatchEvent(
+          new CustomEvent("dept:changed", { detail: { dept: "" } })
+        );
+      }
     } catch {}
-    window.dispatchEvent(
-      new CustomEvent("dept:changed", { detail: { dept: label } })
-    );
   }, [selected, isAuthPage, departments]);
+
+  // ✅ 네비게이션 클릭 시: 부서 선택 초기화 + 전체 새로고침
+  const resetDeptAndReload = (path) => (e) => {
+    e.preventDefault(); // NavLink 기본 동작 막고
+    try {
+      localStorage.removeItem(STORAGE_DEPT_KEY); // 부서 선택 초기화
+    } catch {}
+    setSelected(null);
+    window.dispatchEvent(new CustomEvent("dept:changed", { detail: { dept: "" } }));
+    // 전체 새로고침(SSR처럼 완전 리로드)
+    window.location.assign(path);
+  };
 
   return (
     <aside className="sidebar">
       <div className="sidebar-inner">
-        {/* ✅ 로고: 항상 표시 */}
+        {/* 로고 */}
         <div className="logo-wrap">
           <img
             src="src/assets/logo.png"
@@ -154,25 +175,24 @@ export default function Sidebar() {
           />
         </div>
 
-        {/* ✅ 프로필: 항상 표시 (로그인/회원가입 페이지에서는 익명 프로필 문구) */}
+        {/* 프로필 */}
         <section className="profile">
           <div className="profile-name">{displayName}</div>
 
           {!showAnonProfile && (
-            <>
-              <div className="chip-row">
-                <span className="chip chip-primary">{profileDeptLabel}</span>
-                {isAdmin && <span className="chip chip-warn">관리자</span>}
-              </div>
-            </>
+            <div className="chip-row">
+              <span className="chip chip-primary">{profileDeptLabel}</span>
+              {isAdmin && <span className="chip chip-warn">관리자</span>}
+            </div>
           )}
         </section>
 
-        {/* ⛔ 로그인/회원가입 페이지에서는 네비게이션 비표시 */}
+        {/* 로그인/회원가입 페이지에서는 네비게이션 숨김 */}
         {!isAuthPage && (
           <nav className="nav">
             <NavLink
               to="/main"
+              onClick={resetDeptAndReload("/main")}
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
             >
               <span className="ico">{icon("bars")}</span>
@@ -181,6 +201,7 @@ export default function Sidebar() {
 
             <NavLink
               to="/board"
+              onClick={resetDeptAndReload("/board")}
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
             >
               <span className="ico">{icon("doc")}</span>
@@ -189,6 +210,7 @@ export default function Sidebar() {
 
             <NavLink
               to="/community"
+              onClick={resetDeptAndReload("/community")}
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
             >
               <span className="ico">{icon("chat")}</span>
@@ -198,6 +220,7 @@ export default function Sidebar() {
             {isAdmin && (
               <NavLink
                 to="/manager"
+                onClick={resetDeptAndReload("/manager")}
                 className={({ isActive }) =>
                   `nav-item ${isActive ? "active" : ""}`
                 }
@@ -209,7 +232,7 @@ export default function Sidebar() {
           </nav>
         )}
 
-        {/* ⛔ 로그인/회원가입 페이지에서는 부서 선택 비표시 */}
+        {/* 로그인/회원가입·커뮤니티 페이지에서는 부서 선택 숨김(기존 로직 유지) */}
         {!isAuthPage && !isCommunity && (
           <>
             <div className="section-title">부서 선택</div>
@@ -220,11 +243,21 @@ export default function Sidebar() {
                     key={d.id}
                     className={`dept-item ${selected === d.id ? "selected" : ""}`}
                     onClick={() => setSelected(d.id)}
+                    title={`${d.label}만 보기`}
                   >
                     <span className="ico">{icon(d.icon)}</span>
                     <span>{d.label}</span>
                   </li>
                 ))}
+                {/* ✅ 전체 보기(선택 해제) 버튼 */}
+                <li
+                  className={`dept-item ${selected === null ? "selected" : ""}`}
+                  onClick={() => setSelected(null)}
+                  title="전체 보기"
+                >
+                  <span className="ico">{icon("globe")}</span>
+                  <span>전체</span>
+                </li>
               </ul>
             </div>
           </>
