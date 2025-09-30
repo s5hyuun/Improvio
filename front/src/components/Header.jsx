@@ -1,13 +1,12 @@
-//Header.jsx 입니ㅣ다.
-
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function Header({ isLoggedIn, setIsLoggedIn, onSearch }) {
   const [badge, setBadge] = useState(1);
   const [langOpen, setLangOpen] = useState(false);
   const [lang, setLang] = useState("한국어");
   const menuRef = useRef(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     function handleClick(e) {
@@ -25,6 +24,22 @@ export default function Header({ isLoggedIn, setIsLoggedIn, onSearch }) {
       document.removeEventListener("keydown", handleEsc);
     };
   }, []);
+
+  // 안전한 로그아웃 처리
+  const handleLogout = () => {
+    // 로그인 상태 초기화
+    setIsLoggedIn(false);
+
+    // 로컬 스토리지/세션 토큰 삭제
+    localStorage.removeItem("token"); // 만약 토큰을 로컬스토리지에 저장했다면
+    sessionStorage.removeItem("token");
+
+    // 필요한 경우 쿠키도 삭제 가능 (js-cookie 등 사용)
+    // Cookies.remove("token");
+
+    // 로그인 페이지로 이동
+    navigate("/login");
+  };
 
   return (
     <header className="topbar">
@@ -48,6 +63,7 @@ export default function Header({ isLoggedIn, setIsLoggedIn, onSearch }) {
           <SuggestionSearch onResults={onSearch} />
         </div>
 
+        {/* 알림 버튼 */}
         <button
           className="icon-btn"
           aria-label="알림"
@@ -70,6 +86,7 @@ export default function Header({ isLoggedIn, setIsLoggedIn, onSearch }) {
           </svg>
         </button>
 
+        {/* 언어 선택 */}
         <div className="dropdown" ref={menuRef}>
           <button
             className="btn"
@@ -123,11 +140,12 @@ export default function Header({ isLoggedIn, setIsLoggedIn, onSearch }) {
           )}
         </div>
 
+        {/* 로그인/로그아웃 */}
         {isLoggedIn ? (
           <button
             className="btn btn-ghost"
             type="button"
-            onClick={() => setIsLoggedIn(false)}
+            onClick={handleLogout}
           >
             로그아웃
           </button>
