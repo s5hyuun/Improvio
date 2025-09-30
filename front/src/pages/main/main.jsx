@@ -30,14 +30,15 @@ const COLORS = [
   "#1e40af", // 네이비 블루
   "#334155", // 블루그레이 다크
 ];
-
 // const COLORS = [
-//   "#e0e7ff", // 연보라빛 연청색 (배경용)
-//   "#a5b4fc", // 라벤더 톤 블루
-//   "#6366f1", // 인디고 블루
-//   "#4338ca", // 진한 블루 퍼플
-//   "#1e1b4b", // 다크 네이비 퍼플
+//   "#dbeafe", // blue-100 (연한 하늘색)
+//   "#93c5fd", // blue-300 (중간 파스텔 블루)
+//   "#3b82f6", // blue-500 (대표 블루)
+//   "#1e40af", // blue-800 (네이비 블루)
+//   "#1e3a8a", // blue-900 (딥 네이비)
 // ];
+
+
 
 
 
@@ -128,8 +129,12 @@ const Dashboard = () => {
                   <YAxis stroke="#333" />
                   <Tooltip />
                   <Legend />
-                  <Bar dataKey="total" fill="#4a6cf7" name="총 건의" />
-                  <Bar dataKey="solved" fill="#69bff8" name="완료 건의" />
+                  {/* <Bar dataKey="total" fill="#4a6cf7" name="총 건의" />
+                  <Bar dataKey="solved" fill="#69bff8" name="완료 건의" /> */}
+                <Bar dataKey="total" fill="#1e40af" name="총 건의" />   {/* navy blue (blue-800) */}
+<Bar dataKey="solved" fill="#60a5fa" name="완료 건의" /> {/* sky blue (blue-400) */}
+
+
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -146,8 +151,24 @@ const Dashboard = () => {
                   <YAxis stroke="#333" />
                   <Tooltip />
                   <Legend />
-                  <Line type="monotone" dataKey="total" stroke="#4a6cf7" strokeWidth={3} />
-                  <Line type="monotone" dataKey="solved" stroke="#69bff8" strokeWidth={3} />
+                  {/* <Line type="monotone" dataKey="total" stroke="#4a6cf7" strokeWidth={3} />
+                  <Line type="monotone" dataKey="solved" stroke="#69bff8" strokeWidth={3} /> */}
+                <Line
+                    type="monotone"
+                    dataKey="total"
+                    stroke="#3b82f6" // 기본 파랑 (팔레트 2번)
+                    strokeWidth={3}
+                    dot={false}
+                    activeDot={{ r: 4, stroke: "#3b82f6", fill: "#fff" }}
+                  />
+                  <Line
+                    type="monotone"
+                    dataKey="solved"
+                    stroke="#1e40af" // 네이비 블루 (팔레트 3번)
+                    strokeWidth={3}
+                    dot={false}
+                    activeDot={{ r: 4, stroke: "#1e40af", fill: "#fff" }}
+                  />
                 </LineChart>
               </ResponsiveContainer>
             </div>
@@ -219,7 +240,7 @@ const Dashboard = () => {
   <li className="effect-item efficiency">
     <div className="effect-label">작업 효율성 평균</div>
     <div className="effect-box">
-      <span className="effect-icon">📈</span>
+      {/* <span className="effect-icon">📈</span> */}
       <div className="effect-value">
         {effects.avg_productivity ? Number(effects.avg_productivity).toFixed(2) : "데이터 없음"}%
       </div>
@@ -228,14 +249,14 @@ const Dashboard = () => {
   <li className="effect-item safety">
     <div className="effect-label">안전 개선 완료 건수</div>
     <div className="effect-box">
-      <span className="effect-icon">🛡️</span>
+      {/* <span className="effect-icon">🛡️</span> */}
       <div className="effect-value">{effects.safety_improvements ?? 0} 건</div>
     </div>
   </li>
   <li className="effect-item saving">
     <div className="effect-label">총 원가 절감</div>
     <div className="effect-box">
-      <span className="effect-icon">💰</span>
+      {/* <span className="effect-icon">💰</span> */}
       <div className="effect-value">
         {effects.total_cost_saving ? Number(effects.total_cost_saving).toLocaleString() : 0} 원
       </div>

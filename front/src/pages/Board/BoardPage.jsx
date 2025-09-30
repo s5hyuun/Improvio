@@ -1,6 +1,8 @@
+// BoardPage.jsx 입니다.
+
 import { useEffect, useState } from "react";
 import Sidebar from "../../components/Sidebar";
-import Header from "../../components/Header";
+import Header, { SuggestionSearch } from "../../components/Header";
 import styles from "../../styles/Board.module.css";
 import BoardContent from "./components/BoardContent";
 import BoardDetail from "./BoardDetail";
@@ -10,7 +12,11 @@ function BoardPage() {
   const [suggestions, setSuggestions] = useState([]);
   const [selected, setSelected] = useState(null);
   const [write, setWrite] = useState(false);
-  const [dept, setDept] = useState(""); // 선택된 부서 ("" = 전체)
+  const [dept, setDept] = useState("");
+
+  // 검색 상태
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   useEffect(() => {
     fetch("http://localhost:5000/api/suggestions")
@@ -19,31 +25,42 @@ function BoardPage() {
       .catch((err) => console.error(err));
   }, []);
 
-  // dept 이벤트 구독
   useEffect(() => {
     function handler(e) {
-      setDept(e.detail.dept); // ""이면 전체 부서
+      setDept(e.detail.dept);
     }
     window.addEventListener("dept:changed", handler);
     return () => window.removeEventListener("dept:changed", handler);
   }, []);
 
-  // 부서별 필터링
-  const filtered = dept
-    ? suggestions.filter((s) => s.department_name === dept)
-    : suggestions;
+  // 검색 결과 vs 전체
+  const dataSource = isSearching ? searchResults : suggestions;
 
-  // status별 필터링
+  const filtered = dept
+    ? dataSource.filter((s) => s.department_name === dept)
+    : dataSource;
+
   const proposals = filtered.filter((s) => s.status === "pending");
   const inProgress = filtered.filter((s) => s.status === "approved");
   const completed = filtered.filter((s) => s.status === "completed");
+
+  const cleanText = (text) => text.replace(/<\/?mark>/g, "");
 
   return (
     <div className="app">
       <Sidebar />
 
       <div className="main">
-        <Header />
+        {/* Header에 onSearch 연결 */}
+        <Header
+          isLoggedIn={true}
+          setIsLoggedIn={() => {}}
+          onSearch={(results, active) => {
+            setSearchResults(results);
+            setIsSearching(active);
+          }}
+        />
+
         <div className={styles.boardContainer}>
           <div className={styles.boardTitle}>
             <div>
@@ -56,13 +73,12 @@ function BoardPage() {
                 onClose={() => setWrite(false)}
                 onSubmit={async (formData) => {
                   try {
-                    await fetch("http://localhost:5000/api/suggestions", {
+                    await fetch("http://localhost:4000/api/suggestions", {
                       method: "POST",
                       body: formData,
                     });
-
                     const res = await fetch(
-                      "http://localhost:5000/api/suggestions"
+                      "http://localhost:4000/api/suggestions"
                     );
                     const data = await res.json();
                     setSuggestions(data);
@@ -84,13 +100,19 @@ function BoardPage() {
                   proposals.map((s) => (
                     <BoardContent
                       key={s.suggestion_id}
-                      suggestion={s}
+                      suggestion={{
+                        ...s,
+                        title: cleanText(s.title),
+                        description: cleanText(s.description),
+                      }}
                       onClick={() => setSelected(s)}
                     />
                   ))
                 ) : (
                   <div className={styles.noContent}>
-                    등록된 제안이 없습니다.
+                    {isSearching
+                      ? "검색 결과가 없습니다."
+                      : "등록된 제안이 없습니다."}
                   </div>
                 )}
               </div>
@@ -103,13 +125,19 @@ function BoardPage() {
                   inProgress.map((s) => (
                     <BoardContent
                       key={s.suggestion_id}
-                      suggestion={s}
+                      suggestion={{
+                        ...s,
+                        title: cleanText(s.title),
+                        description: cleanText(s.description),
+                      }}
                       onClick={() => setSelected(s)}
                     />
                   ))
                 ) : (
                   <div className={styles.noContent}>
-                    진행 중인 제안이 없습니다.
+                    {isSearching
+                      ? "검색 결과가 없습니다."
+                      : "진행 중인 제안이 없습니다."}
                   </div>
                 )}
               </div>
@@ -122,13 +150,19 @@ function BoardPage() {
                   completed.map((s) => (
                     <BoardContent
                       key={s.suggestion_id}
-                      suggestion={s}
+                      suggestion={{
+                        ...s,
+                        title: cleanText(s.title),
+                        description: cleanText(s.description),
+                      }}
                       onClick={() => setSelected(s)}
                     />
                   ))
                 ) : (
                   <div className={styles.noContent}>
-                    완료된 제안이 없습니다.
+                    {isSearching
+                      ? "검색 결과가 없습니다."
+                      : "완료된 제안이 없습니다."}
                   </div>
                 )}
               </div>

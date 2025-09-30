@@ -8,14 +8,18 @@ import multer from "multer";
 import path from "path";
 import fs from "fs";
 import mime from "mime"; // npm install mime
+import { fileURLToPath } from "url";
 import performanceRouter from "./routes/performance.js";
 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const SECRET_KEY = "secret_key";
 
 const app = express();
 app.use(cors({}));
 app.use(express.json());
 app.use("/api/performance", performanceRouter);
+app.use(express.static(path.join(__dirname, "dist")));
 app.use("/uploads", express.static("uploads"));
 const uploadDir = "uploads";
 if (!fs.existsSync(uploadDir)) {
@@ -44,7 +48,7 @@ app.post("/api/summarize", async (req, res) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: "Bearer ", 
+          Authorization: `Bearer ${HF_API_TOKEN}`,
         },
         body: JSON.stringify({
           inputs: description,
@@ -129,7 +133,48 @@ app.get("/api/suggestions", async (req, res) => {
     res.status(500).json({ error: "Database error" });
   }
 });
+app.get("/api/suggestions/search", async (req, res) => {
+  try {
+    const { query } = req.query;
+    if (!query) {
+      return res.status(400).json({ error: "검색어(query)가 필요합니다." });
+    }
 
+    const [suggestions] = await pool.query(
+      `
+      SELECT s.*,
+             u.name AS user_name, d.department_name,
+             (SELECT COUNT(*) FROM Comment c WHERE c.suggestion_id = s.suggestion_id) AS comment_count,
+             (SELECT count(*) FROM Vote WHERE suggestion_id = s.suggestion_id) AS vote_count
+      FROM Suggestion s
+      LEFT JOIN User u ON s.user_id = u.user_id
+      LEFT JOIN Department d ON s.department_id = d.department_id
+      WHERE s.title LIKE ? OR s.description LIKE ? OR s.expected_effect LIKE ?
+      ORDER BY s.created_at DESC
+      `,
+      [`%${query}%`, `%${query}%`, `%${query}%`]
+    );
+
+    // ✅ 검색어 하이라이트 처리 추가
+    const highlightText = (text) => {
+      if (!text) return text;
+      const regex = new RegExp(`(${query})`, "gi");
+      return text.replace(regex, "<mark>$1</mark>");
+    };
+
+    const highlighted = suggestions.map((s) => ({
+      ...s,
+      title: highlightText(s.title),
+      description: highlightText(s.description),
+      expected_effect: highlightText(s.expected_effect),
+    }));
+
+    res.json(highlighted);
+  } catch (err) {
+    console.error("검색 오류:", err);
+    res.status(500).json({ error: "검색 중 오류 발생" });
+  }
+});
 // 제안 개수 조회
 app.get("/api/suggestions/count", async (req, res) => {
   try {
@@ -999,7 +1044,13 @@ app.post("/api/posts", upload.array("images", 10), async (req, res) => {
     conn.release();
   }
 });
-
+app.get((req, res) => {
+  if (req.path.startsWith("/api")) {
+    // API 요청이면 404
+    return res.status(404).json({ error: "API endpoint not found" });
+  }
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
 app.listen(5000, () => {
   console.log("http://localhost:5000");
 });

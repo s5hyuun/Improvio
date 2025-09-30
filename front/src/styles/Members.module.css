@@ -77,9 +77,10 @@
   background: #fdfdfd;
 }
 
-.nameCell{ font-weight:600; color: var(--text, #0b1220); }
-.deptCell{ color: var(--primary, #2d6cff); font-weight: 600; }
-.dateCell{ color: var(--text, #0b1220); }
+.nameCell{  color: black; }
+.deptCell{ color: black;  }
+.dateCell{ color:black;
+ }
 .colStatus, .statusCell{ text-align:right; }
 
 .badgeActive {
