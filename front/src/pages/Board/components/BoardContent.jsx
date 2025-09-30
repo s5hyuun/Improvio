@@ -39,7 +39,11 @@ function BoardContent({ suggestion, onClick }) {
   return (
     <div className={styles.contentContainer} onClick={onClick}>
       <h3>{title}</h3>
-      <div className={styles.description}>{description}</div>
+      <div className={styles.description}>
+        {description.length > 50
+          ? `${description.slice(0, 60)}...`
+          : description}
+      </div>
 
       <div className={styles.contentUser}>
         <div>
