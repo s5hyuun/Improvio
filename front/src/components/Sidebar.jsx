@@ -2,6 +2,20 @@ import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
 const STORAGE_DEPT_KEY = "selected_dept";
+const AUTH_KEY = "auth_user";
+
+const DEPT_LABEL_BY_NUM = {
+  1: "R&D",
+  2: "해외영업",
+  3: "기본설계",
+  4: "미래사업개발",
+  5: "조선설계",
+  6: "해양설계",
+  7: "PM",
+  8: "구매",
+  9: "경영지원",
+  10: "안전",
+};
 
 export default function Sidebar() {
   const departments = [
@@ -19,6 +33,90 @@ export default function Sidebar() {
 
   const location = useLocation();
   const isCommunity = location.pathname.startsWith("/community");
+  const isAuthPage = /\/login|\/signup/i.test(location.pathname);
+
+  const readAuth = () => {
+    try {
+      const raw = localStorage.getItem(AUTH_KEY);
+      if (!raw) return null;
+      const a = JSON.parse(raw);
+
+      const roleRaw =
+        a?.role ??
+        a?.user?.role ??
+        a?.claims?.role ??
+        a?.roles?.[0] ??
+        a?.auth?.role ??
+        a?.privilege;
+
+      const role =
+        typeof roleRaw === "string"
+          ? roleRaw.toLowerCase()
+          : typeof roleRaw === "number"
+          ? roleRaw
+          : "";
+
+      const department_id =
+        a?.department_id ??
+        a?.department ??
+        a?.user?.department_id ??
+        a?.profile?.department_id ??
+        null;
+
+      const department_name =
+        a?.department_name ??
+        a?.user?.department_name ??
+        (Number.isInteger(department_id)
+          ? DEPT_LABEL_BY_NUM[department_id]
+          : null) ??
+        null;
+
+      return {
+        ...a,
+        role,
+        department_id,
+        department_name,
+        username: a.username ?? a.name ?? a.employeeId ?? "사용자",
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const [auth, setAuth] = useState(readAuth);
+  useEffect(() => {
+    const onAuthChanged = () => setAuth(readAuth());
+    window.addEventListener("auth:changed", onAuthChanged);
+    window.addEventListener("storage", onAuthChanged);
+    return () => {
+      window.removeEventListener("auth:changed", onAuthChanged);
+      window.removeEventListener("storage", onAuthChanged);
+    };
+  }, []);
+
+  const role = auth?.role ?? "";
+  const isAdmin =
+    role === "admin" ||
+    role === "manager" ||
+    (typeof role === "number" && [1, 9].includes(role));
+
+  const isLoggedIn = !!auth;
+  const showAnonProfile = !isLoggedIn || isAuthPage;
+
+  const displayName = showAnonProfile
+    ? "로그인해주세요"
+    : auth?.username || "사용자";
+
+  const deptLabelFromAuth =
+    auth?.department_name ??
+    (Number.isInteger(auth?.department_id)
+      ? DEPT_LABEL_BY_NUM[auth.department_id]
+      : null);
+
+  const deptLabelFromLocal = localStorage.getItem(STORAGE_DEPT_KEY) || null;
+
+  const profileDeptLabel =
+    deptLabelFromAuth || deptLabelFromLocal || "부서 미지정";
 
   const [selected, setSelected] = useState(() => {
     try {
@@ -53,19 +151,23 @@ export default function Sidebar() {
         </div>
 
         <section className="profile">
-          <div className="profile-name">username</div>
-          <button className="link-btn" type="button">
-            edit
-          </button>
-          <div className="chip-row">
-            <span className="chip chip-primary">R&amp;D</span>
-            <span className="chip chip-warn">관리자</span>
-          </div>
+          <div className="profile-name">{displayName}</div>
+
+          {!showAnonProfile && (
+            <>
+              <button className="link-btn" type="button">
+                edit
+              </button>
+              <div className="chip-row">
+                <span className="chip chip-primary">{profileDeptLabel}</span>
+                {isAdmin && <span className="chip chip-warn">관리자</span>}
+              </div>
+            </>
+          )}
         </section>
 
         <nav className="nav">
-          {/* ✅ Main Chart -> /main */}
-          <NavLink
+           <NavLink
             to="/main"
             className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
           >
@@ -73,7 +175,6 @@ export default function Sidebar() {
             <span>Main Chart</span>
           </NavLink>
 
-          {/* ✅ Requirements -> /board */}
           <NavLink
             to="/board"
             className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
@@ -82,7 +183,6 @@ export default function Sidebar() {
             <span>Requirements</span>
           </NavLink>
 
-          {/* ✅ Community -> /community */}
           <NavLink
             to="/community"
             className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
@@ -90,6 +190,18 @@ export default function Sidebar() {
             <span className="ico">{icon("chat")}</span>
             <span>Community</span>
           </NavLink>
+
+          {isAdmin && (
+            <NavLink
+              to="/manager"
+              className={({ isActive }) =>
+                `nav-item ${isActive ? "active" : ""}`
+              }
+            >
+              <span className="ico">{icon("shield")}</span>
+              <span>관리자</span>
+            </NavLink>
+          )}
         </nav>
 
         {!isCommunity && (

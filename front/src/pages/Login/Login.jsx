@@ -21,7 +21,23 @@ export default function Login() {
         body: JSON.stringify({ employeeId: username, password }),
       });
       const data = await response.json();
+
       if (data.success) {
+        // 🔹 서버가 반환하는 데이터에 맞게 auth_user 저장
+        // data.user 또는 data.data 등에 유저 정보가 들어있다면 여기에 맞춰 넣어야 함
+        const userData = {
+          username: data.user?.username || username,
+          department_id: data.user?.department_id,
+          department_name: data.user?.department_name,
+          role: data.user?.role || "user",
+        };
+
+        // localStorage에 저장 (Sidebar가 읽을 수 있도록)
+        localStorage.setItem("auth_user", JSON.stringify(userData));
+
+        // 로그인 상태 변화를 Sidebar에 알림
+        window.dispatchEvent(new CustomEvent("auth:changed"));
+
         alert("로그인 성공!");
         navigate("/main");
       } else {
