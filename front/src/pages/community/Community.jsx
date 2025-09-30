@@ -13,9 +13,18 @@ function Community() {
   useEffect(() => {
     fetch("http://localhost:5000/api/boards")
       .then((res) => res.json())
-      .then((data) => setBoards(data))
+      .then((data) => {
+        setBoards(data);
+
+        // ✅ boardId가 없으면 기본으로 자유게시판(free) 이동
+        if (location.pathname === "/community") {
+          const freeBoard =
+            data.find((b) => b.name === "자유게시판") || data[0];
+          nav(`/community/board/${freeBoard.board_id}`);
+        }
+      })
       .catch((err) => console.error(err));
-  }, []);
+  }, [nav, location.pathname]);
 
   useEffect(() => {
     fetch("http://localhost:5000/api/hot-posts")
