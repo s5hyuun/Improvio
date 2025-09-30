@@ -271,31 +271,39 @@ export default function Manager() {
     });
 
   const urgentSplitFallback = {
-    display: "grid",
-    gridTemplateColumns: "1fr 1fr",
-    gap: "16px",
-    marginTop: 24,
-    alignItems: "stretch",
+     display: "grid",
+  gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", // 자식이 넘치지 않도록
+  gap: "16px",
+  marginTop: 24,
+  alignItems: "stretch",
+  height: "100%",   // 부모(content)의 남는 높이를 그대로 받음
+  minHeight: 0, 
   };
   const columnFallback = {
-    background: "#fff",
-    borderRadius: 16,
-    border: "1px solid #e5e7eb",
-    boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-    display: "flex",
-    flexDirection: "column",
-    minHeight: 320,
-    maxHeight: 420,
-  };
-  const headerRowFallback = {
-    padding: "16px 20px",
-    fontWeight: 700,
-    borderBottom: "1px solid #f1f5f9",
-  };
-  const scrollAreaFallback = {
-    overflowY: "auto",
-    padding: 16,
-  };
+  background: "#fff",
+  borderRadius: 16,
+  border: "1px solid #e5e7eb",
+  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+  display: "flex",
+  flexDirection: "column",
+  minHeight: 0,    // 🔑 자식 스크롤 허용
+  height: "100%",  // 🔑 urgentSplit의 높이를 꽉 채움
+};
+
+const headerRowFallback = {
+  padding: "16px 20px",
+  fontWeight: 700,
+  borderBottom: "1px solid #f1f5f9",
+  flex: "0 0 auto", // 헤더는 고정
+};
+
+const scrollAreaFallback = {
+  overflowY: "auto",
+  padding: 16,
+  flex: "1 1 auto", // 🔑 남는 공간을 스크롤 영역이 차지
+  minHeight: 0,     // 🔑 flex 스크롤 이슈 방지
+};
+
 
   return (
     <div className="app">
@@ -304,9 +312,9 @@ export default function Manager() {
         onSelectDept={(id) => setCurrentDeptId(id || "all")}
       />
 
-      <main className="main">
+      <main className="main" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
         <Header />
-        <section className="content">
+        <section className="content" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
           <div className={styles.btn}>
             <button
               type="button"
