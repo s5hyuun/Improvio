@@ -32,7 +32,8 @@ function resolveImage(row) {
     .map((x) => {
       if (!x) return null;
       if (typeof x === "string") return x;
-      if (typeof x === "object") return x.url || x.path || x.file_url || x.file_path || null;
+      if (typeof x === "object")
+        return x.url || x.path || x.file_url || x.file_path || null;
       return null;
     })
     .filter(Boolean);
@@ -91,6 +92,9 @@ function adaptFromDB(row) {
     status,
     urgent,
     image_url, // ✅ 표준화된 이미지 URL
+
+    comment_count: row.comment_count ?? 0,
+    vote_count: row.vote_count ?? 0,
   };
 }
 
@@ -267,6 +271,8 @@ function BoardPage() {
                         ...s,
                         title: cleanText(s.title),
                         description: cleanText(s.description),
+                        comment_count: s.comment_count,
+                        vote_count: s.vote_count,
                       }}
                       onClick={() => setSelected(s)}
                     />
