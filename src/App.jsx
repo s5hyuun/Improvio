@@ -10,6 +10,8 @@ import SignupallPage from "./pages/signupall/signupall.jsx";
 import SignupPage from "./pages/signup(employee)/signup.jsx";
 import SignupPage2 from "./pages/signup(admin)/signup4.jsx";
 import Dashboard from "./pages/main/main.jsx";
+import "./i18n"; // i18n 초기화
+
 
 export default function App() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);

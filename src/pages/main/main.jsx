@@ -1,85 +1,91 @@
-// src/pages/Dashboard.jsx (혹은 위치에 맞게 붙여넣기)
+// src/pages/Dashboard.jsx
 import React, { useState, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import "./Dashboard.css";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
-
+import axios from "axios";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-  ResponsiveContainer,
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, PieChart, Pie, Cell, Legend, ResponsiveContainer
 } from "recharts";
 
-import axios from "axios";
-
 const COLORS = ["#4a6cf7", "#69bff8", "#ff9f43", "#e3eaf5", "#b0c4ff"];
+const DEPT_MAP = { 1: "생산", 2: "품질", 3: "설계", 4: "안전", 5: "기타" };
 
-// 부서 id -> 이름 매핑 (DB에 실제 department 테이블이 있으면 백엔드에서 이름을 내려주도록 바꾸셔도 됩니다)
-const DEPT_MAP = {
-  1: "생산",
-  2: "품질",
-  3: "설계",
-  4: "안전",
-  5: "기타"
-};
-
-const Dashboard = () => {
-  const [suggestionTrend, setSuggestionTrend] = useState([]); // line chart
-  const [deptToday, setDeptToday] = useState([]); // pie (전체 기준)
-  const [deptSolved, setDeptSolved] = useState([]); // donut
+export default function Dashboard() {
+  const { t, i18n } = useTranslation();
+  const [suggestionTrend, setSuggestionTrend] = useState([]);
+  const [deptToday, setDeptToday] = useState([]);
+  const [deptSolved, setDeptSolved] = useState([]);
   const [effects, setEffects] = useState({});
   const [recentSolved, setRecentSolved] = useState(null);
   const [totalCount, setTotalCount] = useState({ total: 0, today: 0 });
 
+  async function translateText(text, targetLang) {
+    try {
+      const res = await axios.post("http://localhost:4000/api/translate", { text, targetLang });
+      return res.data.translatedText;
+    } catch (err) {
+      console.error("번역 실패:", err);
+      return text;
+    }
+  }
+
   useEffect(() => {
     async function fetchAll() {
       try {
-        // counts
+        // 1. 총 건수
         const countsRes = await axios.get("http://localhost:4000/api/performance/counts");
         setTotalCount(countsRes.data || { total: 0, today: 0 });
 
-        // weekly-trend (날짜별 집계) -> Recharts용으로 약간 포맷팅
+        // 2. 주간 트렌드
         const trendRes = await axios.get("http://localhost:4000/api/performance/weekly-trend");
-        // trendRes.data 형식: [{ day: "2025-09-18", total: 3, solved: 2 }, ...]
         const trendFormatted = (trendRes.data || []).map(item => {
-          // 날짜를 보기좋게 (예: "09-18" 또는 요일)로 바꿔서 day 키에 넣음
           const d = new Date(item.day);
-          const label = `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, "0")}`; // "9-18" 형태
+          const label = `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, "0")}`;
           return { day: label, total: Number(item.total), solved: Number(item.solved) };
         });
         setSuggestionTrend(trendFormatted);
 
-        // deptToday (전체 기준 부서별 건수) -> { name, value } 형태
+        // 3. 부서별 오늘 건의
         const dtRes = await axios.get("http://localhost:4000/api/performance/dept-today");
-        const dtFormatted = (dtRes.data || []).map(r => ({
-          name: DEPT_MAP[r.id] || `부서-${r.id}`,
-          value: Number(r.value)
+        let dtFormatted = (dtRes.data || []).map(r => ({
+          name: DEPT_MAP[r.id] || `Dept-${r.id}`,
+          value: Number(r.value),
         }));
+        if (i18n.language !== "ko") {
+          dtFormatted = await Promise.all(dtFormatted.map(async r => ({
+            ...r,
+            name: await translateText(r.name, i18n.language)
+          })));
+        }
         setDeptToday(dtFormatted);
 
-        // deptSolved
+        // 4. 부서별 해결 건의
         const dsRes = await axios.get("http://localhost:4000/api/performance/dept-solved");
-        const dsFormatted = (dsRes.data || []).map(r => ({
-          name: DEPT_MAP[r.id] || `부서-${r.id}`,
-          value: Number(r.value)
+        let dsFormatted = (dsRes.data || []).map(r => ({
+          name: DEPT_MAP[r.id] || `Dept-${r.id}`,
+          value: Number(r.value),
         }));
+        if (i18n.language !== "ko") {
+          dsFormatted = await Promise.all(dsFormatted.map(async r => ({
+            ...r,
+            name: await translateText(r.name, i18n.language)
+          })));
+        }
         setDeptSolved(dsFormatted);
 
-        // expected-effects
+        // 5. 기대효과
         const efRes = await axios.get("http://localhost:4000/api/performance/expected-effects");
         setEffects(efRes.data || { avg_productivity: null, total_cost_saving: 0, safety_improvements: 0 });
 
-        // recent-solved
+        // 6. 최근 해결된 건
         const recentRes = await axios.get("http://localhost:4000/api/performance/recent-solved");
-        setRecentSolved(recentRes.data || null);
+        let recentData = recentRes.data || null;
+        if (recentData && i18n.language !== "ko") {
+          recentData.effect_summary = await translateText(recentData.effect_summary, i18n.language);
+        }
+        setRecentSolved(recentData);
 
       } catch (err) {
         console.error("데이터 로드 오류:", err);
@@ -87,7 +93,7 @@ const Dashboard = () => {
     }
 
     fetchAll();
-  }, []);
+  }, [i18n.language]);
 
   return (
     <div className="app">
@@ -96,17 +102,17 @@ const Dashboard = () => {
         <Header />
 
         <div className="dashboard-container">
-          {/* 오늘/전체 건의 수 (전체 기반) */}
+          {/* 오늘/전체 건의 수 */}
           <div className="card">
-            <div className="card-title">오늘 건의 수</div>
+            <div className="card-title">{t("dashboard.todayCount")}</div>
             <div className="card-content">
-              전체 건의 수: <b>{totalCount.total}</b> / (오늘: <b>{totalCount.today}</b>)
+              {t("dashboard.totalCount")}: <b>{totalCount.total}</b> / ({t("dashboard.today")}: <b>{totalCount.today}</b>)
             </div>
           </div>
 
           {/* 선 그래프 */}
           <div className="card">
-            <div className="card-title">총 해결된 건의 우선순위 그래프</div>
+            <div className="card-title">{t("dashboard.trendChart")}</div>
             <div className="card-content" style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={suggestionTrend}>
@@ -124,49 +130,30 @@ const Dashboard = () => {
 
           {/* 최근 해결된 문제 */}
           <div className="card">
-            <div className="card-title">가장 최근 해결된 문제</div>
+            <div className="card-title">{t("dashboard.recentSolved")}</div>
             <div className="card-content">
               {recentSolved ? (
                 <>
-                  <b
-                    style={{
-                      display: "block",
-                      marginBottom: "12px", // 글자 아래 간격
-                      marginTop: "8px",     // 글자 위 간격
-                    }}
-                  >
-                    {recentSolved.effect_summary} (
-                    {new Date(recentSolved.resolved_at).toLocaleString()})
+                  <b style={{ display: "block", marginBottom: "12px", marginTop: "8px" }}>
+                    {recentSolved.effect_summary} ({new Date(recentSolved.resolved_at).toLocaleString()})
                   </b>
-
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "center",
-                      marginTop: "12px", // 텍스트와 이미지 사이 간격
-                      flexGrow: 1,
-                    }}
-                  >
+                  <div style={{ display: "flex", justifyContent: "center", marginTop: "12px", flexGrow: 1 }}>
                     <img
                       src="/monitor.png"
-                      alt="모니터링 개선 이미지"
-                      style={{
-                        maxWidth: "100%",
-                        maxHeight: "250px",
-                        objectFit: "contain",
-                      }}
+                      alt={t("dashboard.monitorAlt", "Monitoring image")}
+                      style={{ maxWidth: "100%", maxHeight: "250px", objectFit: "contain" }}
                     />
                   </div>
                 </>
               ) : (
-                <span>데이터 없음</span>
+                <span>{t("dashboard.noData")}</span>
               )}
             </div>
           </div>
 
-          {/* 부서별 전체 건의 수 - Pie */}
+          {/* 부서별 전체 건의 수 */}
           <div className="card">
-            <div className="card-title">부서별 전체 건의 수</div>
+            <div className="card-title">{t("dashboard.deptToday")}</div>
             <div className="card-content" style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -182,9 +169,9 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* 부서별 해결된 건의 수 - 도넛 */}
+          {/* 부서별 해결된 건의 수 */}
           <div className="card">
-            <div className="card-title">부서별 해결된 건의 수</div>
+            <div className="card-title">{t("dashboard.deptSolved")}</div>
             <div className="card-content" style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
@@ -202,12 +189,12 @@ const Dashboard = () => {
 
           {/* 기대효과 */}
           <div className="card">
-            <div className="card-title">기대효과 (DB 기준)</div>
+            <div className="card-title">{t("dashboard.expectedEffects")}</div>
             <div className="card-content">
               <ul>
-                <li>작업 효율성 평균: <b>{effects.avg_productivity ? Number(effects.avg_productivity).toFixed(2) : "데이터 없음"}%</b></li>
-                <li>안전 개선 완료 건수(예시 dept_id=4): <b>{effects.safety_improvements ?? 0}</b> 건</li>
-                <li>총 원가 절감(합계): <b>{effects.total_cost_saving ? Number(effects.total_cost_saving).toLocaleString() : 0}</b> 원</li>
+                <li>{t("dashboard.avgProductivity")}: <b>{effects.avg_productivity ? Number(effects.avg_productivity).toFixed(2) : t("dashboard.noData")}%</b></li>
+                <li>{t("dashboard.safetyImprovements")}: <b>{effects.safety_improvements ?? 0}</b></li>
+                <li>{t("dashboard.totalCostSaving")}: <b>{effects.total_cost_saving ? Number(effects.total_cost_saving).toLocaleString() : 0}</b></li>
               </ul>
             </div>
           </div>
@@ -215,6 +202,4 @@ const Dashboard = () => {
       </main>
     </div>
   );
-};
-
-export default Dashboard;
+}

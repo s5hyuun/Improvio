@@ -10,11 +10,17 @@ import fs from "fs";
 import mime from "mime"; // npm install mime
 import { fileURLToPath } from "url";
 import performanceRouter from "./routes/performance.js";
+import fetch from "node-fetch"; 
+import axios from "axios";
+import dotenv from "dotenv";
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const SECRET_KEY = "secret_key";
+const SECRET_KEY = process.env.SECRET_KEY;
+const HF_API_TOKEN = process.env.HF_API_TOKEN;
+const DEEPL_API_KEY = process.env.DEEPL_API_KEY;
 
 const app = express();
 
@@ -65,7 +71,7 @@ app.post("/api/summarize", async (req, res) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": "Bearer "
+          "Authorization": `Bearer ${HF_API_TOKEN}`
         },
         body: JSON.stringify({
           inputs: description
@@ -80,6 +86,53 @@ app.post("/api/summarize", async (req, res) => {
     res.json(data);
   } catch (err) {
     res.status(500).json({ error: err.message });
+  }
+});
+
+// 번역 api 
+app.post("/api/translate", async (req, res) => {
+  try {
+    const { text, targetLang } = req.body;
+    if (!text || !targetLang)
+      return res.status(400).json({ error: "text와 targetLang 필요" });
+
+    // 1. DB에서 기존 번역 확인
+    const [rows] = await pool.query(
+      "SELECT translated_text FROM translations WHERE source_text = ? AND target_lang = ?",
+      [text, targetLang]
+    );
+
+    if (rows.length > 0) {
+      return res.json({ translatedText: rows[0].translated_text });
+    }
+
+    // 2. DeepL API 호출
+    const response = await axios.post(
+      "https://api-free.deepl.com/v2/translate",
+      new URLSearchParams({
+        auth_key: DEEPL_API_KEY,
+        text,
+        target_lang: targetLang.toUpperCase(),
+      }),
+      { headers: { "Content-Type": "application/x-www-form-urlencoded" } }
+    );
+
+    const translatedText = response.data.translations[0].text;
+
+    // 3. DB 저장
+    await pool.query(
+      "INSERT INTO translations (source_text, target_lang, translated_text) VALUES (?, ?, ?)",
+      [text, targetLang, translatedText]
+    );
+
+    res.json({ translatedText });
+
+  } catch (err) {
+    console.error("DeepL 번역 에러 전체:", err.response?.data || err);
+    res.status(500).json({
+      error: "번역 실패",
+      deepl_error: err.response?.data || err.message
+    });
   }
 });
 

@@ -1,0 +1,109 @@
+{
+  "header": {
+    "title": "管理者ページ",
+    "searchPlaceholder": "検索ワードを入力してください",
+    "loginBtn": "ログイン",
+    "signupBtn": "サインアップ",
+    "logoutBtn": "ログアウト"
+  },
+  "sidebar": {
+    "username": "ユーザー名",
+    "edit": "編集",
+    "chip1": "R&D",
+    "chip2": "管理者",
+    "mainChart": "メインチャート",
+    "requirements": "要件",
+    "community": "コミュニティ",
+    "deptTitle": "部門選択",
+    "loginPrompt": "ログインしてください",
+    "admin": "管理者",
+    "noDept": "部門未指定",
+    "departments": {
+      "rd": "R&D",
+      "globalSales": "海外営業",
+      "basicDesign": "基本設計",
+      "futureBiz": "未来事業開発",
+      "shipDesign": "造船設計",
+      "marineDesign": "海洋設計",
+      "pm": "PM",
+      "purchase": "購買",
+      "ops": "経営支援",
+      "safety": "安全"
+    }
+  },
+  "loginPage": {
+    "usernamePlaceholder": "ユーザー名を入力",
+    "passwordPlaceholder": "パスワードを入力",
+    "signinBtn": "ログイン"
+  },
+  "dashboard": {
+    "todayCount": "本日の提案数",
+    "totalCount": "総提案数",
+    "today": "今日",
+    "trendChart": "解決済み提案の推移グラフ",
+    "recentSolved": "最近解決された問題",
+    "noData": "データなし",
+    "deptToday": "部門別提案数",
+    "deptSolved": "部門別解決済み提案数",
+    "expectedEffects": "期待効果 (DB基準)",
+    "avgProductivity": "作業効率平均",
+    "safetyImprovements": "安全改善完了件数",
+    "totalCostSaving": "総コスト削減"
+  },
+  "signup": {
+    "title": "会員登録（社員用）",
+    "adminTitle": "会員登録（管理者用）",
+    "termsTitle": "利用規約同意",
+    "termsLabel": "利用規約に同意します。",
+    "privacyTitle": "個人情報の収集および利用同意",
+    "privacyLabel": "個人情報の収集および利用に同意します。",
+    "nextBtn": "次のステップ",
+    "alertTerms": "すべての規約に同意する必要があります。"
+  },
+  "board": {
+  "title": "改善提案システム",
+  "termsTitle": "現場スタッフの不便事項や改善アイデアを共有してください",
+  "writebtn": "+ 投稿",
+  "alert": {
+    "saveError": "保存中にエラーが発生しました。"
+  },
+  "column": {
+    "proposal": "提案",
+    "inProgress": "進行中",
+    "complete": "完了"
+  },
+  "empty": {
+    "proposal": "登録された提案はありません。",
+    "inProgress": "進行中の提案はありません。",
+    "complete": "完了した提案はありません。"
+  }
+},
+"manager": {
+    "title": "管理者ページ",
+    "menu": {
+      "dashboard": "管理者ダッシュボード",
+      "employee": "従業員管理",
+      "suggestion": "提案管理",
+      "notice": "お知らせ管理"
+    },
+    "stats": {
+      "totalEmployees": "総従業員数",
+      "totalSuggestions": "総提案例数",
+      "activeNotices": "有効なお知らせ",
+      "urgentSuggestions": "緊急提案"
+    },
+    "dashboardLabel": "ダッシュボード統計"
+  },
+  "community": {
+      "boardList": "掲示板一覧",
+      "hotPosts": "🔥人気の投稿",
+      "adArea": "広告スペース"
+},
+"postDetail": {
+  "loading": "読み込み中...",
+  "back": "掲示板一覧へ戻る",
+  "comment": "コメント",
+  "like": "いいね",
+  "ad": "広告スペース"
+}
+}

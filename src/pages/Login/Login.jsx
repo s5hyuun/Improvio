@@ -1,14 +1,16 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import styles from "../../styles/Login.module.css";
 import SignupAll from "../signupall/signupall";
 
 export default function Login() {
+  const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [tab, setTab] = useState("signin"); // "signin" | "signup"
+  const [tab, setTab] = useState("signin");
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
@@ -37,11 +39,8 @@ export default function Login() {
       <Sidebar />
       <main className="main">
         <Header />
-
         <section className={styles.shell}>
-          {/* data-tab 로 스타일 제어 */}
           <form className={styles.form} data-tab={tab} onSubmit={handleLogin}>
-            {/* 탭 라디오 (Reset 제거) */}
             <input
               id="signin"
               className={styles.radio}
@@ -72,17 +71,15 @@ export default function Login() {
               SIGN UP
             </label>
 
-            {/* 화살표 + 카드 */}
             <div className={styles.cardArea} data-card-area>
               <div className={styles.arrow} />
               <div className={styles.wrapper} data-wrapper>
-                {tab === "signin" ? (
+                {tab === "signin" && (
                   <>
-                    {/* <h2 style={{ margin: "4px 0 8px 0" }}>로그인</h2> */}
                     <input
                       className={styles.input}
                       type="text"
-                      placeholder="아이디 입력"
+                      placeholder={t("loginPage.usernamePlaceholder")}
                       value={username}
                       onChange={(e) => setUsername(e.target.value)}
                       required
@@ -91,34 +88,23 @@ export default function Login() {
                     <input
                       className={styles.input}
                       type="password"
-                      placeholder="비밀번호 입력"
+                      placeholder={t("loginPage.passwordPlaceholder")}
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
                       autoComplete="current-password"
                     />
-
-                    {/* 버튼 (signin에서만 노출) */}
                     <div className={styles.actions}>
                       <button
                         type="submit"
                         className={`${styles.button} ${styles.signinBtn}`}
                       >
-                        <span>로그인</span>
+                        {t("loginPage.signinBtn")}
                       </button>
-                      {/* <button
-                        type="button"
-                        className={`${styles.button} ${styles.ghost} ${styles.signupBtn}`}
-                        onClick={() => setTab("signup")}
-                      >
-                        회원가입
-                      </button> */}
                     </div>
                   </>
-                ) : (
-                  // ✅ SIGN UP 탭: 바로 signupall 렌더 (흰 화면 없이 즉시 전환)
-                  <SignupAll onBack={() => setTab("signin")} />
                 )}
+                {tab === "signup" && <SignupAll onBack={() => setTab("signin")} />}
               </div>
             </div>
 

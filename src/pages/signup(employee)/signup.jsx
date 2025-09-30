@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next"; // i18n 사용
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import SignupStep2 from "./signup2";
@@ -6,6 +7,7 @@ import SignupStep3 from "./signup3";
 import "./signup.css";
 
 export default function Signup() {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     terms: false,
@@ -19,7 +21,7 @@ export default function Signup() {
 
   const handleNext = () => {
     if (!formData.terms || !formData.privacy) {
-      alert("모든 약관에 동의해야 다음 단계로 진행할 수 있습니다.");
+      alert(t("signup.alertTerms"));
       return;
     }
     setStep(2);
@@ -33,11 +35,11 @@ export default function Signup() {
 
         {step === 1 && (
           <section className="content flex justify-center items-center min-h-screen bg-gray-100">
-            <h1 className="signup-title">회원가입(직원용)</h1>
+            <h1 className="signup-title">{t("signup.title")}</h1>
 
             <div className="big-block">
               <section className="signup-section">
-                <h2>이용약관 동의</h2>
+                <h2>{t("signup.termsTitle")}</h2>
                 <div className="signup-terms-box">
                   <p>
                     <h3>[이용약관]</h3>
@@ -120,12 +122,12 @@ export default function Signup() {
                     checked={formData.terms}
                     onChange={handleChange}
                   />
-                  이용약관에 동의합니다.
+                  {t("signup.termsLabel")}
                 </label>
               </section>
 
               <section className="signup-section">
-                <h2>개인정보 수집 및 이용 동의</h2>
+                <h2>{t("signup.privacyTitle")}</h2>
                 <div className="signup-terms-box">
                   <p>
                     <br></br>
@@ -169,13 +171,13 @@ export default function Signup() {
                     checked={formData.privacy}
                     onChange={handleChange}
                   />
-                  개인정보 수집 및 이용에 동의합니다.
+                  {t("signup.privacyLabel")}
                 </label>
               </section>
             </div>
 
             <button className="signup-btn" onClick={handleNext}>
-              다음 단계
+              {t("signup.nextBtn")}
             </button>
           </section>
         )}

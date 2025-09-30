@@ -1,0 +1,109 @@
+{
+  "header": {
+    "title": "Admin Page",
+    "searchPlaceholder": "Enter search term",
+    "loginBtn": "Login",
+    "signupBtn": "Sign Up",
+    "logoutBtn": "Logout"
+  },
+  "sidebar": {
+    "username": "Username",
+    "edit": "Edit",
+    "chip1": "R&D",
+    "chip2": "Admin",
+    "mainChart": "Main Chart",
+    "requirements": "Requirements",
+    "community": "Community",
+    "deptTitle": "Select Department",
+    "loginPrompt": "Please log in",
+    "admin": "Admin",
+    "noDept": "No department assigned",
+    "departments": {
+      "rd": "R&D",
+      "globalSales": "Global Sales",
+      "basicDesign": "Basic Design",
+      "futureBiz": "Future Business Dev",
+      "shipDesign": "Ship Design",
+      "marineDesign": "Marine Design",
+      "pm": "PM",
+      "purchase": "Purchase",
+      "ops": "Operations",
+      "safety": "Safety"
+    }
+  },
+  "loginPage": {
+    "usernamePlaceholder": "Enter username",
+    "passwordPlaceholder": "Enter password",
+    "signinBtn": "Login"  
+  },
+   "dashboard": {
+    "todayCount": "Suggestions Today",
+    "totalCount": "Total Suggestions",
+    "today": "Today",
+    "trendChart": "Total Solved Suggestions Trend",
+    "recentSolved": "Most Recently Solved Issue",
+    "noData": "No data",
+    "deptToday": "Total Suggestions by Department",
+    "deptSolved": "Solved Suggestions by Department",
+    "expectedEffects": "Expected Effects (DB Based)",
+    "avgProductivity": "Average Productivity",
+    "safetyImprovements": "Safety Improvements Completed",
+    "totalCostSaving": "Total Cost Saving"
+  },
+ "signup": {
+    "title": "Sign Up (Employee)",
+    "adminTitle": "Sign Up (Admin)",
+    "termsTitle": "Terms of Service Agreement",
+    "termsLabel": "I agree to the Terms of Service.",
+    "privacyTitle": "Consent to Personal Information Collection and Use",
+    "privacyLabel": "I agree to the collection and use of personal information.",
+    "nextBtn": "Next Step",
+    "alertTerms": "You must agree to all terms to proceed to the next step."
+  },
+  "board" :{
+    "title": "Improvement Proposition System",
+    "termsTitle" : "Please share the inconvenience and improvement ideas of the field staff",
+    "writebtn" : "+ Writing",
+     "alert": {
+    "saveError": "An error occurred while saving."
+  },
+  "column": {
+    "proposal": "Proposal",
+    "inProgress": "In Progress",
+    "complete": "Completed"
+  },
+  "empty": {
+    "proposal": "No proposals have been registered.",
+    "inProgress": "No suggestions are in progress.",
+    "complete": "No completed suggestions."
+  }
+},
+"manager": {
+    "title": "Manager Page",
+    "menu": {
+      "dashboard": "Manager Dashboard",
+      "employee": "Employee Management",
+      "suggestion": "Suggestion Management",
+      "notice": "Notice Management"
+    },
+    "stats": {
+      "totalEmployees": "Total Employees",
+      "totalSuggestions": "Total Suggestions",
+      "activeNotices": "Active Notices",
+      "urgentSuggestions": "Urgent Suggestions"
+    },
+    "dashboardLabel": "Dashboard Statistics"
+  },
+  "community": {
+    "boardList": "Board List",
+    "hotPosts": "🔥HOT Posts",
+    "adArea": "Advertisement"
+},
+"postDetail": {
+  "loading": "Loading...",
+  "back": "Back to Board List",
+  "comment": "Comments",
+  "like": "Likes",
+  "ad": "Advertisement"
+}
+}
