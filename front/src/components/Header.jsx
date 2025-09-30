@@ -29,6 +29,11 @@ const NOTICE_SEED = [
   { id: 2, title: "월간 안전교육 일정 안내", body: "이번 달 안전교육 일정을 안내드립니다. 모든 직원은 반드시 참석해주시기 바랍니다.", urgent: false, active: true, created_at: "2024-01-10", read: false },
 ];
 
+/** ─── 공통 유틸 ───────────────────────────────────────────── */
+function isAuthenticated() {
+  try { return !!localStorage.getItem(AUTH_KEY); } catch { return false; }
+}
+
 /** ─── 시간 유틸 ────────────────────────────────────────────── */
 function normalizeNotice(n) {
   const ts =
@@ -37,7 +42,6 @@ function normalizeNotice(n) {
       : Number.isFinite(+n.created_at)
       ? Number(n.created_at)
       : new Date(n.created_at || Date.now()).getTime();
-  // n.read 가 있으면 그대로 유지, 없으면 false
   return { ...n, read: !!n.read, created_at_ts: ts };
 }
 function timeAgo(ts) {
@@ -91,18 +95,25 @@ function resolveDeptIdFromServer(deptRaw){
   }
   return null;
 }
+
 function loadUserOnce(){
-  let base = { role: localStorage.getItem("user_role")||"admin", username: localStorage.getItem("username")||"username", deptId: localStorage.getItem("user_dept")||null };
+  // 로그인 안 된 경우
+  if (!isAuthenticated()) return { role: "", username: "", deptId: null, isAuthenticated: false };
+
+  // 로그인 된 경우에만 AUTH_KEY 기반으로 정보 구성
+  let base = { role: localStorage.getItem("user_role")||"", username: localStorage.getItem("username")||"", deptId: localStorage.getItem("user_dept")||null };
   try{ const raw = localStorage.getItem(AUTH_KEY); if(raw) base={...base, ...JSON.parse(raw)}; }catch{}
   const role = String(base.role ?? base.user_role ?? base.position ?? "").toLowerCase();
   const deptRaw = base.deptId ?? base.user_dept ?? base.department ?? base.department_id ?? base.department_name ?? base.departmentId ?? null;
   const deptId = resolveDeptIdFromServer(deptRaw);
-  return { role, username: base.username || base.name || "username", deptId };
+  return { role, username: base.username || base.name || "", deptId, isAuthenticated: true };
 }
 
 /** ─── Component ──────────────────────────────────────────────── */
 export default function Header({ onSearch }) {
   const [user, setUser] = useState(loadUserOnce());
+  const [authed, setAuthed] = useState(isAuthenticated());
+
   const navigate = useNavigate();
   const location = useLocation();
   const isAuthPage = /\/(login|signup)/i.test(location.pathname);
@@ -110,11 +121,33 @@ export default function Header({ onSearch }) {
   const role = String(user.role || "").toLowerCase();
   const isAdmin = role === "admin" || role === "manager";
 
+  // 로그인 상태 변화 감지
   useEffect(() => {
-    const onAuthChanged = () => { setUser(loadUserOnce()); ensureNoticesSeeded(); };
+    const onAuthChanged = () => {
+      setAuthed(isAuthenticated());
+      setUser(loadUserOnce());
+      ensureNoticesSeeded();
+    };
+    const onStorage = (e) => {
+      if (e.key === AUTH_KEY) {
+        setAuthed(isAuthenticated());
+        setUser(loadUserOnce());
+      }
+    };
     window.addEventListener("auth:changed", onAuthChanged);
-    return () => window.removeEventListener("auth:changed", onAuthChanged);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("auth:changed", onAuthChanged);
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
+
+  // 미인증 시 로그인 페이지로 강제 이동
+  useEffect(() => {
+    if (!authed && !isAuthPage) {
+      navigate("/login", { replace: true });
+    }
+  }, [authed, isAuthPage, navigate]);
 
   // 언어
   const [langOpen, setLangOpen] = useState(false);
@@ -207,7 +240,7 @@ export default function Header({ onSearch }) {
   }, []);
 
   const handleLogout = () => {
-    localStorage.clear();
+    localStorage.removeItem(AUTH_KEY);
     window.dispatchEvent(new CustomEvent("auth:changed"));
     navigate("/login", { replace: true });
   };
@@ -226,11 +259,11 @@ export default function Header({ onSearch }) {
   /** ─── 하단 컨트롤 ───────────────────────────────────────── */
   const handleMarkAllRead = () => {
     setNotifs(prev => prev.map(n => ({ ...n, read: true })));
-    markAllNoticesRead(); // 공지 읽음 처리(사라지지 않음)
+    markAllNoticesRead();
   };
   const handleClearAll = () => {
-    setNotifs([]);        // 알림 모두 삭제
-    deactivateAllNotices(); // 공지 전역 비활성화(삭제에 해당)
+    setNotifs([]);
+    deactivateAllNotices();
   };
 
   const nothingToRead =
@@ -277,7 +310,7 @@ export default function Header({ onSearch }) {
                     <li
                       key={n.id}
                       className={`menu-item-clickable ${n.read ? "is-read" : ""}`}
-                      onClick={() => setNoticeRead(n.id, true)} // 클릭 = 읽음
+                      onClick={() => setNoticeRead(n.id, true)}
                     >
                       <div className="notice-row">
                         <span className="notice-title">{n.urgent ? "🔥 " : ""}{n.title}</span>
@@ -286,7 +319,7 @@ export default function Header({ onSearch }) {
                           <button
                             type="button"
                             className="btn-x"
-                            onClick={(e) => { e.stopPropagation(); deactivateNotice(n.id); }} // X = 삭제(비활성)
+                            onClick={(e) => { e.stopPropagation(); deactivateNotice(n.id); }}
                             title="공지 삭제"
                           >
                             ×
@@ -298,19 +331,18 @@ export default function Header({ onSearch }) {
                   ))
                 )}
 
-                {/* 일반 알림 */}
                 {notifs.length > 0 && notifs.map((n) => (
                   <li
                     key={n.id}
                     className={`menu-item-clickable ${n.read ? "is-read" : ""}`}
-                    onClick={() => setNotifs(prev => prev.map(x => (x.id === n.id ? { ...x, read: true } : x)))} // 클릭 = 읽음
+                    onClick={() => setNotifs(prev => prev.map(x => (x.id === n.id ? { ...x, read: true } : x)))}
                   >
                     <div className="notif-row">
                       <span className="notif-title">{n.title}</span>
                       <button
                         type="button"
                         className="btn-x"
-                        onClick={(e) => { e.stopPropagation(); setNotifs(prev => prev.filter(x => x.id !== n.id)); }} // X = 삭제
+                        onClick={(e) => { e.stopPropagation(); setNotifs(prev => prev.filter(x => x.id !== n.id)); }}
                         title="알림 삭제"
                       >
                         ×
@@ -320,7 +352,6 @@ export default function Header({ onSearch }) {
                   </li>
                 ))}
 
-                {/* 하단 컨트롤 */}
                 <li className="menu-footer">
                   <button
                     type="button"
@@ -404,7 +435,7 @@ function icon(name) {
     case "chat": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3 1-5A8 8 0 1 1 21 12z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>);
     case "shield": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
     case "bulb": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>);
-    case "globe": return (<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M2 12h20M12 2a15 15 0 0 1 0 20" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
+    case "globe": return (<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
     case "flag": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2v6l5 3-5 3v8" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
     case "triangle": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 18l9-12 9 12H3z" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
     case "sea": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M2 18s4-6 10-6 10 6 10 6-4 4-10 4-10-4-10-4zm10-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
