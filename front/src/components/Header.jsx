@@ -1,12 +1,10 @@
-// Header.jsx (알람에서만 숨김 처리 버전)
+// Header.jsx
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const NOTIFS_STORAGE_KEY = "header_notifs_v1";
 const AUTH_KEY = "auth_user";
 const NOTICE_STORAGE_KEY = "notices_v1";
-// 헤더 드롭다운에서만 숨긴 공지 ID 보관
-const DISMISSED_NOTICE_KEY = "header_dismissed_notice_ids_v1";
 
 const DEPARTMENTS = [
   { id: "rd", label: "R&D", icon: "bulb" },
@@ -27,84 +25,75 @@ const DEPT_NUM_TO_ID = {
 };
 
 const NOTICE_SEED = [
-  { id: 1, title: "긴급: 생산라인 자동화 제안 검토 필요", body: "높은 우선순위를 가진 생산라인 자동화 제안이 제출되었습니다. 관련 부서의 빠른 검토가 필요합니다.", urgent: true, active: true, created_at: "2024-01-15" },
-  { id: 2, title: "월간 안전교육 일정 안내", body: "이번 달 안전교육 일정을 안내드립니다. 모든 직원은 반드시 참석해주시기 바랍니다.", urgent: false, active: true, created_at: "2024-01-10" },
+  { id: 1, title: "긴급: 생산라인 자동화 제안 검토 필요", body: "높은 우선순위를 가진 생산라인 자동화 제안이 제출되었습니다. 관련 부서의 빠른 검토가 필요합니다.", urgent: true, active: true, created_at: "2024-01-15", read: false },
+  { id: 2, title: "월간 안전교육 일정 안내", body: "이번 달 안전교육 일정을 안내드립니다. 모든 직원은 반드시 참석해주시기 바랍니다.", urgent: false, active: true, created_at: "2024-01-10", read: false },
 ];
+
+/** ─── 시간 유틸 ────────────────────────────────────────────── */
+function normalizeNotice(n) {
+  const ts =
+    typeof n.created_at_ts === "number" && Number.isFinite(n.created_at_ts)
+      ? n.created_at_ts
+      : Number.isFinite(+n.created_at)
+      ? Number(n.created_at)
+      : new Date(n.created_at || Date.now()).getTime();
+  // n.read 가 있으면 그대로 유지, 없으면 false
+  return { ...n, read: !!n.read, created_at_ts: ts };
+}
+function timeAgo(ts) {
+  const diff = Date.now() - ts;
+  if (diff < 5000) return "방금 전";
+  const s = Math.floor(diff / 1000);
+  if (s < 60) return `${s}초 전`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m}분 전`;
+  const h = Math.floor(m / 60);
+  if (h < 24) return `${h}시간 전`;
+  const d = Math.floor(h / 24);
+  return `${d}일 전`;
+}
 
 /** ─── Notice helpers ─────────────────────────────────────────── */
 function readNoticesFromStorage() {
-  try {
-    const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : null;
-  } catch {
-    return null;
-  }
+  try { const raw = localStorage.getItem(NOTICE_STORAGE_KEY); return raw ? JSON.parse(raw) : null; } catch { return null; }
 }
 function writeNoticesToStorage(list) {
-  try {
-    localStorage.setItem(NOTICE_STORAGE_KEY, JSON.stringify(list ?? []));
-  } catch {}
+  try { localStorage.setItem(NOTICE_STORAGE_KEY, JSON.stringify(list ?? [])); } catch {}
 }
 function broadcastNotices(list) {
   writeNoticesToStorage(list);
-  const activeCount = (list || []).filter((n) => n.active).length;
+  const activeCount = (list || []).filter(n => n.active).length;
   window.dispatchEvent(new CustomEvent("notice:changed", { detail: { list, activeCount } }));
 }
-// 처음 한번도 저장된 적이 없을 때(null)만 시드 입력
 function ensureNoticesSeeded() {
-  const current = readNoticesFromStorage(); // null | array
+  const current = readNoticesFromStorage();
   if (current === null) {
-    broadcastNotices(NOTICE_SEED);
-    return NOTICE_SEED;
+    const seeded = NOTICE_SEED.map(normalizeNotice);
+    broadcastNotices(seeded);
+    return seeded;
   }
-  return current; // 빈 배열이면 그대로 유지
-}
-
-// 헤더 전용 숨김 ID Set
-function readDismissedSet() {
-  try {
-    const raw = localStorage.getItem(DISMISSED_NOTICE_KEY);
-    const arr = raw ? JSON.parse(raw) : [];
-    return new Set(arr);
-  } catch {
-    return new Set();
-  }
-}
-function writeDismissedSet(set) {
-  try {
-    localStorage.setItem(DISMISSED_NOTICE_KEY, JSON.stringify([...set]));
-  } catch {}
+  return (current || []).map(normalizeNotice);
 }
 
 /** ─── Dept helpers ───────────────────────────────────────────── */
-function deptById(id) { return DEPARTMENTS.find((d) => d.id === id) || null; }
-function deptByLabel(label) { return DEPARTMENTS.find((d) => d.label === label) || null; }
-function resolveDeptIdFromServer(deptRaw) {
-  if (!deptRaw && deptRaw !== 0) return null;
-  if (typeof deptRaw === "number") return DEPT_NUM_TO_ID[deptRaw] || null;
-  if (typeof deptRaw === "string" && /^\d+$/.test(deptRaw)) return DEPT_NUM_TO_ID[parseInt(deptRaw,10)] || null;
-  if (typeof deptRaw === "string") {
-    if (deptById(deptRaw)) return deptRaw;
-    const byLabel = deptByLabel(deptRaw);
-    return byLabel ? byLabel.id : null;
-  }
-  if (typeof deptRaw === "object") {
+function deptById(id){return DEPARTMENTS.find(d=>d.id===id)||null;}
+function deptByLabel(label){return DEPARTMENTS.find(d=>d.label===label)||null;}
+function resolveDeptIdFromServer(deptRaw){
+  if(!deptRaw&&deptRaw!==0) return null;
+  if(typeof deptRaw==="number") return DEPT_NUM_TO_ID[deptRaw]||null;
+  if(typeof deptRaw==="string" && /^\d+$/.test(deptRaw)) return DEPT_NUM_TO_ID[parseInt(deptRaw,10)]||null;
+  if(typeof deptRaw==="string"){ if(deptById(deptRaw)) return deptRaw; const by=deptByLabel(deptRaw); return by?by.id:null; }
+  if(typeof deptRaw==="object"){
     const numId = Number(deptRaw.department_id ?? deptRaw.id ?? deptRaw.departmentId);
-    if (!Number.isNaN(numId) && numId) {
-      const byNum = DEPT_NUM_TO_ID[numId];
-      if (byNum) return byNum;
-    }
+    if(!Number.isNaN(numId) && numId){ const by=DEPT_NUM_TO_ID[numId]; if(by) return by; }
     const label = deptRaw.department_name ?? deptRaw.name ?? deptRaw.label ?? null;
-    if (label) {
-      const byLabel = deptByLabel(String(label));
-      if (byLabel) return byLabel.id;
-    }
+    if(label){ const by=deptByLabel(String(label)); if(by) return by.id; }
   }
   return null;
 }
-function loadUserOnce() {
-  let base = { role: localStorage.getItem("user_role") || "admin", username: localStorage.getItem("username") || "username", deptId: localStorage.getItem("user_dept") || null };
-  try { const raw = localStorage.getItem(AUTH_KEY); if (raw) base = { ...base, ...JSON.parse(raw) }; } catch {}
+function loadUserOnce(){
+  let base = { role: localStorage.getItem("user_role")||"admin", username: localStorage.getItem("username")||"username", deptId: localStorage.getItem("user_dept")||null };
+  try{ const raw = localStorage.getItem(AUTH_KEY); if(raw) base={...base, ...JSON.parse(raw)}; }catch{}
   const role = String(base.role ?? base.user_role ?? base.position ?? "").toLowerCase();
   const deptRaw = base.deptId ?? base.user_dept ?? base.department ?? base.department_id ?? base.department_name ?? base.departmentId ?? null;
   const deptId = resolveDeptIdFromServer(deptRaw);
@@ -121,12 +110,8 @@ export default function Header({ onSearch }) {
   const role = String(user.role || "").toLowerCase();
   const isAdmin = role === "admin" || role === "manager";
 
-  // auth 변경 시 사용자 갱신 + (처음이라면) 시드 보장
   useEffect(() => {
-    const onAuthChanged = () => {
-      setUser(loadUserOnce());
-      ensureNoticesSeeded(); // 새로 생성은 null일 때만
-    };
+    const onAuthChanged = () => { setUser(loadUserOnce()); ensureNoticesSeeded(); };
     window.addEventListener("auth:changed", onAuthChanged);
     return () => window.removeEventListener("auth:changed", onAuthChanged);
   }, []);
@@ -156,50 +141,55 @@ export default function Header({ onSearch }) {
     window.addEventListener("header:notif:add", onAdd);
     return () => window.removeEventListener("header:notif:add", onAdd);
   }, []);
-  const unread = notifs.filter((n) => !n.read).length;
+  const unreadNotifs = notifs.filter((n) => !n.read).length;
 
-  // 공지: 최초 로딩 + 변경 이벤트 구독
+  // 공지(저장/동기)
   const [noticeList, setNoticeList] = useState([]);
-  const [noticeActiveCount, setNoticeActiveCount] = useState(0);
   useEffect(() => {
-    const initial = ensureNoticesSeeded(); // null이면 시드, []면 유지
-    const activeSorted = (initial || [])
+    const initial = ensureNoticesSeeded();
+    applyNoticeState(initial);
+
+    const onNoticeChanged = (e) => { const { list=[] } = e.detail || {}; applyNoticeState(list); };
+    window.addEventListener("notice:changed", onNoticeChanged);
+
+    const onStorage = (e) => {
+      if (e.key === NOTICE_STORAGE_KEY) {
+        try { const list = e.newValue ? JSON.parse(e.newValue) : []; applyNoticeState(list); } catch {}
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => { window.removeEventListener("notice:changed", onNoticeChanged); window.removeEventListener("storage", onStorage); };
+  }, []);
+
+  function applyNoticeState(listRaw = []) {
+    const normalized = (listRaw || []).map(normalizeNotice);
+    const activeSorted = normalized
       .filter((n) => n.active)
       .sort((a,b)=> (a.urgent===b.urgent?0:(a.urgent?-1:1)))
-      .sort((a,b)=> new Date(b.created_at)-new Date(a.created_at));
+      .sort((a,b)=> b.created_at_ts - a.created_at_ts);
     setNoticeList(activeSorted);
-    setNoticeActiveCount(activeSorted.length);
-  }, []);
-  useEffect(() => {
-    const onNoticeChanged = (e) => {
-      const { list = [], activeCount = 0 } = e.detail || {};
-      const activeSorted = (list || [])
-        .filter((n) => n.active)
-        .sort((a,b)=> (a.urgent===b.urgent?0:(a.urgent?-1:1)))
-        .sort((a,b)=> new Date(b.created_at)-new Date(a.created_at));
-      setNoticeList(activeSorted);
-      setNoticeActiveCount(activeCount);
-    };
-    window.addEventListener("notice:changed", onNoticeChanged);
-    return () => window.removeEventListener("notice:changed", onNoticeChanged);
-  }, []);
+  }
 
-  // 헤더 전용 숨김 ID Set
-  const [dismissedNoticeIds, setDismissedNoticeIds] = useState(() => readDismissedSet());
-  const dismissNoticeInHeader = (id) => {
-    setDismissedNoticeIds((prev) => {
-      const next = new Set(prev);
-      next.add(id);
-      writeDismissedSet(next);
-      return next;
-    });
+  // 공지 읽음/삭제 조작
+  const setNoticeRead = (id, read=true) => {
+    const all = readNoticesFromStorage() || [];
+    const updated = all.map(n => n.id === id ? { ...n, read } : n);
+    broadcastNotices(updated);
   };
-  const restoreAllDismissedNotices = () => {
-    setDismissedNoticeIds(() => {
-      const empty = new Set();
-      writeDismissedSet(empty);
-      return empty;
-    });
+  const markAllNoticesRead = () => {
+    const all = readNoticesFromStorage() || [];
+    const updated = all.map(n => n.active ? { ...n, read: true } : n);
+    broadcastNotices(updated);
+  };
+  const deactivateNotice = (id) => {
+    const all = readNoticesFromStorage() || [];
+    const updated = all.map(n => n.id === id ? { ...n, active: false } : n);
+    broadcastNotices(updated);
+  };
+  const deactivateAllNotices = () => {
+    const all = readNoticesFromStorage() || [];
+    const updated = all.map(n => ({ ...n, active: false }));
+    broadcastNotices(updated);
   };
 
   // 드롭다운 닫힘 제어
@@ -222,16 +212,31 @@ export default function Header({ onSearch }) {
     navigate("/login", { replace: true });
   };
 
-  // 좌측 아이콘/라벨
+  // 좌측 표시
   const dept = deptById(user.deptId);
   const topLeft = isAdmin
     ? { label: "관리자 페이지", iconName: "shield", color: "#ea580c" }
     : { label: dept?.label || "사용자", iconName: dept?.icon || "user", color: "#2563eb" };
 
-  // 벨 배지/색
-  const visibleNotices = noticeList.filter(n => !dismissedNoticeIds.has(n.id)); // 헤더에서 숨긴 항목 제외
-  const totalBadge = unread + visibleNotices.length;
-  const bellColor = unread > 0 ? "#EA580C" : visibleNotices.length > 0 ? "#2563EB" : undefined;
+  // 배지: 미읽음만 집계
+  const unreadNotices = noticeList.filter(n => !n.read).length;
+  const totalBadge = unreadNotifs + unreadNotices;
+  const bellColor = totalBadge > 0 ? (unreadNotifs > 0 ? "#EA580C" : "#2563EB") : undefined;
+
+  /** ─── 하단 컨트롤 ───────────────────────────────────────── */
+  const handleMarkAllRead = () => {
+    setNotifs(prev => prev.map(n => ({ ...n, read: true })));
+    markAllNoticesRead(); // 공지 읽음 처리(사라지지 않음)
+  };
+  const handleClearAll = () => {
+    setNotifs([]);        // 알림 모두 삭제
+    deactivateAllNotices(); // 공지 전역 비활성화(삭제에 해당)
+  };
+
+  const nothingToRead =
+    unreadNotifs === 0 && unreadNotices === 0;
+  const nothingToDelete =
+    notifs.length === 0 && noticeList.length === 0;
 
   return (
     <header className="topbar" style={{ display: "flex", alignItems: "center" }}>
@@ -249,88 +254,105 @@ export default function Header({ onSearch }) {
 
         {!isAuthPage && (
           <div className="dropdown" ref={notifMenuRef}>
-            <button className="icon-btn" aria-label="알림" onClick={() => setNotifOpen((v) => !v)} style={{ position: "relative" }}>
+            <button className="icon-btn" aria-label="알림" onClick={() => setNotifOpen(v => !v)} style={{ position: "relative" }}>
               <svg viewBox="0 0 24 24" style={{ color: bellColor, width: 24, height: 24 }}>
                 <path d="M18 8a6 6 0 10-12 0c0 7-3 7-3 7h18s-3 0-3-7" fill="none" stroke="currentColor" strokeWidth="2" />
                 <path d="M13.73 21a2 2 0 0 1-3.46 0" fill="none" stroke="currentColor" strokeWidth="2" />
               </svg>
               {totalBadge > 0 && (
-                <span style={{ position: "absolute", top: -2, right: -6, minWidth: 18, height: 18, padding: "0 4px", background: bellColor || "#EA580C", color: "#fff", borderRadius: 9, fontSize: 11, display: "grid", placeItems: "center", lineHeight: 1 }}>
+                <span className="badge-dot" style={{ position: "absolute", top: -2, right: -6, minWidth: 18, height: 18, padding: "0 4px", background: bellColor || "#EA580C", color: "#fff", borderRadius: 9, fontSize: 11, display: "grid", placeItems: "center", lineHeight: 1 }}>
                   {totalBadge}
                 </span>
               )}
             </button>
 
             {notifOpen && (
-              <ul className="menu" role="menu" style={{ minWidth: 320, padding: 8 }}>
-                <li style={{ fontWeight: 700, padding: "6px 8px" }}>공지</li>
-                {visibleNotices.length === 0 ? (
-                  <li style={{ padding: 8, opacity: 0.8 }}>
-                    공지가 없습니다.
+              <ul className="menu notif-menu" role="menu">
+                <li className="menu-header">공지</li>
 
-                  </li>
+                {noticeList.length === 0 ? (
+                  <li className="menu-empty">공지가 없습니다.</li>
                 ) : (
-                  visibleNotices.map((n) => (
-                    <li key={n.id} style={{ padding: "8px 6px" }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
-                        <span style={{ fontWeight: 600 }}>{n.urgent ? "🔥 " : ""}{n.title}</span>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 12, opacity: 0.7 }}>{n.created_at}</span>
-                          {/* 알람에서만 숨김: 공지 데이터는 보존 */}
+                  noticeList.map((n) => (
+                    <li
+                      key={n.id}
+                      className={`menu-item-clickable ${n.read ? "is-read" : ""}`}
+                      onClick={() => setNoticeRead(n.id, true)} // 클릭 = 읽음
+                    >
+                      <div className="notice-row">
+                        <span className="notice-title">{n.urgent ? "🔥 " : ""}{n.title}</span>
+                        <div className="notice-right">
+                          <span className="notice-time">{timeAgo(n.created_at_ts)}</span>
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); dismissNoticeInHeader(n.id); }}
-                            title="알람에서만 숨기기"
-                            style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 16, lineHeight: 1, opacity: 0.7 }}
+                            className="btn-x"
+                            onClick={(e) => { e.stopPropagation(); deactivateNotice(n.id); }} // X = 삭제(비활성)
+                            title="공지 삭제"
                           >
                             ×
                           </button>
                         </div>
                       </div>
-                      {n.body && (
-                        <div style={{ marginTop: 4, fontSize: 13, opacity: 0.9, whiteSpace: "pre-wrap" }}>
-                          {n.body}
-                        </div>
-                      )}
+                      {n.body && <div className="notice-body">{n.body}</div>}
                     </li>
                   ))
                 )}
 
+                {/* 일반 알림 */}
                 {notifs.length > 0 && notifs.map((n) => (
-                  <li key={n.id} onClick={() => setNotifs((prev) => prev.map((x) => (x.id === n.id ? { ...x, read: true } : x)))} style={{ padding: "8px 6px", opacity: n.read ? 0.6 : 1, cursor: "pointer" }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <span>{n.title}</span>
-                      <button type="button" onClick={(e) => { e.stopPropagation(); setNotifs((prev) => prev.filter((x) => x.id !== n.id)); }} style={{ border: "none", background: "transparent", cursor: "pointer" }}>
+                  <li
+                    key={n.id}
+                    className={`menu-item-clickable ${n.read ? "is-read" : ""}`}
+                    onClick={() => setNotifs(prev => prev.map(x => (x.id === n.id ? { ...x, read: true } : x)))} // 클릭 = 읽음
+                  >
+                    <div className="notif-row">
+                      <span className="notif-title">{n.title}</span>
+                      <button
+                        type="button"
+                        className="btn-x"
+                        onClick={(e) => { e.stopPropagation(); setNotifs(prev => prev.filter(x => x.id !== n.id)); }} // X = 삭제
+                        title="알림 삭제"
+                      >
                         ×
                       </button>
                     </div>
-                    <div style={{ fontSize: 12, opacity: 0.8 }}>{n.meta}</div>
+                    <div className="notif-meta">{n.meta}</div>
                   </li>
                 ))}
 
-                {notifs.length > 0 && (
-                  <li style={{ display: "flex", justifyContent: "flex-end", gap: 8, padding: 4 }}>
-                    <button onClick={() => setNotifs((prev) => prev.map((n) => ({ ...n, read: true })))}>모두 읽음</button>
-                    <button onClick={() => setNotifs([])}>모두 삭제</button>
-                  </li>
-                )}
+                {/* 하단 컨트롤 */}
+                <li className="menu-footer">
+                  <button
+                    type="button"
+                    className="btn-sm btn-light"
+                    onClick={handleMarkAllRead}
+                    disabled={nothingToRead}
+                    title="알림/공지를 모두 읽음 처리"
+                  >
+                    모두 읽기
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-sm btn-primary"
+                    onClick={handleClearAll}
+                    disabled={nothingToDelete}
+                    title="알림 모두 삭제 + 공지 전역 비활성화"
+                  >
+                    모두 삭제
+                  </button>
+                </li>
               </ul>
             )}
           </div>
         )}
 
         <div className="dropdown" ref={langMenuRef}>
-          <button className="btn" type="button" onClick={() => setLangOpen((v) => !v)} aria-expanded={langOpen} aria-haspopup="menu">
+          <button className="btn" type="button" onClick={() => setLangOpen(v => !v)} aria-expanded={langOpen} aria-haspopup="menu">
             <span className="ico">
-              <svg viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" />
-                <path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="2" />
-              </svg>
+              <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
             </span>
             {lang}
-            <svg className="caret" viewBox="0 0 24 24" width="16" height="16">
-              <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2" />
-            </svg>
+            <svg className="caret" viewBox="0 0 24 24" width="16" height="16"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
           </button>
 
           {langOpen && (
@@ -354,79 +376,42 @@ export default function Header({ onSearch }) {
 
 /** ─── Search box ─────────────────────────────────────────────── */
 function SuggestionSearch({ onSearch }) {
-  const [query, setQuery] = useState("");
-  const [message, setMessage] = useState("");
-
+  const [query, setQuery] = useState(""); const [message, setMessage] = useState("");
   const handleSearch = async () => {
-    if (!query.trim()) {
-      setMessage("검색어를 입력해주세요.");
-      onSearch([], false);
-      return;
-    }
+    if (!query.trim()) { setMessage("검색어를 입력해주세요."); onSearch([], false); return; }
     try {
       const res = await fetch(`http://localhost:5000/api/suggestions/search?query=${encodeURIComponent(query)}`);
-      const data = await res.json();
-      setMessage("");
-      onSearch(data, true);
-    } catch (err) {
-      console.error("검색에 실패했습니다.", err);
-      setMessage("검색에 실패했습니다.");
-      onSearch([], false);
-    }
+      const data = await res.json(); setMessage(""); onSearch(data, true);
+    } catch (err) { console.error("검색에 실패했습니다.", err); setMessage("검색에 실패했습니다."); onSearch([], false); }
   };
-
   const handleKeyDown = (e) => { if (e.key === "Enter") handleSearch(); };
-
   return (
     <div className="search" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
       <span className="ico search-ico">
-        <svg viewBox="0 0 24 24" width="20" height="20">
-          <circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" />
-          <path d="M21 21l-4.3-4.3" fill="none" stroke="currentColor" strokeWidth="2" />
-        </svg>
+        <svg viewBox="0 0 24 24" width="20" height="20"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M21 21l-4.3-4.3" fill="none" stroke="currentColor" strokeWidth="2" /></svg>
       </span>
-      <input
-        type="text"
-        placeholder="검색"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        onKeyDown={handleKeyDown}
-        style={{ border: "none", outline: "none", padding: "0.4rem 0.6rem", fontSize: "14px", backgroundColor: "transparent" }}
-      />
+      <input type="text" placeholder="검색" value={query} onChange={(e) => setQuery(e.target.value)} onKeyDown={handleKeyDown} style={{ border: "none", outline: "none", padding: "0.4rem 0.6rem", fontSize: "14px", backgroundColor: "transparent" }} />
       {message && <span style={{ color: "red" }}>{message}</span>}
     </div>
   );
 }
 
-/** ─── Icons (Sidebar와 동일 이름) ───────────────────────────── */
+/** ─── Icons ─────────────────────────────────────────────────── */
 function icon(name) {
   switch (name) {
-    case "bars":
-      return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 21h18M7 10v8M12 5v13M17 13v5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>);
-    case "doc":
-      return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M14 3v6h6" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
-    case "chat":
-      return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3 1-5A8 8 0 1 1 21 12z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>);
-    case "shield":
-      return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
-    case "bulb":
-      return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>);
-    case "globe":
-      return (<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M2 12h20M12 2a15 15 0 0 1 0 20" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
-    case "flag":
-      return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2v6l5 3-5 3v8" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
-    case "triangle":
-      return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 18l9-12 9 12H3z" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
-    case "sea":
-      return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M2 18s4-6 10-6 10 6 10 6-4 4-10 4-10-4-10-4zm10-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
-    case "user":
-      return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22c0-5 4-8 9-8s9 3 9 8" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
-    case "list":
-      return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
-    case "monitor":
-      return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 4h16v12H4z" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M8 20h8" stroke="currentColor" strokeWidth="2" /></svg>);
-    default:
-      return null;
+    case "bars": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 21h18M7 10v8M12 5v13M17 13v5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>);
+    case "doc": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M14 3v6h6" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
+    case "chat": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M21 12a8 8 0 0 1-8 8H7l-4 3 1-5A8 8 0 1 1 21 12z" fill="none" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" /></svg>);
+    case "shield": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
+    case "bulb": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>);
+    case "globe": return (<svg viewBox="0 0 24 24" width="20" height="20"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M2 12h20M12 2a15 15 0 0 1 0 20" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
+    case "flag": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 2v6l5 3-5 3v8" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
+    case "triangle": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 18l9-12 9 12H3z" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
+    case "sea": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M2 18s4-6 10-6 10 6 10 6-4 4-10 4-10-4-10-4zm10-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
+    case "user": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22c0-5 4-8 9-8s9 3 9 8" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
+    case "list": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" strokeWidth="2" /></svg>);
+    case "monitor": return (<svg viewBox="0 0 24 24" width="20" height="20"><path d="M4 4h16v12H4z" fill="none" stroke="currentColor" strokeWidth="2" /><path d="M8 20h8" stroke="currentColor" strokeWidth="2" /></svg>);
+    default: return null;
   }
 }
 

@@ -27,7 +27,6 @@ function broadcast(list) {
 
 export default function Notice() {
   const [list, setList] = useState([]);
-
   const [open, setOpen] = useState(false);
   const [editId, setEditId] = useState(null);
 
@@ -35,6 +34,7 @@ export default function Notice() {
   const [body, setBody] = useState("");
   const [urgent, setUrgent] = useState(false);
 
+  // 초기 로드
   useEffect(() => {
     const cached = loadNotices();
     if (cached && cached.length) {
@@ -48,6 +48,7 @@ export default function Notice() {
           body: "높은 우선순위를 가진 생산라인 자동화 제안이 제출되었습니다. 관련 부서의 빠른 검토가 필요합니다.",
           urgent: true,
           active: true,
+          read: false,
           created_at: "2024-01-15",
         },
         {
@@ -56,6 +57,7 @@ export default function Notice() {
           body: "이번 달 안전교육 일정을 안내드립니다. 모든 직원은 반드시 참석해주시기 바랍니다.",
           urgent: false,
           active: true,
+          read: false,
           created_at: "2024-01-10",
         },
       ];
@@ -64,8 +66,30 @@ export default function Notice() {
     }
   }, []);
 
+  // 🔄 다른 탭/헤더에서 수정된 내용 동기화
+  useEffect(() => {
+    const onNoticeChanged = (e) => {
+      const next = e?.detail?.list ?? [];
+      setList(next);
+    };
+    const onStorage = (e) => {
+      if (e.key === STORAGE_KEY) {
+        try {
+          const next = e.newValue ? JSON.parse(e.newValue) : [];
+          setList(next);
+        } catch {}
+      }
+    };
+    window.addEventListener("notice:changed", onNoticeChanged);
+    window.addEventListener("storage", onStorage);
+    return () => {
+      window.removeEventListener("notice:changed", onNoticeChanged);
+      window.removeEventListener("storage", onStorage);
+    };
+  }, []);
+
   const view = useMemo(() => {
-    return list
+    return (list || [])
       .slice()
       .sort((a, b) => (a.urgent === b.urgent ? 0 : a.urgent ? -1 : 1))
       .sort(
@@ -101,8 +125,11 @@ export default function Notice() {
     const b = body.trim();
     if (!t) return;
 
+    // 최신 저장소와 병합 후 갱신(읽음 상태 보존)
+    const latest = loadNotices() ?? list;
+
     if (editId !== null) {
-      const next = list.map((n) =>
+      const next = latest.map((n) =>
         n.id === editId ? { ...n, title: t, body: b, urgent } : n
       );
       setList(next);
@@ -116,22 +143,29 @@ export default function Notice() {
         body: b,
         urgent,
         active: true,
+        read: false, // 신규는 미읽음
         created_at: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(
           2,
           "0"
         )}-${String(now.getDate()).padStart(2, "0")}`,
       };
-      const next = [item, ...list];
+      const next = [item, ...latest];
       setList(next);
       broadcast(next);
       closeModal();
     }
   };
 
+  // ✅ 게시 중단/재개
   const toggleActive = (id) => {
-    const next = list.map((n) =>
-      n.id === id ? { ...n, active: !n.active } : n
-    );
+    // 최신 저장소 기준으로 읽음 상태를 보존
+    const latest = loadNotices() ?? list;
+    const next = latest.map((n) => {
+      if (n.id !== id) return n;
+      const toActive = !n.active;
+      // 재개 시 미읽음으로 만들어 헤더에 다시 뜨게
+      return { ...n, active: toActive, read: toActive ? false : n.read };
+    });
     setList(next);
     broadcast(next);
   };
@@ -139,10 +173,10 @@ export default function Notice() {
   // ✅ 공지 삭제 (편집 모달에서 사용)
   const deleteNotice = () => {
     if (editId === null) return;
-    // 확인 다이얼로그(원치 않으시면 제거해도 됩니다)
-    const next = list.filter((n) => n.id !== editId);
+    const latest = loadNotices() ?? list;
+    const next = latest.filter((n) => n.id !== editId);
     setList(next);
-    broadcast(next); // 헤더/대시보드와 동기화
+    broadcast(next);
     closeModal();
   };
 
@@ -178,6 +212,7 @@ export default function Notice() {
                         중단
                       </span>
                     )}
+
                   </div>
                 </div>
 
@@ -261,7 +296,6 @@ export default function Notice() {
                   <button
                     type="button"
                     onClick={deleteNotice}
-                    // 인라인 강조(별도 CSS 수정 없이 사용)
                     style={{
                       margin: "0 8px",
                       padding: "10px 16px",

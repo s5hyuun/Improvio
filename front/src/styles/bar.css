@@ -844,3 +844,119 @@ body {
   /* 커스텀 스크롤 컨테이너 */
   overflow: auto !important; /* ✅ 이것만 스크롤 */
 }
+
+/* ── 알림 드롭다운 정리 ───────────────────────────── */
+.menu.notif-menu {
+  min-width: 340px;
+  padding: 8px;
+}
+
+.menu-header {
+  font-weight: 700;
+  padding: 8px 10px;
+  border-radius: 8px;
+  color: #0f172a;
+}
+
+.menu-empty {
+  padding: 10px 12px;
+  opacity: .7;
+}
+
+.menu-item-clickable {
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.menu-item-clickable:hover {
+  background: rgba(15, 23, 42, 0.06);
+}
+.menu-item-clickable.is-read {
+  opacity: .6;
+}
+
+.notice-row,
+.notif-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+.notice-title,
+.notif-title {
+  font-weight: 600;
+  color: #0f172a;
+}
+.notice-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.notice-time {
+  font-size: 12px;
+  color: #64748b;
+}
+.notice-body,
+.notif-meta {
+  margin-top: 4px;
+  font-size: 13px;
+  color: #334155;
+  white-space: pre-wrap;
+}
+
+.btn-x {
+  border: none;
+  background: transparent;
+  width: 22px;
+  height: 22px;
+  line-height: 1;
+  border-radius: 6px;
+  color: #64748b;
+  font-size: 16px;
+  cursor: pointer;
+}
+.btn-x:hover {
+  background: rgba(2, 132, 199, 0.12);
+  color: #0ea5e9;
+}
+
+/* 하단 컨트롤: 모두 읽기 / 모두 삭제 */
+.menu-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  margin-top: 4px;
+}
+
+.btn-sm {
+  height: 34px;
+  padding: 0 12px;
+  border-radius: 10px;
+  font-weight: 700;
+  border: 1px solid #cfe0ff;
+  cursor: pointer;
+}
+.btn-sm:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.btn-light {
+  background: #f3f7ff;
+  color: #2563eb;
+  border-color: #d9e6ff;
+}
+.btn-light:hover:not(:disabled) {
+  background: #eaf2ff;
+}
+
+.btn-primary {
+  background: #2563eb;
+  color: #fff;
+  border-color: #2563eb;
+}
+.btn-primary:hover:not(:disabled) {
+  filter: brightness(0.95);
+}

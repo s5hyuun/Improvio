@@ -1,3 +1,4 @@
+// Sidebar.jsx
 import { useEffect, useState } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 
@@ -33,7 +34,7 @@ export default function Sidebar() {
 
   const location = useLocation();
   const isCommunity = location.pathname.startsWith("/community");
-  const isAuthPage = /\/login|\/signup/i.test(location.pathname);
+  const isAuthPage = /\/(login|signup)/i.test(location.pathname); // ✅ 로그인/회원가입 페이지 감지
 
   const readAuth = () => {
     try {
@@ -129,6 +130,8 @@ export default function Sidebar() {
   });
 
   useEffect(() => {
+    // 인증 페이지에서는 부서 선택 이벤트/저장은 굳이 하지 않아도 되므로 가드(선택)
+    if (isAuthPage) return;
     const current = departments.find((d) => d.id === selected);
     const label = current?.label ?? "";
     try {
@@ -137,11 +140,12 @@ export default function Sidebar() {
     window.dispatchEvent(
       new CustomEvent("dept:changed", { detail: { dept: label } })
     );
-  }, [selected]);
+  }, [selected, isAuthPage, departments]);
 
   return (
     <aside className="sidebar">
       <div className="sidebar-inner">
+        {/* ✅ 로고: 항상 표시 */}
         <div className="logo-wrap">
           <img
             src="src/assets/logo.png"
@@ -150,6 +154,7 @@ export default function Sidebar() {
           />
         </div>
 
+        {/* ✅ 프로필: 항상 표시 (로그인/회원가입 페이지에서는 익명 프로필 문구) */}
         <section className="profile">
           <div className="profile-name">{displayName}</div>
 
@@ -163,45 +168,49 @@ export default function Sidebar() {
           )}
         </section>
 
-        <nav className="nav">
-           <NavLink
-            to="/main"
-            className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          >
-            <span className="ico">{icon("bars")}</span>
-            <span>Main Chart</span>
-          </NavLink>
-
-          <NavLink
-            to="/board"
-            className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          >
-            <span className="ico">{icon("doc")}</span>
-            <span>Requirements</span>
-          </NavLink>
-
-          <NavLink
-            to="/community"
-            className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
-          >
-            <span className="ico">{icon("chat")}</span>
-            <span>Community</span>
-          </NavLink>
-
-          {isAdmin && (
+        {/* ⛔ 로그인/회원가입 페이지에서는 네비게이션 비표시 */}
+        {!isAuthPage && (
+          <nav className="nav">
             <NavLink
-              to="/manager"
-              className={({ isActive }) =>
-                `nav-item ${isActive ? "active" : ""}`
-              }
+              to="/main"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
             >
-              <span className="ico">{icon("shield")}</span>
-              <span>관리자</span>
+              <span className="ico">{icon("bars")}</span>
+              <span>Main Chart</span>
             </NavLink>
-          )}
-        </nav>
 
-        {!isCommunity && (
+            <NavLink
+              to="/board"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+            >
+              <span className="ico">{icon("doc")}</span>
+              <span>Requirements</span>
+            </NavLink>
+
+            <NavLink
+              to="/community"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+            >
+              <span className="ico">{icon("chat")}</span>
+              <span>Community</span>
+            </NavLink>
+
+            {isAdmin && (
+              <NavLink
+                to="/manager"
+                className={({ isActive }) =>
+                  `nav-item ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="ico">{icon("shield")}</span>
+                <span>관리자</span>
+              </NavLink>
+            )}
+          </nav>
+        )}
+
+        {/* ⛔ 로그인/회원가입 페이지에서는 부서 선택 비표시 */}
+        {!isAuthPage && !isCommunity && (
           <>
             <div className="section-title">부서 선택</div>
             <div className="dept-wrap">
@@ -209,9 +218,7 @@ export default function Sidebar() {
                 {departments.map((d) => (
                   <li
                     key={d.id}
-                    className={`dept-item ${
-                      selected === d.id ? "selected" : ""
-                    }`}
+                    className={`dept-item ${selected === d.id ? "selected" : ""}`}
                     onClick={() => setSelected(d.id)}
                   >
                     <span className="ico">{icon(d.icon)}</span>
@@ -250,12 +257,7 @@ function icon(name) {
             stroke="currentColor"
             strokeWidth="2"
           />
-          <path
-            d="M14 3v6h6"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M14 3v6h6" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "chat":
@@ -296,42 +298,20 @@ function icon(name) {
     case "globe":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <circle
-            cx="12"
-            cy="12"
-            r="9"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
-          <path
-            d="M2 12h20M12 2a15 15 0 0 1 0 20"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M2 12h20M12 2a15 15 0 0 1 0 20" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "flag":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M12 2v6l5 3-5 3v8"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M12 2v6l5 3-5 3v8" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "triangle":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M3 18l9-12 9 12H3z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M3 18l9-12 9 12H3z" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "sea":
@@ -349,7 +329,7 @@ function icon(name) {
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
           <path
-            d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22c0-5 4-8 9-8s9 3 9 8"
+            d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22c0-5 4-8 9-8s9 3  9 8"
             fill="none"
             stroke="currentColor"
             strokeWidth="2"
@@ -359,23 +339,13 @@ function icon(name) {
     case "list":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M3 6h18M3 12h18M3 18h18"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
     case "monitor":
       return (
         <svg viewBox="0 0 24 24" width="20" height="20">
-          <path
-            d="M4 4h16v12H4z"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-          />
+          <path d="M4 4h16v12H4z" fill="none" stroke="currentColor" strokeWidth="2" />
           <path d="M8 20h8" stroke="currentColor" strokeWidth="2" />
         </svg>
       );
