@@ -1,3 +1,4 @@
+// Notice.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/Notice.module.css";
 
@@ -135,6 +136,16 @@ export default function Notice() {
     broadcast(next);
   };
 
+  // ✅ 공지 삭제 (편집 모달에서 사용)
+  const deleteNotice = () => {
+    if (editId === null) return;
+    // 확인 다이얼로그(원치 않으시면 제거해도 됩니다)
+    const next = list.filter((n) => n.id !== editId);
+    setList(next);
+    broadcast(next); // 헤더/대시보드와 동기화
+    closeModal();
+  };
+
   return (
     <div className={styles.wrap}>
       <div className={styles.toolbar}>
@@ -236,6 +247,7 @@ export default function Notice() {
                 <span>긴급 표시</span>
               </label>
 
+              {/* 하단 버튼: 취소 | 삭제 | 저장 */}
               <div className={styles.modalActions}>
                 <button
                   type="button"
@@ -244,6 +256,28 @@ export default function Notice() {
                 >
                   취소
                 </button>
+
+                {editId !== null && (
+                  <button
+                    type="button"
+                    onClick={deleteNotice}
+                    // 인라인 강조(별도 CSS 수정 없이 사용)
+                    style={{
+                      margin: "0 8px",
+                      padding: "10px 16px",
+                      borderRadius: 12,
+                      border: "1px solid #fecaca",
+                      background: "#fee2e2",
+                      color: "#b91c1c",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                    title="공지 삭제"
+                  >
+                    삭제
+                  </button>
+                )}
+
                 <button type="submit" className={styles.submitBtn}>
                   {editId !== null ? "저장" : "게시"}
                 </button>
