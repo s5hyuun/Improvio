@@ -72,10 +72,19 @@ function PostList() {
 
   // ✅ 등록 API (PostWrite에서 onSubmit 호출 시 사용)
   const handleSubmit = async (newPost) => {
+    const authUser = JSON.parse(localStorage.getItem("auth_user"));
+    if (!authUser?.user_id) {
+      alert("로그인 후 글을 작성해주세요.");
+      return;
+    }
     const res = await fetch("http://localhost:5000/api/posts", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ board_id: boardId, ...newPost }),
+      body: JSON.stringify({
+        board_id: boardId,
+        user_id: authUser.user_id,
+        ...newPost,
+      }),
     });
     if (res.ok) {
       const saved = await res.json();

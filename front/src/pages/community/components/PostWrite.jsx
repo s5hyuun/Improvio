@@ -27,6 +27,12 @@ function PostWrite({ onSubmit, onCancel }) {
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [onCancel]);
+  const [userId, setUserId] = useState(null);
+
+  useEffect(() => {
+    const authUser = JSON.parse(localStorage.getItem("auth_user"));
+    if (authUser?.user_id) setUserId(authUser.user_id);
+  }, []);
 
   const handleOverlayClick = (e) => {
     if (dialogRef.current && !dialogRef.current.contains(e.target)) {
@@ -81,7 +87,7 @@ function PostWrite({ onSubmit, onCancel }) {
     try {
       const formData = new FormData();
       formData.append("board_id", boardId);
-      formData.append("user_id", user_id); // 로그인 사용자 ID
+      formData.append("user_id", userId); // 로그인 사용자 ID
       formData.append("title", title.trim());
       formData.append("content", content.trim());
       formData.append("department_id", boardId); // 예시: board_id와 같게 설정
