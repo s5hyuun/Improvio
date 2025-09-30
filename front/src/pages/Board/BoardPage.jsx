@@ -10,7 +10,45 @@ import BoardWrite from "./components/BoardWrite";
 const API = "http://localhost";
 const STORAGE_KEY = "proposal_items_cache_v1";
 
-// Proposal.jsx의 규칙과 동일한 어댑터
+/** 이미지/파일 경로를 표준 image_url로 해석 */
+function resolveImage(row) {
+  const base = "http://localhost:5000";
+  const flats = [
+    row.image_url,
+    row.imageUrl,
+    row.image,
+    row.photo_url,
+    row.photo,
+    row.attachment_url,
+    row.file_url,
+    row.file_path,
+  ].filter(Boolean);
+
+  const arrays = []
+    .concat(row.images || [])
+    .concat(row.photos || [])
+    .concat(row.attachments || [])
+    .concat(row.files || [])
+    .map((x) => {
+      if (!x) return null;
+      if (typeof x === "string") return x;
+      if (typeof x === "object") return x.url || x.path || x.file_url || x.file_path || null;
+      return null;
+    })
+    .filter(Boolean);
+
+  const first = [...flats, ...arrays].find(Boolean);
+  if (!first) return null;
+
+  try {
+    const u = new URL(first, base);
+    return u.href;
+  } catch {
+    return first;
+  }
+}
+
+// Proposal.jsx의 규칙과 동일한 어댑터 + image_url 매핑
 function adaptFromDB(row) {
   const id = row.id ?? row.suggestion_id ?? row.suggestionId;
   const body = row.body ?? row.description ?? "";
@@ -37,6 +75,8 @@ function adaptFromDB(row) {
   const urgent =
     typeof row.urgent === "boolean" ? row.urgent : !!row.is_urgent || false;
 
+  const image_url = resolveImage(row);
+
   return {
     id,
     suggestion_id: row.suggestion_id ?? id,
@@ -50,6 +90,7 @@ function adaptFromDB(row) {
     priority,
     status,
     urgent,
+    image_url, // ✅ 표준화된 이미지 URL
   };
 }
 
@@ -76,7 +117,7 @@ function BoardPage() {
   const [selected, setSelected] = useState(null);
   const [write, setWrite] = useState(false);
 
-  // ✅ 기본값: 전체 보기
+  // 기본값: 전체 보기
   const [dept, setDept] = useState("");
 
   // 검색 상태
@@ -144,7 +185,7 @@ function BoardPage() {
     [dataSourceRaw]
   );
 
-  // ✅ dept === "" 이면 전체 보기
+  // dept === "" 이면 전체 보기
   const filtered = dept
     ? dataSource.filter((s) => (s.dept ?? s.department_name) === dept)
     : dataSource;
@@ -201,7 +242,9 @@ function BoardPage() {
                       : [];
                     // 새 글 작성 후에도 캐시 병합
                     const cache = loadCache();
-                    setSuggestions(cache.length ? mergeById(server, cache) : server);
+                    setSuggestions(
+                      cache.length ? mergeById(server, cache) : server
+                    );
                     setWrite(false);
                   } catch (err) {
                     console.error(err);
