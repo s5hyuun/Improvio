@@ -393,7 +393,7 @@ export default function Manager() {
                 {/* 긴급 제안 */}
                 <section className={styles.urgentColumn || ""} role="region" aria-label="긴급 제안" style={styles.urgentColumn ? undefined : columnFallback}>
                   <div className={styles.urgentColumnHeader || ""} style={styles.urgentColumnHeader ? undefined : headerRowFallback}>
-                    ⚠ 긴급 제안
+                    🚨 긴급 제안
                   </div>
 
                   <div className={styles.urgentScroll || ""} style={styles.urgentScroll ? undefined : scrollAreaFallback}>
