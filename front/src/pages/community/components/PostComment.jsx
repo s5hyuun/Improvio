@@ -4,20 +4,23 @@ import styles from "../../../styles/Community.module.css";
 function PostComment({ postId, currentUser }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   // 댓글 불러오기
+  const fetchComments = async () => {
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/posts/${postId}/comments`
+      );
+      const data = await res.json();
+      setComments(data || []);
+    } catch (err) {
+      console.error("댓글 불러오기 실패:", err);
+    }
+  };
+
   useEffect(() => {
-    (async () => {
-      try {
-        const res = await fetch(
-          `http://localhost:5000/api/posts/${postId}/comments`
-        );
-        const data = await res.json();
-        setComments(data);
-      } catch (err) {
-        console.error("댓글 불러오기 실패:", err);
-      }
-    })();
+    fetchComments();
   }, [postId]);
 
   // 댓글 작성
@@ -25,6 +28,12 @@ function PostComment({ postId, currentUser }) {
     e.preventDefault();
     if (!newComment.trim()) return;
 
+    if (!currentUser?.user_id) {
+      alert("로그인 후 댓글 작성이 가능합니다.");
+      return;
+    }
+
+    setSubmitting(true);
     try {
       const res = await fetch(
         `http://localhost:5000/api/posts/${postId}/comments`,
@@ -33,18 +42,23 @@ function PostComment({ postId, currentUser }) {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             user_id: currentUser.user_id,
-            content: newComment,
+            content: newComment.trim(),
           }),
         }
       );
 
-      if (res.ok) {
-        const saved = await res.json();
-        setComments([saved, ...comments]); // 새 댓글 추가
+      const data = await res.json();
+      if (res.ok && data) {
+        setComments([data, ...comments]); // 새 댓글 상단에 추가
         setNewComment("");
+      } else {
+        alert(data?.error || "댓글 작성 실패");
       }
     } catch (err) {
       console.error("댓글 저장 실패:", err);
+      alert("서버 오류가 발생했습니다.");
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -57,8 +71,11 @@ function PostComment({ postId, currentUser }) {
           value={newComment}
           onChange={(e) => setNewComment(e.target.value)}
           placeholder="댓글을 입력하세요"
+          disabled={submitting}
         />
-        <button type="submit">등록</button>
+        <button type="submit" disabled={submitting}>
+          {submitting ? "등록 중..." : "등록"}
+        </button>
       </form>
 
       {/* 댓글 목록 */}
@@ -67,7 +84,7 @@ function PostComment({ postId, currentUser }) {
           <div className={styles.postCommentLeft}>
             <i className="fa-regular fa-user"></i>
             <div>
-              <span>{c.user_name}</span>
+              <span>{c.user_name || `익명${c.user_id}`}</span>
               <span>{formatDate(c.created_at)}</span>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import styles from "../../../styles/Board.module.css";
 import { useState, useEffect, useRef } from "react";
 
-function BoardWrite({ onClose, onSubmit }) {
+function BoardWrite({ onClose, onSubmit, user }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [expect, setExpect] = useState("");
@@ -44,10 +44,22 @@ function BoardWrite({ onClose, onSubmit }) {
     fd.append("title", title);
     fd.append("description", description);
     fd.append("expected_effect", expect);
+
     files.forEach((f) => fd.append("files", f));
     onSubmit(fd);
   };
-
+  const DEPARTMENTS = {
+    1: "R&D",
+    2: "해외영업",
+    3: "기본설계",
+    4: "미래사업개발",
+    5: "조선설계",
+    6: "해양설계",
+    7: "PM",
+    8: "구매",
+    9: "경영지원",
+    10: "안전",
+  };
   return (
     <div
       className={styles.overlay}
@@ -62,13 +74,16 @@ function BoardWrite({ onClose, onSubmit }) {
             <h3>새 제안 작성</h3>
             <div className={styles.writeTopIcons}>
               <div>
-                <i className="fa-regular fa-user"></i>익명101
+                <i className="fa-regular fa-user"></i>
+                익명{user?.user_id}
               </div>
               <div>
-                <i className="fa-regular fa-building"></i>부서자리
+                <i className="fa-regular fa-building"></i>
+                {DEPARTMENTS[user?.department_id]}
               </div>
               <div>
-                <i className="fa-regular fa-calendar"></i>2025-09-25
+                <i className="fa-regular fa-calendar"></i>
+                {new Date().toISOString().slice(0, 10)} {/* YYYY-MM-DD */}
               </div>
             </div>
           </div>

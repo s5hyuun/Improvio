@@ -10,7 +10,6 @@ function BoardDetail({ suggestion, onClose }) {
   const [disliked, setDisliked] = useState(false); // 내가 싫어요 눌렀는지
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const user_id = 1; // 실제 로그인한 user_id로 바꿔야 함
   const [summary, setSummary] = useState("");
   const [loadingSummary, setLoadingSummary] = useState(false);
   // ESC 눌러도 닫히게
@@ -72,7 +71,9 @@ function BoardDetail({ suggestion, onClose }) {
     user_id: author_id,
   } = detail;
 
-  // 좋아요 클릭
+  const authUser = JSON.parse(localStorage.getItem("auth_user"));
+  const user_id = authUser?.user_id;
+
   // 좋아요 토글
   const handleVote = async () => {
     try {
@@ -81,7 +82,7 @@ function BoardDetail({ suggestion, onClose }) {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: 1 }), // 토글
+          body: JSON.stringify({ user_id }), // 🔹 user_id 사용
         }
       );
       setVoted(!voted);
@@ -99,7 +100,7 @@ function BoardDetail({ suggestion, onClose }) {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: 1 }),
+          body: JSON.stringify({ user_id }),
         }
       );
       setDisliked(!disliked);
@@ -120,7 +121,7 @@ function BoardDetail({ suggestion, onClose }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           content: newComment,
-          user_id, // 로그인한 user_id
+          user_id,
           suggestion_id: suggestion.suggestion_id,
         }),
       });

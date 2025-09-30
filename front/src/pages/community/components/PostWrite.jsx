@@ -2,6 +2,9 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import styles from "../../../styles/Community.module.css";
 import { useLocation } from "react-router-dom";
 const MAX_IMAGES = 10;
+// 최상단
+const authUser = JSON.parse(localStorage.getItem("auth_user"));
+const user_id = authUser?.user_id;
 
 function PostWrite({ onSubmit, onCancel }) {
   const [title, setTitle] = useState("");
@@ -78,7 +81,7 @@ function PostWrite({ onSubmit, onCancel }) {
     try {
       const formData = new FormData();
       formData.append("board_id", boardId);
-      formData.append("user_id", 1); // 로그인 사용자 ID
+      formData.append("user_id", user_id); // 로그인 사용자 ID
       formData.append("title", title.trim());
       formData.append("content", content.trim());
       formData.append("department_id", boardId); // 예시: board_id와 같게 설정
