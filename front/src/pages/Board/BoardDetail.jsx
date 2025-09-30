@@ -237,35 +237,33 @@ function BoardDetail({ suggestion, onClose }) {
                         }}
                       />
                     ))}
-                  <div className={styles.description}>{description}</div>
-
-                  {/* AI 요약 */}
-                  <div style={{ marginTop: "12px" }}>
-                    <button
-                      onClick={handleSummarize}
-                      disabled={loadingSummary || !description}
-                      style={{ padding: "6px 12px" }}
-                    >
-                      {loadingSummary ? "요약 중..." : "AI 요약"}
-                    </button>
-                    {summary && (
-                      <div
-                        style={{
-                          marginTop: "8px",
-                          fontStyle: "italic",
-                          color: "#555",
-                        }}
-                      >
-                        {summary}
-                      </div>
-                    )}
-                  </div>
                 </div>
               )}
 
               <div className={styles.description}>{description}</div>
               <div className={styles.effect}>기대효과</div>
               <div className={styles.description}>{expected_effect}</div>
+              {/* AI 요약 */}
+              <div style={{ marginTop: "12px" }}>
+                <button
+                  onClick={handleSummarize}
+                  disabled={loadingSummary || !description}
+                  style={{ padding: "6px 12px" }}
+                >
+                  {loadingSummary ? "요약 중..." : "AI 요약"}
+                </button>
+                {summary && (
+                  <div
+                    style={{
+                      marginTop: "8px",
+                      fontStyle: "italic",
+                      color: "#555",
+                    }}
+                  >
+                    {summary}
+                  </div>
+                )}
+              </div>
             </div>
 
             <div className={styles.detailThumb}>
