@@ -141,25 +141,6 @@ export default function Header({ isLoggedIn, setIsLoggedIn, onSearch }) {
             </Link>
           </>
         )}
-
-        <button
-          className="icon-btn"
-          aria-label="새로고침"
-          type="button"
-          onClick={(e) => {
-            e.currentTarget.style.transform = "rotate(180deg)";
-            setTimeout(() => (e.currentTarget.style.transform = ""), 300);
-          }}
-        >
-          <svg viewBox="0 0 24 24">
-            <path
-              d="M21 12a9 9 0 1 1-3-6.7M21 3v6h-6"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            />
-          </svg>
-        </button>
       </div>
     </header>
   );
@@ -186,25 +167,56 @@ function SuggestionSearch({ onResults }) {
     );
     const data = await res.json();
 
-    if (data.length === 0) {
-      setMessage("");
-    } else {
-      setMessage("");
-    }
-
+    setMessage("");
     onResults(data, true);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      handleSearch();
+    }
+  };
+
   return (
-    <div>
+    <div
+      className="search"
+      style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}
+    >
+      <span className="ico search-ico">
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <circle
+            cx="11"
+            cy="11"
+            r="7"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          <path
+            d="M21 21l-4.3-4.3"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+        </svg>
+      </span>
       <input
         type="text"
         placeholder="검색어 입력"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
+        onKeyDown={handleKeyDown}
+        style={{
+          border: "none",
+          outline: "none",
+          padding: "0.4rem 0.6rem",
+          fontSize: "14px",
+          backgroundColor: "transparent",
+        }}
       />
-      <button onClick={handleSearch}>검색</button>
-      {message && <p style={{ color: "red" }}>{message}</p>}
+      {message && (
+        <p style={{ color: "red", marginLeft: "0.5rem" }}>{message}</p>
+      )}
     </div>
   );
 }
