@@ -112,3 +112,10 @@
   font-size: 15px; 
   line-height: 1.25;
 }
+
+
+/* 긴급 공지 리스트 전용 간격 */
+.noticeGap {
+  display: grid;     /* 카드들을 그리드로 배치 */
+  gap: 16px;         /* 카드 사이 간격 (원하는 값으로 12~20px 조절 가능) */
+}
