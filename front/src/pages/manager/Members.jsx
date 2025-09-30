@@ -98,7 +98,7 @@ export default function Member({ selectedDeptId = "all" }) {
                     cursor: "pointer",
                     border: "none",
                     background:
-                      m.status === "활성" ? "rgba(45,108,255,.12)" : "#fbac94",
+                      m.status === "활성" ? "rgba(45,108,255,.12)" : "#db3b18",
                     color: m.status === "활성" ? "#2d6cff" : "#fff",
                     padding: "6px 10px",
                     borderRadius: "999px",
