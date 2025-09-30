@@ -172,7 +172,7 @@ const Dashboard = () => {
         const rows = (trendRes.data || [])
           .map((r) => ({
             dateObj: new Date(r.day),
-            dayStr: String(r.day),             // YYYY-MM-DD
+            dayStr: String(r.day), // YYYY-MM-DD
             total: Number(r.total),
             solved: Number(r.solved || 0),
             status: r.status,
@@ -197,10 +197,10 @@ const Dashboard = () => {
           runningTotal += item.total;
           runningSolved += item.solved;
           return {
-            date: item.dayStr,                // 툴팁에 보여줄 전체 날짜
-            d: item.dateObj.getDate(),        // ✅ X축 표시에 사용할 '일(1~31)'
-            total: runningTotal,              // 누적 총 건의
-            solved: runningSolved,            // 누적 완료 건의
+            date: item.dayStr, // 툴팁에 보여줄 전체 날짜
+            d: item.dateObj.getDate(), // X축 표시에 사용할 '일(1~31)'
+            total: runningTotal, // 누적 총 건의
+            solved: runningSolved, // 누적 완료 건의
           };
         });
 
@@ -241,18 +241,20 @@ const Dashboard = () => {
       <main className="main">
         <Header />
         <div className="dashboard-container">
-
           {/* 일 단위 건의 수 - BarChart (월~금) */}
           <div className="card">
             <div className="card-title">일 단위 건의 수</div>
             <div className="card-content" style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={suggestionTrend.day || []}>
+                <BarChart
+                  data={suggestionTrend.day || []}
+                  margin={{ top: 10, right: 28, left: 0, bottom: 0 }} // ✅ 오른쪽 마진
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e3eaf5" />
                   <XAxis dataKey="day" stroke="#333" />
                   <YAxis stroke="#333" />
                   <Tooltip />
-                  <Legend content={<CustomBarLegend />}/>
+                  <Legend content={<CustomBarLegend />} />
                   <Bar dataKey="total" fill="#1e40af" name="총 건의" />
                   <Bar dataKey="solved" fill="#60a5fa" name="완료 건의" />
                 </BarChart>
@@ -265,25 +267,26 @@ const Dashboard = () => {
             <div className="card-title">해결된 이슈 흐름(누적)</div>
             <div className="card-content" style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={suggestionTrend.cum || []}>
+                <LineChart
+                  data={suggestionTrend.cum || []}
+                  margin={{ top: 10, right: 28, left: 0, bottom: 0 }} // ✅ 오른쪽 마진
+                >
                   <CartesianGrid strokeDasharray="3 3" stroke="#e3eaf5" />
-                  {/* ✅ X축은 '일(1~31)' */}
                   <XAxis dataKey="d" stroke="#333" />
                   <YAxis stroke="#333" />
-                  {/* 툴팁에 전체 날짜를 보여주도록 labelFormatter 사용 */}
                   <Tooltip
                     labelFormatter={(label, payload) => {
                       const full = payload?.[0]?.payload?.date; // YYYY-MM-DD
                       return full || `${label}일`;
                     }}
                   />
-                  <Legend content={<CustomLineLegend />}/>
+                  <Legend content={<CustomLineLegend />} />
                   <Line
                     type="monotone"
                     dataKey="total"
                     stroke="#3b82f6"
                     strokeWidth={3}
-                    dot={{ r: 3 }}                               // ✅ 점 표시
+                    dot={{ r: 3 }}
                     activeDot={{ r: 5, stroke: "#3b82f6", fill: "#fff" }}
                     name="누적 총 건의"
                   />
@@ -292,7 +295,7 @@ const Dashboard = () => {
                     dataKey="solved"
                     stroke="#1e40af"
                     strokeWidth={3}
-                    dot={{ r: 3 }}                               // ✅ 점 표시
+                    dot={{ r: 3 }}
                     activeDot={{ r: 5, stroke: "#1e40af", fill: "#fff" }}
                     name="누적 완료 건의"
                   />
