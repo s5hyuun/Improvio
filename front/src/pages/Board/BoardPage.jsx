@@ -70,13 +70,22 @@ function BoardPage() {
             <button onClick={() => setWrite(true)}>+ 글쓰기</button>
             {write && (
               <BoardWrite
+                user={JSON.parse(localStorage.getItem("auth_user"))} // 👈 여기 추가
                 onClose={() => setWrite(false)}
                 onSubmit={async (formData) => {
                   try {
+                    // 이미 user_id, department_id가 formData에 들어있는지 확인
+                    const user = JSON.parse(localStorage.getItem("auth_user"));
+                    if (user) {
+                      formData.append("user_id", user.user_id);
+                      formData.append("department_id", user.department_id);
+                    }
+
                     await fetch("http://localhost:5000/api/suggestions", {
                       method: "POST",
                       body: formData,
                     });
+
                     const res = await fetch(
                       "http://localhost:5000/api/suggestions"
                     );
