@@ -31,6 +31,36 @@ function PostDetail() {
   };
 
   const totalComments = post?.comment_count ?? post?.comments?.length ?? 0;
+  // 댓글 등록 함수
+  const addComment = async () => {
+    if (!newComment.trim()) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/posts/${postId}/comments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: newComment,
+            user_id: 1, // TODO: 로그인한 사용자 ID 넣기
+          }),
+        }
+      );
+
+      const saved = await res.json();
+
+      // DB에 저장된 댓글을 현재 state에 추가
+      setPost((prev) => ({
+        ...prev,
+        comments: [...(prev.comments ?? []), saved],
+      }));
+
+      setNewComment(""); // 입력창 초기화
+    } catch (err) {
+      console.error("댓글 등록 실패:", err);
+    }
+  };
 
   if (!post) return <div>Loading...</div>;
 
@@ -100,8 +130,7 @@ function PostDetail() {
                 if (e.isComposing) return;
                 if (e.key === "Enter") {
                   e.preventDefault();
-                  // 필요 시 여기서 등록 로직 연결
-                  setNewComment("");
+                  addComment();
                 }
               }}
             />
@@ -109,10 +138,7 @@ function PostDetail() {
               <button
                 className={styles.mksendBtn}
                 type="button"
-                onClick={() => {
-                  // 필요 시 여기서 등록 로직 연결
-                  setNewComment("");
-                }}
+                onClick={addComment}
                 aria-label="댓글 등록"
               >
                 <i className="fa-solid fa-pen" />

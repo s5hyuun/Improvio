@@ -1051,6 +1051,54 @@ app.get((req, res) => {
   }
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
+// server.js
+app.get("/api/posts/:postId/comments", async (req, res) => {
+  const { postId } = req.params;
+  try {
+    const [rows] = await pool.query(
+      `SELECT c.postcomment_id, c.content, c.created_at, u.user_name
+       FROM postcomment c
+       JOIN user u ON c.user_id = u.user_id
+       WHERE c.post_id = ?
+       ORDER BY c.created_at DESC`,
+      [postId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "댓글 불러오기 실패" });
+  }
+});
+app.post("/api/posts/:postId/comments", async (req, res) => {
+  const { postId } = req.params;
+  const { content, user_id } = req.body;
+
+  if (!content) {
+    return res.status(400).json({ error: "내용이 필요합니다." });
+  }
+
+  try {
+    const [result] = await pool.query(
+      `INSERT INTO postcomment (content, user_id, post_id, created_at) 
+       VALUES (?, ?, ?, NOW())`,
+      [content, user_id || null, postId]
+    );
+
+    const [newComment] = await pool.query(
+      `SELECT pc.*, u.username AS author
+       FROM postcomment pc
+       LEFT JOIN user u ON pc.user_id = u.user_id
+       WHERE pc.postcomment_id = ?`,
+      [result.insertId]
+    );
+
+    res.status(201).json(newComment[0]);
+  } catch (err) {
+    console.error("댓글 추가 오류:", err);
+    res.status(500).json({ error: "댓글 추가 실패" });
+  }
+});
+
 app.listen(5000, () => {
   console.log("http://localhost:5000");
 });
