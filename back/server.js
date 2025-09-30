@@ -48,7 +48,7 @@ app.post("/api/summarize", async (req, res) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer `,
+          Authorization: `Bearer ${HF_API_TOKEN}`,
         },
         body: JSON.stringify({
           inputs: description,
