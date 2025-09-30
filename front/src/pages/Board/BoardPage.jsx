@@ -1,3 +1,4 @@
+// BoardPage.jsx
 import { useEffect, useMemo, useState } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
@@ -74,6 +75,8 @@ function BoardPage() {
   const [suggestions, setSuggestions] = useState([]);
   const [selected, setSelected] = useState(null);
   const [write, setWrite] = useState(false);
+
+  // ✅ 기본값: 전체 보기
   const [dept, setDept] = useState("");
 
   // 검색 상태
@@ -101,10 +104,10 @@ function BoardPage() {
     };
   }, []);
 
-  // 부서 변경 이벤트
+  // 부서 변경 이벤트(사이드바에서 브로드캐스트)
   useEffect(() => {
     function handler(e) {
-      setDept(e.detail.dept);
+      setDept(e.detail?.dept ?? "");
     }
     window.addEventListener("dept:changed", handler);
     return () => window.removeEventListener("dept:changed", handler);
@@ -141,6 +144,7 @@ function BoardPage() {
     [dataSourceRaw]
   );
 
+  // ✅ dept === "" 이면 전체 보기
   const filtered = dept
     ? dataSource.filter((s) => (s.dept ?? s.department_name) === dept)
     : dataSource;

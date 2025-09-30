@@ -34,7 +34,7 @@ export default function Sidebar() {
 
   const location = useLocation();
   const isCommunity = location.pathname.startsWith("/community");
-  const isAuthPage = /\/(login|signup)/i.test(location.pathname);
+  const isAuthPage = /\/(login|signup)/i.test(location.pathname); // 로그인/회원가입 페이지 감지
 
   const readAuth = () => {
     try {
@@ -124,7 +124,7 @@ export default function Sidebar() {
     try {
       const saved = localStorage.getItem(STORAGE_DEPT_KEY);
       const found = departments.find((d) => d.label === saved);
-      return found ? found.id : null; // 기존 'rd' 기본값 제거
+      return found ? found.id : null; // 기본 'rd' 제거
     } catch {
       return null;
     }
@@ -151,16 +151,14 @@ export default function Sidebar() {
     } catch {}
   }, [selected, isAuthPage, departments]);
 
-  // ✅ 네비게이션 클릭 시: 부서 선택 초기화 + 전체 새로고침
-  const resetDeptAndReload = (path) => (e) => {
-    e.preventDefault(); // NavLink 기본 동작 막고
+  // ✅ Requirements 탭 클릭 시: 부서 초기화(전체 보기) 후 네비게이션
+  const onClickRequirements = () => {
     try {
-      localStorage.removeItem(STORAGE_DEPT_KEY); // 부서 선택 초기화
+      localStorage.removeItem(STORAGE_DEPT_KEY);
     } catch {}
     setSelected(null);
     window.dispatchEvent(new CustomEvent("dept:changed", { detail: { dept: "" } }));
-    // 전체 새로고침(SSR처럼 완전 리로드)
-    window.location.assign(path);
+    // 네비게이션은 NavLink가 처리(새로고침 불필요)
   };
 
   return (
@@ -192,7 +190,6 @@ export default function Sidebar() {
           <nav className="nav">
             <NavLink
               to="/main"
-              onClick={resetDeptAndReload("/main")}
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
             >
               <span className="ico">{icon("bars")}</span>
@@ -201,7 +198,7 @@ export default function Sidebar() {
 
             <NavLink
               to="/board"
-              onClick={resetDeptAndReload("/board")}
+              onClick={onClickRequirements}
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
             >
               <span className="ico">{icon("doc")}</span>
@@ -210,7 +207,6 @@ export default function Sidebar() {
 
             <NavLink
               to="/community"
-              onClick={resetDeptAndReload("/community")}
               className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
             >
               <span className="ico">{icon("chat")}</span>
@@ -220,7 +216,6 @@ export default function Sidebar() {
             {isAdmin && (
               <NavLink
                 to="/manager"
-                onClick={resetDeptAndReload("/manager")}
                 className={({ isActive }) =>
                   `nav-item ${isActive ? "active" : ""}`
                 }
@@ -238,6 +233,16 @@ export default function Sidebar() {
             <div className="section-title">부서 선택</div>
             <div className="dept-wrap">
               <ul className="dept-list">
+                {/* ✅ 전체(선택 해제) */}
+                <li
+                  className={`dept-item ${selected === null ? "selected" : ""}`}
+                  onClick={() => setSelected(null)}
+                  title="전체 보기"
+                >
+                  <span className="ico">{icon("globe")}</span>
+                  <span>전체</span>
+                </li>
+
                 {departments.map((d) => (
                   <li
                     key={d.id}
@@ -249,15 +254,6 @@ export default function Sidebar() {
                     <span>{d.label}</span>
                   </li>
                 ))}
-                {/* ✅ 전체 보기(선택 해제) 버튼 */}
-                <li
-                  className={`dept-item ${selected === null ? "selected" : ""}`}
-                  onClick={() => setSelected(null)}
-                  title="전체 보기"
-                >
-                  <span className="ico">{icon("globe")}</span>
-                  <span>전체</span>
-                </li>
               </ul>
             </div>
           </>
