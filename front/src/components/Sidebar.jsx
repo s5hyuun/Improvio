@@ -155,9 +155,6 @@ export default function Sidebar() {
 
           {!showAnonProfile && (
             <>
-              <button className="link-btn" type="button">
-                edit
-              </button>
               <div className="chip-row">
                 <span className="chip chip-primary">{profileDeptLabel}</span>
                 {isAdmin && <span className="chip chip-warn">관리자</span>}
