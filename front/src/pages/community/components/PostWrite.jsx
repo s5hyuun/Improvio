@@ -74,6 +74,12 @@ function PostWrite({ onSubmit, onCancel }) {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!userId) {
+  alert("로그인이 필요합니다.");
+  return;
+}
+
     if (!title.trim() || !content.trim()) {
       alert("제목과 내용을 입력해주세요.");
       return;

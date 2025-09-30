@@ -40,6 +40,10 @@ function BoardWrite({ onClose, onSubmit, user }) {
     setFiles((prev) => prev.filter((_, i) => i !== index));
 
   const submit = () => {
+     if (!user || !user.user_id) {
+    alert("로그인이 필요합니다.");
+    return;
+  }
     const fd = new FormData();
     fd.append("title", title);
     fd.append("description", description);
