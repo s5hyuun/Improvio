@@ -1,6 +1,9 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function SignupStep2({ onComplete }) {
+export default function SignupStep2() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: "",
     employeeId: "",
@@ -9,6 +12,7 @@ export default function SignupStep2({ onComplete }) {
     department: "",
   });
 
+  const [departments, setDepartments] = useState([]);
   const [employeeIdError, setEmployeeIdError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
 
@@ -19,6 +23,13 @@ export default function SignupStep2({ onComplete }) {
   const toggleShowConfirmPassword = () =>
     setShowConfirmPassword((prev) => !prev);
 
+  useEffect(() => {
+    fetch("http://localhost:5000/api/departments")
+      .then((res) => res.json())
+      .then((data) => setDepartments(data))
+      .catch((err) => console.error("부서 불러오기 실패:", err));
+  }, []);
+
   function handleChange(e) {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
@@ -27,17 +38,13 @@ export default function SignupStep2({ onComplete }) {
   const handleEmployeeIdChange = (e) => {
     const value = e.target.value;
     const onlyNums = value.replace(/[^0-9]/g, "");
-
-    if (value !== onlyNums) {
-      setEmployeeIdError("이 칸에는 숫자만 입력할 수 있습니다.");
-    } else {
-      setEmployeeIdError("");
-    }
-
+    setEmployeeIdError(
+      value !== onlyNums ? "이 칸에는 숫자만 입력할 수 있습니다." : ""
+    );
     setFormData((prev) => ({ ...prev, employeeId: onlyNums }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (!/^\d+$/.test(formData.employeeId)) {
@@ -52,8 +59,31 @@ export default function SignupStep2({ onComplete }) {
       setConfirmPasswordError("");
     }
 
-    console.log("회원가입 정보:", formData);
-    onComplete();
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: formData.name,
+          username: formData.employeeId,
+          password: formData.password,
+          role: "employee",
+          department_id: parseInt(formData.department, 10),
+        }),
+      });
+
+      const data = await res.json();
+      if (!res.ok) {
+        alert(data.message || "회원가입 실패");
+        return;
+      }
+
+      alert("회원가입 성공! 로그인 페이지로 이동합니다.");
+      navigate("/login", { replace: true });
+    } catch (err) {
+      console.error("회원가입 오류:", err);
+      alert("서버 오류가 발생했습니다.");
+    }
   };
 
   return (
@@ -119,7 +149,6 @@ export default function SignupStep2({ onComplete }) {
               </button>
             </div>
           </div>
-
           <div>
             <label className="block mb-1 font-medium">비밀번호 확인</label>
             <div className="relative">
@@ -165,20 +194,11 @@ export default function SignupStep2({ onComplete }) {
               required
             >
               <option value="">부서를 선택하세요</option>
-              <option value="basic-design">기본설계</option>
-              <option value="ship-design">조선설계</option>
-              <option value="offshore-design">해양설계</option>
-              <option value="process-management">공정관리</option>
-              <option value="purchasing">구매</option>
-              <option value="project-management">PM</option>
-              <option value="automation">자동화</option>
-              <option value="overseas-sales">해외영업</option>
-              <option value="management-support">경영지원</option>
-              <option value="qulity-planning-inspection">
-                품질관리/기획/검사
-              </option>
-              <option value="safety-environment-health">안전/환경/보건</option>
-              <option value="research-development">연구개발</option>
+              {departments.map((dept) => (
+                <option key={dept.department_id} value={dept.department_id}>
+                  {dept.department_name}
+                </option>
+              ))}
             </select>
           </div>
 

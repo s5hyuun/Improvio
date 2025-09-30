@@ -1,6 +1,9 @@
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-export default function SignupStep5({ onComplete }) {
+export default function SignupStep5() {
+  const navigate = useNavigate();
+
   const [formData, setFormData] = useState({
     name: "",
     employeeId: "",
@@ -11,7 +14,6 @@ export default function SignupStep5({ onComplete }) {
 
   const [employeeIdError, setEmployeeIdError] = useState("");
   const [confirmPasswordError, setConfirmPasswordError] = useState("");
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -33,7 +35,6 @@ export default function SignupStep5({ onComplete }) {
     } else {
       setEmployeeIdError("");
     }
-
     setFormData((prev) => ({ ...prev, employeeId: onlyNums }));
   };
 
@@ -58,9 +59,9 @@ export default function SignupStep5({ onComplete }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           name: formData.name,
-          username: formData.employeeId, // 사원번호를 username으로
+          username: formData.employeeId,
           password: formData.password,
-          role: "manager", // 관리자 가입이므로 admin
+          role: "manager",
           department_id: parseInt(formData.department, 10) || null,
         }),
       });
@@ -71,8 +72,8 @@ export default function SignupStep5({ onComplete }) {
         return;
       }
 
-      alert("회원가입 성공! 승인을 기다려주세요.");
-      onComplete(); // 다음 단계로 진행
+      alert("회원가입 성공! 로그인 페이지로 이동합니다.");
+      navigate("/login", { replace: true });
     } catch (err) {
       console.error("회원가입 오류:", err);
       alert("서버 오류가 발생했습니다.");
@@ -96,7 +97,6 @@ export default function SignupStep5({ onComplete }) {
               required
             />
           </div>
-
           <div>
             <label className="block mb-1 font-medium">사원번호</label>
             <input
@@ -128,7 +128,7 @@ export default function SignupStep5({ onComplete }) {
               <button
                 type="button"
                 onClick={toggleShowPassword}
-                className="absolute inset-y-0 right-3 flex items-center"
+                className="absolute inset-y-0 right-3 flex items-center text-gray-500"
               >
                 <img
                   src={
