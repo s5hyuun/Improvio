@@ -64,24 +64,25 @@ export default function Sidebar() {
         </section>
 
         <nav className="nav">
-          <a className="nav-item" href="#">
+          {/* ✅ Main Chart -> /main */}
+          <NavLink
+            to="/main"
+            className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+          >
             <span className="ico">{icon("bars")}</span>
             <span>Main Chart</span>
-          </a>
+          </NavLink>
 
-          <a
-            className="nav-item"
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              window.dispatchEvent(
-                new CustomEvent("dept:changed", { detail: { dept: "" } })
-              );
-            }}
+          {/* ✅ Requirements -> /board */}
+          <NavLink
+            to="/board"
+            className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
           >
             <span className="ico">{icon("doc")}</span>
             <span>Requirements</span>
-          </a>
+          </NavLink>
+
+          {/* ✅ Community -> /community */}
           <NavLink
             to="/community"
             className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}

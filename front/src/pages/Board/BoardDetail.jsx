@@ -11,7 +11,8 @@ function BoardDetail({ suggestion, onClose }) {
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const user_id = 1; // 실제 로그인한 user_id로 바꿔야 함
-
+  const [summary, setSummary] = useState("");
+  const [loadingSummary, setLoadingSummary] = useState(false);
   // ESC 눌러도 닫히게
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -138,7 +139,34 @@ function BoardDetail({ suggestion, onClose }) {
       setSubmitting(false);
     }
   };
+  const handleSummarize = async () => {
+    if (!description) return;
+    setLoadingSummary(true);
+    setSummary("");
 
+    try {
+      const res = await fetch("http://localhost:5000/api/summarize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ description }),
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        console.error(data.error);
+        setSummary("요약 실패");
+      } else {
+        setSummary(data[0]?.summary_text || "요약 실패");
+      }
+    } catch (err) {
+      console.error(err);
+      setSummary("요약 실패");
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
   return (
     <div
       className={styles.overlay}
@@ -209,6 +237,29 @@ function BoardDetail({ suggestion, onClose }) {
                         }}
                       />
                     ))}
+                  <div className={styles.description}>{description}</div>
+
+                  {/* AI 요약 */}
+                  <div style={{ marginTop: "12px" }}>
+                    <button
+                      onClick={handleSummarize}
+                      disabled={loadingSummary || !description}
+                      style={{ padding: "6px 12px" }}
+                    >
+                      {loadingSummary ? "요약 중..." : "AI 요약"}
+                    </button>
+                    {summary && (
+                      <div
+                        style={{
+                          marginTop: "8px",
+                          fontStyle: "italic",
+                          color: "#555",
+                        }}
+                      >
+                        {summary}
+                      </div>
+                    )}
+                  </div>
                 </div>
               )}
 

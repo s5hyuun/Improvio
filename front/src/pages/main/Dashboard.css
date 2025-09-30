@@ -259,3 +259,120 @@ body:has(.app)::after {
   box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12) !important;
   color: var(--ink) !important;
 }
+
+/* ======================== 최신 해결 사례 꾸미기 */
+.recent-solved-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  text-align: left;
+  border-radius: 6px; /* 덜 둥글게 */
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  width: 100%;
+}
+
+.recent-solved-summary {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 18px;
+  font-weight: 600;
+  color: #1f2937;
+  background: none;
+  padding: 0;
+  box-shadow: none;
+  line-height: 1.6;
+}
+
+.recent-solved-summary small {
+  display: block;
+  margin-top: 4px;
+  font-size: 13px;
+  color: #6b7280;
+}
+
+.recent-solved-image {
+  max-width: 100%;
+  max-height: 180px;
+  object-fit: contain;
+  border: 1px solid #e5e7eb;
+  border-radius: 4px;
+  background: #fff;
+}
+
+/* 기대효과 꾸미기 */
+.effect-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* 3등분 균등 */
+  gap: 18px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.effect-item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; /* 안쪽 블록(.effect-box)이 동일 높이 */
+}
+
+.effect-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin-bottom: 6px;
+  text-align: center;
+}
+
+.effect-box {
+  flex: 1; /* 부모 높이에 맞춰 늘어나게 */
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 14px;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.06);
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* 숫자를 수직 중앙 */
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  min-height: 120px; /* 원하는 최소 높이 지정 */
+}
+
+.effect-box:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.1);
+}
+
+.effect-icon {
+  font-size: 22px;
+}
+
+.effect-value {
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+  white-space: nowrap;
+}
+
+/* 항목별 색상 강조 */
+.effect-item.efficiency .effect-value {
+  color: #2563eb; /* 블루 */
+}
+.effect-item.safety .effect-value {
+  color: #16a34a; /* 그린 */
+}
+.effect-item.saving .effect-value {
+  color: #d97706; /* 오렌지 */
+}
+
+/* 반응형: 작은 화면에서는 세로 배치 */
+@media (max-width: 860px) {
+  .effect-list {
+    grid-template-columns: 1fr;
+  }
+}

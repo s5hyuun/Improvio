@@ -46,7 +46,19 @@ function PostDetail() {
         {/* 제목/본문 */}
         <div className={styles.mkdetailTitle}>{post.title}</div>
         <div className={styles.mkdetailBody}>{post.content}</div>
-
+        {post.attachments && post.attachments.length > 0 && (
+          <div className={styles.mkAttachments}>
+            {post.attachments.map((att) => (
+              <div key={att.attachment_id} className={styles.mkAttachmentItem}>
+                <img
+                  src={`http://localhost:5000${att.file_path}`}
+                  alt="첨부이미지"
+                  className={styles.mkAttachmentImg}
+                />
+              </div>
+            ))}
+          </div>
+        )}
         {/* 메타(작성자/시간/댓글/좋아요 수) — 아이콘/카운트만 표시 */}
         <div className={styles.mkmetaRow} style={{ marginTop: 8 }}>
           <div className={styles.mkmetaLeft}>

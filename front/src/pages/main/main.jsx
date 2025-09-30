@@ -157,23 +157,22 @@ const Dashboard = () => {
           <div className="card">
             <div className="card-title">최신 해결 사례</div>
             <div className="card-content">
-              {recentSolved ? (
-                <>
-                  <b style={{ display: "block", marginBottom: "12px", marginTop: "8px" }}>
-                    {recentSolved.effect_summary} ({new Date(recentSolved.resolved_at).toLocaleString()})
-                  </b>
-                  <div style={{ display: "flex", justifyContent: "center", marginTop: "12px", flexGrow: 1 }}>
-                    <img
-                      src="http://localhost:5000/uploads/14.png"
-                      alt="모니터링 개선 이미지"
-                      style={{ maxWidth: "100%", maxHeight: "250px", objectFit: "contain" }}
-                    />
-                  </div>
-                </>
-              ) : (
-                <span>데이터 없음</span>
-              )}
-            </div>
+  {recentSolved ? (
+    <div className="recent-solved-box">
+      <div className="recent-solved-summary">
+        {recentSolved.effect_summary} <br />
+        <small>({new Date(recentSolved.resolved_at).toLocaleString()})</small>
+      </div>
+      <img
+        src="http://localhost:5000/uploads/14.png"
+        alt="모니터링 개선 이미지"
+        className="recent-solved-image"
+      />
+    </div>
+  ) : (
+    <span>데이터 없음</span>
+  )}
+</div>
           </div>
 
           {/* 부서별 전체 건의 수 - Pie */}
@@ -214,19 +213,40 @@ const Dashboard = () => {
 
           {/* 기대효과 */}
           <div className="card">
-            <div className="card-title">기대효과</div>
-            <div className="card-content">
-              <ul>
-                <li>
-                  작업 효율성 평균: <b>{effects.avg_productivity ? Number(effects.avg_productivity).toFixed(2) : "데이터 없음"}%</b>
-                </li>
-                <li>안전 개선 완료 건수(예시 dept_id=4): <b>{effects.safety_improvements ?? 0}</b> 건</li>
-                <li>
-                  총 원가 절감(합계): <b>{effects.total_cost_saving ? Number(effects.total_cost_saving).toLocaleString() : 0}</b> 원
-                </li>
-              </ul>
-            </div>
-          </div>
+  <div className="card-title">실적 지표</div>
+  <div className="card-content">
+    <ul className="effect-list">
+  <li className="effect-item efficiency">
+    <div className="effect-label">작업 효율성 평균</div>
+    <div className="effect-box">
+      <span className="effect-icon">📈</span>
+      <div className="effect-value">
+        {effects.avg_productivity ? Number(effects.avg_productivity).toFixed(2) : "데이터 없음"}%
+      </div>
+    </div>
+  </li>
+  <li className="effect-item safety">
+    <div className="effect-label">안전 개선 완료 건수</div>
+    <div className="effect-box">
+      <span className="effect-icon">🛡️</span>
+      <div className="effect-value">{effects.safety_improvements ?? 0} 건</div>
+    </div>
+  </li>
+  <li className="effect-item saving">
+    <div className="effect-label">총 원가 절감</div>
+    <div className="effect-box">
+      <span className="effect-icon">💰</span>
+      <div className="effect-value">
+        {effects.total_cost_saving ? Number(effects.total_cost_saving).toLocaleString() : 0} 원
+      </div>
+    </div>
+  </li>
+</ul>
+
+
+  </div>
+</div>
+
 
         </div>
       </main>

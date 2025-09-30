@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import styles from "../../../styles/Community.module.css";
-
+import { useLocation } from "react-router-dom";
 const MAX_IMAGES = 10;
 
 function PostWrite({ onSubmit, onCancel }) {
@@ -12,7 +12,11 @@ function PostWrite({ onSubmit, onCancel }) {
 
   const fileInputRef = useRef(null);
   const dialogRef = useRef(null);
-
+  const location = useLocation();
+  const boardId = useMemo(() => {
+    const parts = location.pathname.split("/");
+    return parseInt(parts[parts.length - 1], 10);
+  }, [location.pathname]);
   useEffect(() => {
     const onKey = (e) => {
       if (e.key === "Escape") onCancel?.();
@@ -65,23 +69,42 @@ function PostWrite({ onSubmit, onCancel }) {
     setImages((prev) => prev.filter((_, i) => i !== idx));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!title.trim() || !content.trim()) {
       alert("제목과 내용을 입력해주세요.");
       return;
     }
-    onSubmit?.({
-      title: title.trim(),
-      content: content.trim(),
-      images,
-      anonymous: isAnon,
-    });
+    try {
+      const formData = new FormData();
+      formData.append("board_id", boardId);
+      formData.append("user_id", 1); // 로그인 사용자 ID
+      formData.append("title", title.trim());
+      formData.append("content", content.trim());
+      formData.append("department_id", boardId); // 예시: board_id와 같게 설정
+      images.forEach((img) => formData.append("images", img));
 
-    setTitle("");
-    setContent("");
-    setImages([]);
-    setIsAnon(false);
+      const res = await fetch("http://localhost:5000/api/posts", {
+        method: "POST",
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.success) {
+        alert("글이 등록되었습니다!");
+        window.location.reload();
+        setTitle("");
+        setContent("");
+        setImages([]);
+        setIsAnon(false);
+        onSubmit?.(data);
+      } else {
+        alert("등록 실패: " + data.error);
+      }
+    } catch (err) {
+      console.error("❌ Submit Error:", err);
+      alert("서버 오류가 발생했습니다.");
+    }
   };
 
   const imageCountText = useMemo(

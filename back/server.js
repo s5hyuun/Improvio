@@ -31,7 +31,36 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage });
+app.post("/api/summarize", async (req, res) => {
+  try {
+    const { description } = req.body; // 클라이언트에서 보내는 description
 
+    if (!description)
+      return res.status(400).json({ error: "description required" });
+
+    const response = await fetch(
+      "https://api-inference.huggingface.co/models/EbanLee/kobart-summary-v3",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: "Bearer ", 
+        },
+        body: JSON.stringify({
+          inputs: description,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (data.error) return res.status(500).json({ error: data.error });
+
+    res.json(data);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
 // POST /api/suggestions (제안 + 첨부파일)
 app.post("/api/suggestions", upload.array("files"), async (req, res) => {
   try {
