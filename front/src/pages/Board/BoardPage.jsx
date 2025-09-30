@@ -73,12 +73,12 @@ function BoardPage() {
                 onClose={() => setWrite(false)}
                 onSubmit={async (formData) => {
                   try {
-                    await fetch("http://localhost:4000/api/suggestions", {
+                    await fetch("http://localhost:5000/api/suggestions", {
                       method: "POST",
                       body: formData,
                     });
                     const res = await fetch(
-                      "http://localhost:4000/api/suggestions"
+                      "http://localhost:5000/api/suggestions"
                     );
                     const data = await res.json();
                     setSuggestions(data);
