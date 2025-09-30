@@ -266,16 +266,8 @@ export default function Header({ onSearch }) {
                 <li style={{ fontWeight: 700, padding: "6px 8px" }}>공지</li>
                 {visibleNotices.length === 0 ? (
                   <li style={{ padding: 8, opacity: 0.8 }}>
-                    활성 공지가 없습니다.
-                    {dismissedNoticeIds.size > 0 && (
-                      <button
-                        type="button"
-                        onClick={restoreAllDismissedNotices}
-                        style={{ marginLeft: 8, fontSize: 12 }}
-                      >
-                        숨김 복원
-                      </button>
-                    )}
+                    공지가 없습니다.
+
                   </li>
                 ) : (
                   visibleNotices.map((n) => (
