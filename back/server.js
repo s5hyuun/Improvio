@@ -10,6 +10,7 @@ import fs from "fs";
 import mime from "mime"; // npm install mime
 import { fileURLToPath } from "url";
 import performanceRouter from "./routes/performance.js";
+import 'dotenv/config';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -18,6 +19,11 @@ const SECRET_KEY = "secret_key";
 const app = express();
 app.use(cors({}));
 app.use(express.json());
+const HF_API_TOKEN = process.env.HF_API_TOKEN;
+if (!HF_API_TOKEN) {
+  console.warn('⚠️  HF_API_TOKEN이 설정되지 않았습니다. .env 확인하세요.');
+}
+
 app.use("/api/performance", performanceRouter);
 app.use(express.static(path.join(__dirname, "dist")));
 app.use("/uploads", express.static("uploads"));

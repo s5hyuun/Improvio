@@ -234,6 +234,7 @@
   line-height: 1.8;
   white-space: pre-wrap;
   word-break: break-word;
+  margin : 20px 0;
 }
 
 .mkimageWrap {
@@ -662,4 +663,7 @@ select.mkinputLike {
 .mksubmitBtn[disabled] {
   opacity: 0.6;
   cursor: not-allowed;
+}
+.mkAttachmentImg{
+  width : 50%;
 }
