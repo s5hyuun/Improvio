@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Outlet, useNavigate } from "react-router-dom";
+import { Outlet, useNavigate, useLocation } from "react-router-dom";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import HotPost from "./components/HotPost";
@@ -9,6 +9,13 @@ function Community() {
   const [boards, setBoards] = useState([]);
   const [hotPosts, setHotPosts] = useState([]);
   const nav = useNavigate();
+  const location = useLocation(); // ✅ 현재 경로 사용
+
+  // ✅ 현재 URL에서 board_id 추출 (예: /community/board/5)
+  const currentBoardId = (() => {
+    const m = location.pathname.match(/\/community\/board\/(\d+)/);
+    return m ? Number(m[1]) : null;
+  })();
 
   useEffect(() => {
     fetch("http://localhost:5000/api/boards")
@@ -16,11 +23,10 @@ function Community() {
       .then((data) => {
         setBoards(data);
 
-        // ✅ boardId가 없으면 기본으로 자유게시판(free) 이동
+        // ✅ boardId가 없으면 자유게시판으로 이동
         if (location.pathname === "/community") {
-          const freeBoard =
-            data.find((b) => b.name === "자유게시판") || data[0];
-          nav(`/community/board/${freeBoard.board_id}`);
+          const freeBoard = data.find((b) => b.name === "자유게시판") || data[0];
+          if (freeBoard) nav(`/community/board/${freeBoard.board_id}`);
         }
       })
       .catch((err) => console.error(err));
@@ -42,23 +48,29 @@ function Community() {
           <div className={styles.commBoards}>
             <div>게시판 목록</div>
             <ul>
-              {boards.map((board) => (
-                <li
-                  key={board.board_id}
-                  onClick={() => nav(`/community/board/${board.board_id}`)}
-                >
-                  <div className={styles.commBoardsName}>
-                    <i className="fa-solid fa-message"></i>
-                    <div>{board.name}</div>
-                  </div>
-                  <span>{board.post_count}</span>
-                </li>
-              ))}
+              {boards.map((board) => {
+                const isActive = currentBoardId === Number(board.board_id);
+                return (
+                  <li
+                    key={board.board_id}
+                    className={isActive ? styles.activeBoard : undefined} // ✅ 활성화 클래스
+                    onClick={() => nav(`/community/board/${board.board_id}`)}
+                  >
+                    <div className={styles.commBoardsName}>
+                      <i className="fa-solid fa-message"></i>
+                      <div>{board.name}</div>
+                    </div>
+                    <span>{board.post_count}</span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
+
           <div className={styles.commPostsContainer}>
             <Outlet />
           </div>
+
           <div className={styles.commRightbar}>
             <div className={styles.commHot}>
               <div>🔥HOT 게시글</div>

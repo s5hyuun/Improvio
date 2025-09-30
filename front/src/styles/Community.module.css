@@ -613,3 +613,18 @@
     transform: translateY(0);
   }
 }
+
+/* list */
+.activeBoard {
+  background: #dbeafe;           
+  color: #1e3a8a;                
+  border-left: 4px solid #2563eb;
+}
+
+.commBoards ul li {
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.commBoards ul li:hover {
+  background: #e5edff;           
+}

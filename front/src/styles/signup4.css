@@ -11,7 +11,6 @@
   background-color: white;
   padding: 20px;
 
-  /* 추가: 너비 100%, 최대 500px 제한 + 아래쪽 margin 추가해서 버튼과 거리두기 */
   width: 100%;
   max-width: 500px;
   margin-bottom: 20px;

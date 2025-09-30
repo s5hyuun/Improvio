@@ -1,10 +1,12 @@
-// Header.jsx (최신)
+// Header.jsx (알람에서만 숨김 처리 버전)
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 
 const NOTIFS_STORAGE_KEY = "header_notifs_v1";
 const AUTH_KEY = "auth_user";
 const NOTICE_STORAGE_KEY = "notices_v1";
+// 헤더 드롭다운에서만 숨긴 공지 ID 보관
+const DISMISSED_NOTICE_KEY = "header_dismissed_notice_ids_v1";
 
 const DEPARTMENTS = [
   { id: "rd", label: "R&D", icon: "bulb" },
@@ -30,7 +32,6 @@ const NOTICE_SEED = [
 ];
 
 /** ─── Notice helpers ─────────────────────────────────────────── */
-// raw가 없으면 null, 있으면 배열(빈 배열일 수도 있음)
 function readNoticesFromStorage() {
   try {
     const raw = localStorage.getItem(NOTICE_STORAGE_KEY);
@@ -38,11 +39,6 @@ function readNoticesFromStorage() {
   } catch {
     return null;
   }
-}
-// 항상 배열을 반환(없으면 빈 배열)
-function readNoticesOrEmpty() {
-  const v = readNoticesFromStorage();
-  return Array.isArray(v) ? v : [];
 }
 function writeNoticesToStorage(list) {
   try {
@@ -54,24 +50,30 @@ function broadcastNotices(list) {
   const activeCount = (list || []).filter((n) => n.active).length;
   window.dispatchEvent(new CustomEvent("notice:changed", { detail: { list, activeCount } }));
 }
-// 처음 한번도 저장된 적이 없을 때(null)만 시드를 넣음.
-// 빈 배열([])이면 사용자가 모두 삭제한 상태이므로 시드 안 넣음.
+// 처음 한번도 저장된 적이 없을 때(null)만 시드 입력
 function ensureNoticesSeeded() {
   const current = readNoticesFromStorage(); // null | array
   if (current === null) {
     broadcastNotices(NOTICE_SEED);
     return NOTICE_SEED;
   }
-  return current; // 빈 배열이어도 그대로 반환
+  return current; // 빈 배열이면 그대로 유지
 }
-function deleteNotice(id) {
+
+// 헤더 전용 숨김 ID Set
+function readDismissedSet() {
   try {
-    const list = readNoticesOrEmpty();
-    const next = list.filter((n) => n.id !== id);
-    broadcastNotices(next); // 저장 + 전역 전파
-  } catch (e) {
-    console.error("공지 삭제 실패:", e);
+    const raw = localStorage.getItem(DISMISSED_NOTICE_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(arr);
+  } catch {
+    return new Set();
   }
+}
+function writeDismissedSet(set) {
+  try {
+    localStorage.setItem(DISMISSED_NOTICE_KEY, JSON.stringify([...set]));
+  } catch {}
 }
 
 /** ─── Dept helpers ───────────────────────────────────────────── */
@@ -182,6 +184,24 @@ export default function Header({ onSearch }) {
     return () => window.removeEventListener("notice:changed", onNoticeChanged);
   }, []);
 
+  // 헤더 전용 숨김 ID Set
+  const [dismissedNoticeIds, setDismissedNoticeIds] = useState(() => readDismissedSet());
+  const dismissNoticeInHeader = (id) => {
+    setDismissedNoticeIds((prev) => {
+      const next = new Set(prev);
+      next.add(id);
+      writeDismissedSet(next);
+      return next;
+    });
+  };
+  const restoreAllDismissedNotices = () => {
+    setDismissedNoticeIds(() => {
+      const empty = new Set();
+      writeDismissedSet(empty);
+      return empty;
+    });
+  };
+
   // 드롭다운 닫힘 제어
   const [notifOpen, setNotifOpen] = useState(false);
   const notifMenuRef = useRef(null);
@@ -202,15 +222,16 @@ export default function Header({ onSearch }) {
     navigate("/login", { replace: true });
   };
 
-  // 좌측 아이콘/라벨: 관리자 고정, 사용자만 부서 반영
+  // 좌측 아이콘/라벨
   const dept = deptById(user.deptId);
   const topLeft = isAdmin
     ? { label: "관리자 페이지", iconName: "shield", color: "#ea580c" }
     : { label: dept?.label || "사용자", iconName: dept?.icon || "user", color: "#2563eb" };
 
   // 벨 배지/색
-  const totalBadge = unread + noticeActiveCount;
-  const bellColor = unread > 0 ? "#EA580C" : noticeActiveCount > 0 ? "#2563EB" : undefined;
+  const visibleNotices = noticeList.filter(n => !dismissedNoticeIds.has(n.id)); // 헤더에서 숨긴 항목 제외
+  const totalBadge = unread + visibleNotices.length;
+  const bellColor = unread > 0 ? "#EA580C" : visibleNotices.length > 0 ? "#2563EB" : undefined;
 
   return (
     <header className="topbar" style={{ display: "flex", alignItems: "center" }}>
@@ -243,20 +264,23 @@ export default function Header({ onSearch }) {
             {notifOpen && (
               <ul className="menu" role="menu" style={{ minWidth: 320, padding: 8 }}>
                 <li style={{ fontWeight: 700, padding: "6px 8px" }}>공지</li>
-                {noticeList.length === 0 ? (
-                  <li style={{ padding: 8, opacity: 0.8 }}>활성 공지가 없습니다.</li>
+                {visibleNotices.length === 0 ? (
+                  <li style={{ padding: 8, opacity: 0.8 }}>
+                    공지가 없습니다.
+
+                  </li>
                 ) : (
-                  noticeList.map((n) => (
+                  visibleNotices.map((n) => (
                     <li key={n.id} style={{ padding: "8px 6px" }}>
                       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 8 }}>
                         <span style={{ fontWeight: 600 }}>{n.urgent ? "🔥 " : ""}{n.title}</span>
                         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                           <span style={{ fontSize: 12, opacity: 0.7 }}>{n.created_at}</span>
-                          {/* 삭제 버튼 → 영구 삭제(스토리지 반영) */}
+                          {/* 알람에서만 숨김: 공지 데이터는 보존 */}
                           <button
                             type="button"
-                            onClick={(e) => { e.stopPropagation(); deleteNotice(n.id); }}
-                            title="공지 삭제"
+                            onClick={(e) => { e.stopPropagation(); dismissNoticeInHeader(n.id); }}
+                            title="알람에서만 숨기기"
                             style={{ border: "none", background: "transparent", cursor: "pointer", fontSize: 16, lineHeight: 1, opacity: 0.7 }}
                           >
                             ×
@@ -345,7 +369,7 @@ function SuggestionSearch({ onSearch }) {
       setMessage("");
       onSearch(data, true);
     } catch (err) {
-      console.error("검색 실패:", err);
+      console.error("검색에 실패했습니다.", err);
       setMessage("검색에 실패했습니다.");
       onSearch([], false);
     }
