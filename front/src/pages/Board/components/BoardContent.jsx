@@ -1,46 +1,106 @@
 import { useState, useMemo } from "react";
 import styles from "../../../styles/Board.module.css";
 
+/** 상대/윈도우 경로 보정 + 절대 URL 생성 */
+function toAbsoluteUrl(raw, base = "http://localhost:5000") {
+  if (!raw) return null;
+  let s = String(raw).trim().replace(/['"]/g, "");
+  // 윈도우 경로 → URL 경로
+  s = s.replace(/\\/g, "/");
+  // 'uploads/...' 처럼 앞에 슬래시가 없으면 붙여줌
+  if (!/^https?:\/\//i.test(s) && !s.startsWith("/")) s = `/${s}`;
+  try {
+    return new URL(s, base).href;
+  } catch {
+    return null;
+  }
+}
+
+/** description/body HTML에서 <img> 첫 src 추출 */
+function extractImgFromHtml(html) {
+  if (!html) return null;
+  try {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    const img = div.querySelector("img");
+    const src = img?.getAttribute("src");
+    return src || null;
+  } catch {
+    return null;
+  }
+}
+
 /** 카드 내부에서 사용할 안전한 이미지 URL 선택자 */
 function pickImageUrl(suggestion, base = "http://localhost:5000") {
   if (!suggestion || typeof suggestion !== "object") return null;
 
-  const flatCandidates = [
-    suggestion.image_url,
-    suggestion.imageUrl,
-    suggestion.image,
-    suggestion.photo_url,
-    suggestion.photo,
-    suggestion.attachment_url,
-    suggestion.file_url,
-    suggestion.file_path,
-  ].filter(Boolean);
+  // 1) 본문 HTML에서 이미지 찾기
+  const fromHtml =
+    extractImgFromHtml(suggestion.description) ||
+    extractImgFromHtml(suggestion.body);
+  if (fromHtml) {
+    const u = toAbsoluteUrl(fromHtml, base);
+    if (u) return u;
+  }
 
-  const arrayCandidates = []
-    .concat(suggestion.images || [])
-    .concat(suggestion.photos || [])
-    .concat(suggestion.attachments || [])
-    .concat(suggestion.files || [])
-    .map((x) => {
-      if (!x) return null;
-      if (typeof x === "string") return x;
-      if (typeof x === "object") return x.url || x.path || x.file_url || x.file_path || null;
-      return null;
-    })
+  // 2) 널리 쓰이는 단일 필드들
+  const flatKeys = [
+    "image_url",
+    "imageUrl",
+    "image",
+    "photo_url",
+    "photo",
+    "thumbnail_url",
+    "thumb_url",
+    "attachment_url",
+    "file_url",
+    "file_path",
+    "image_path",
+    "upload_path",
+    "preview_url",
+  ];
+  const flatCandidates = flatKeys
+    .map((k) => suggestion[k])
+    .filter(Boolean)
+    .map((v) => toAbsoluteUrl(v, base))
     .filter(Boolean);
 
-  const first = [...flatCandidates, ...arrayCandidates].find(Boolean) || null;
-  if (!first) return null;
+  if (flatCandidates.length) return flatCandidates[0];
 
-  // 절대 URL인지 상대 경로인지 판별하여 보정
-  try {
-    const u = new URL(first, base);
-    // 만약 first가 이미 절대주소면 그대로, "/uploads/.." 같은 상대면 base 붙음
-    return u.href;
-  } catch {
-    // URL 파싱 실패 시 그대로 반환
-    return first;
+  // 3) 배열 형태(images/photos/attachments/files 등)
+  const arrayKeys = ["images", "photos", "attachments", "files", "pictures"];
+  const arrayCandidates = [];
+  arrayKeys.forEach((k) => {
+    const arr = suggestion[k];
+    if (Array.isArray(arr)) {
+      arr.forEach((x) => {
+        if (!x) return;
+        if (typeof x === "string") {
+          const u = toAbsoluteUrl(x, base);
+          if (u) arrayCandidates.push(u);
+        } else if (typeof x === "object") {
+          const cand =
+            x.url ||
+            x.path ||
+            x.file_url ||
+            x.file_path ||
+            x.image_url ||
+            x.preview_url;
+          const u = toAbsoluteUrl(cand, base);
+          if (u) arrayCandidates.push(u);
+        }
+      });
+    }
+  });
+  if (arrayCandidates.length) return arrayCandidates[0];
+
+  // 4) BoardPage에서 넘겨주는 표준화 필드
+  if (suggestion.image_url) {
+    const u = toAbsoluteUrl(suggestion.image_url, base);
+    if (u) return u;
   }
+
+  return null;
 }
 
 function BoardContent({ suggestion, onClick }) {
@@ -70,7 +130,6 @@ function BoardContent({ suggestion, onClick }) {
           body: JSON.stringify({ user_id: 1, score }), // TODO: 실제 로그인 user_id 사용
         }
       );
-
       if (res.ok) {
         if (score === 1) setVotes((v) => v + 1);
         else if (score === -1) setDislikes((d) => d + 1);
@@ -136,13 +195,13 @@ function BoardContent({ suggestion, onClick }) {
             <i className="fa-regular fa-thumbs-down"></i> {dislikes}
           </div>
 
-          <div title="댓글 수">
+        <div title="댓글 수">
             <i className="fa-regular fa-comment"></i> {comment_count}
           </div>
         </div>
       </div>
 
-      {/* 이미지 썸네일 영역 (있을 때만 표시) */}
+      {/* 이미지 썸네일 (있을 때만) */}
       {imageUrl && (
         <div
           style={{
@@ -153,6 +212,8 @@ function BoardContent({ suggestion, onClick }) {
             overflow: "hidden",
             border: "1px solid #e2e8f0",
           }}
+          onClick={(e) => e.stopPropagation()}
+          title="첨부 이미지"
         >
           <img
             src={imageUrl}
@@ -165,7 +226,7 @@ function BoardContent({ suggestion, onClick }) {
               display: "block",
             }}
             onError={(e) => {
-              // 썸네일 로딩 실패 시 영역 숨김
+              // 로딩 실패 시 썸네일 영역 숨김
               e.currentTarget.parentElement.style.display = "none";
             }}
           />

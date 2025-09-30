@@ -10,43 +10,93 @@ import BoardWrite from "./components/BoardWrite";
 const API = "http://localhost";
 const STORAGE_KEY = "proposal_items_cache_v1";
 
-/** 이미지/파일 경로를 표준 image_url로 해석 */
+function toAbsoluteUrl(raw, base = "http://localhost:5000") {
+  if (!raw) return null;
+  let s = String(raw).trim().replace(/['"]/g, "");
+  s = s.replace(/\\/g, "/");
+  if (!/^https?:\/\//i.test(s) && !s.startsWith("/")) s = `/${s}`;
+  try {
+    return new URL(s, base).href;
+  } catch {
+    return null;
+  }
+}
+
+/** description/body HTML에서 <img> 첫 src 추출 */
+function extractImgFromHtml(html) {
+  if (!html) return null;
+  try {
+    const div = document.createElement("div");
+    div.innerHTML = html;
+    const img = div.querySelector("img");
+    const src = img?.getAttribute("src");
+    return src || null;
+  } catch {
+    return null;
+  }
+}
+
+/** 다양한 형태의 이미지 소스를 표준 image_url로 수렴 */
 function resolveImage(row) {
   const base = "http://localhost:5000";
-  const flats = [
-    row.image_url,
-    row.imageUrl,
-    row.image,
-    row.photo_url,
-    row.photo,
-    row.attachment_url,
-    row.file_url,
-    row.file_path,
-  ].filter(Boolean);
 
-  const arrays = []
-    .concat(row.images || [])
-    .concat(row.photos || [])
-    .concat(row.attachments || [])
-    .concat(row.files || [])
-    .map((x) => {
-      if (!x) return null;
-      if (typeof x === "string") return x;
-      if (typeof x === "object")
-        return x.url || x.path || x.file_url || x.file_path || null;
-      return null;
-    })
-    .filter(Boolean);
-
-  const first = [...flats, ...arrays].find(Boolean);
-  if (!first) return null;
-
-  try {
-    const u = new URL(first, base);
-    return u.href;
-  } catch {
-    return first;
+  // 1) 본문 HTML에서 우선 추출
+  const fromHtml =
+    extractImgFromHtml(row.description) || extractImgFromHtml(row.body);
+  if (fromHtml) {
+    const u = toAbsoluteUrl(fromHtml, base);
+    if (u) return u;
   }
+
+  // 2) 단일 키
+  const flatKeys = [
+    "image_url",
+    "imageUrl",
+    "image",
+    "photo_url",
+    "photo",
+    "thumbnail_url",
+    "thumb_url",
+    "attachment_url",
+    "file_url",
+    "file_path",
+    "image_path",
+    "upload_path",
+    "preview_url",
+  ];
+  for (const k of flatKeys) {
+    if (row[k]) {
+      const u = toAbsoluteUrl(row[k], base);
+      if (u) return u;
+    }
+  }
+
+  // 3) 배열 키
+  const arrayKeys = ["images", "photos", "attachments", "files", "pictures"];
+  for (const k of arrayKeys) {
+    const arr = row[k];
+    if (Array.isArray(arr)) {
+      for (const x of arr) {
+        if (!x) continue;
+        let cand = null;
+        if (typeof x === "string") cand = x;
+        else if (typeof x === "object") {
+          cand =
+            x.url ||
+            x.path ||
+            x.file_url ||
+            x.file_path ||
+            x.image_url ||
+            x.preview_url ||
+            null;
+        }
+        const u = toAbsoluteUrl(cand, base);
+        if (u) return u;
+      }
+    }
+  }
+
+  return null;
 }
 
 // Proposal.jsx의 규칙과 동일한 어댑터 + image_url 매핑
@@ -92,9 +142,6 @@ function adaptFromDB(row) {
     status,
     urgent,
     image_url, // ✅ 표준화된 이미지 URL
-
-    comment_count: row.comment_count ?? 0,
-    vote_count: row.vote_count ?? 0,
   };
 }
 
@@ -108,7 +155,6 @@ function loadCache() {
 }
 
 function mergeById(serverList, cacheList) {
-  // cache의 최신 status/urgent 값을 서버 목록에 덮어씁니다.
   const map = new Map(cacheList.map((x) => [x.id, x]));
   return serverList.map((s) => {
     const m = map.get(s.id);
@@ -244,7 +290,6 @@ function BoardPage() {
                     const server = Array.isArray(data)
                       ? data.map(adaptFromDB)
                       : [];
-                    // 새 글 작성 후에도 캐시 병합
                     const cache = loadCache();
                     setSuggestions(
                       cache.length ? mergeById(server, cache) : server
@@ -271,8 +316,6 @@ function BoardPage() {
                         ...s,
                         title: cleanText(s.title),
                         description: cleanText(s.description),
-                        comment_count: s.comment_count,
-                        vote_count: s.vote_count,
                       }}
                       onClick={() => setSelected(s)}
                     />
