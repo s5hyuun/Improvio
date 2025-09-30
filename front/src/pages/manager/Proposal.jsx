@@ -108,13 +108,24 @@ export function SuggestionList() {
   }, []);
 
   const updateStatus = async (id, next) => {
+    // 1) 로컬 상태/캐시 갱신
+    let changedItem = null;
     setItems((prev) => {
       const updated = prev.map((x) =>
-        x.id === id ? { ...x, status: next } : x
+        x.id === id ? ((changedItem = { ...x, status: next }), changedItem) : x
       );
       saveToStorage(updated);
       return updated;
     });
+
+    // 2) 다른 페이지로 실시간 브로드캐스트
+    window.dispatchEvent(
+      new CustomEvent("suggestion:status", {
+        detail: { id, status: next, item: changedItem },
+      })
+    );
+
+    // 3) 서버 반영
     try {
       await fetch(`${API}/api/suggestions/${id}`, {
         method: "PUT",
@@ -155,6 +166,7 @@ export function SuggestionList() {
       }
     } catch {}
   };
+
   const viewItems = useMemo(() => {
     let arr = items;
 
@@ -330,7 +342,7 @@ export function adaptFromDB(row) {
       : null;
 
   let status = row.status;
-  if (!DB_STATUS.includes(status)) {
+  if (!["pending", "approved", "completed"].includes(status)) {
     const lower = String(row.status ?? "").toLowerCase();
     if (lower.includes("progress")) status = "approved";
     else if (lower.includes("complete")) status = "completed";
@@ -344,6 +356,8 @@ export function adaptFromDB(row) {
     id,
     title: row.title ?? "(제목 없음)",
     body,
+    // BoardPage 호환을 위해 description도 채워둡니다.
+    description: row.description ?? body,
     dept,
     author,
     created_at,
