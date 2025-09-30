@@ -23,6 +23,7 @@
   font-size: 22px;
   font-weight: bold;
   color: #333;
+  margin-top : 60px;
 }
 
 .signup-section {
@@ -171,6 +172,19 @@
   /* align-items: center; */
 
   min-height: 100vh;
+
+  /* 기존 jsx에서 주던 bg-gray-100 색상 대체 */
+  background-color: #f3f7fb;
+
+  padding: 20px;
+}
+.signupcontent{
+  display: flex;
+  flex-direction: column;
+  /* justify-content: center; */
+  align-items: center;
+
+  min-height: 100%;
 
   /* 기존 jsx에서 주던 bg-gray-100 색상 대체 */
   background-color: #f3f7fb;

@@ -21,8 +21,6 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-// const COLORS = ["#4a6cf7", "#69bff8", "#ff9f43", "#e3eaf5", "#b0c4ff"];
-
 const COLORS = [
   "#dbeafe", // 연한 하늘빛 블루
   "#93c5fd", // 중간 밝기 블루
@@ -30,14 +28,6 @@ const COLORS = [
   "#1e40af", // 네이비 블루
   "#334155", // 블루그레이 다크
 ];
-// const COLORS = [
-//   "#dbeafe", // blue-100 (연한 하늘색)
-//   "#93c5fd", // blue-300 (중간 파스텔 블루)
-//   "#3b82f6", // blue-500 (대표 블루)
-//   "#1e40af", // blue-800 (네이비 블루)
-//   "#1e3a8a", // blue-900 (딥 네이비)
-// ];
-
 
 const CustomLegend = ({ payload }) => {
   return (
@@ -78,6 +68,7 @@ const CustomLegend = ({ payload }) => {
     </ul>
   );
 };
+
 const CustomLineLegend = ({ payload }) => {
   return (
     <ul
@@ -158,10 +149,6 @@ const CustomBarLegend = ({ payload }) => {
   );
 };
 
-
-
-
-
 const DEPT_MAP = {
   1: "생산",
   2: "품질",
@@ -171,7 +158,7 @@ const DEPT_MAP = {
 };
 
 const Dashboard = () => {
-  const [suggestionTrend, setSuggestionTrend] = useState([]);
+  const [suggestionTrend, setSuggestionTrend] = useState({ day: [], cum: [] });
   const [deptToday, setDeptToday] = useState([]);
   const [deptSolved, setDeptSolved] = useState([]);
   const [effects, setEffects] = useState({});
@@ -180,44 +167,64 @@ const Dashboard = () => {
   useEffect(() => {
     async function fetchAll() {
       try {
-        // 일 단위 데이터 (월~금, 영어 요일)
+        // 1) 일 단위 데이터 (전체 기간)
         const trendRes = await axios.get("http://localhost:5000/api/performance/weekly-trend");
-        const dayOfWeekMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const rows = (trendRes.data || [])
+          .map((r) => ({
+            dateObj: new Date(r.day),
+            dayStr: String(r.day),             // YYYY-MM-DD
+            total: Number(r.total),
+            solved: Number(r.solved || 0),
+            status: r.status,
+          }))
+          .sort((a, b) => a.dateObj - b.dateObj); // 날짜 오름차순
 
-        const dayData = (trendRes.data || [])
-          .map((item) => {
-            const d = new Date(item.day);
-            const dayLabel = dayOfWeekMap[d.getDay()];
-            return {
-              day: dayLabel,
-              total: Number(item.total),
-              solved: Number(item.solved || 0),
-              status: item.status,
-            };
-          })
+        // (A) BarChart용: 요일 라벨(월~금만)
+        const dayOfWeekMap = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const dayData = rows
+          .map((item) => ({
+            day: dayOfWeekMap[item.dateObj.getDay()],
+            total: item.total,
+            solved: item.solved,
+            status: item.status,
+          }))
           .filter((item) => ["Mon", "Tue", "Wed", "Thu", "Fri"].includes(item.day));
 
-        setSuggestionTrend({ day: dayData });
+        // (B) LineChart용: 누적 합 + X축 '일(1~31)'만
+        let runningTotal = 0;
+        let runningSolved = 0;
+        const cumData = rows.map((item) => {
+          runningTotal += item.total;
+          runningSolved += item.solved;
+          return {
+            date: item.dayStr,                // 툴팁에 보여줄 전체 날짜
+            d: item.dateObj.getDate(),        // ✅ X축 표시에 사용할 '일(1~31)'
+            total: runningTotal,              // 누적 총 건의
+            solved: runningSolved,            // 누적 완료 건의
+          };
+        });
 
-        // 부서별 전체 건의 수
+        setSuggestionTrend({ day: dayData, cum: cumData });
+
+        // 2) 부서별 전체 건의 수
         const dtRes = await axios.get("http://localhost:5000/api/performance/dept-today");
         setDeptToday((dtRes.data || []).map((r) => ({
           name: DEPT_MAP[r.id] || `부서-${r.id}`,
           value: Number(r.value),
         })));
 
-        // 부서별 해결된 건의 수
+        // 3) 부서별 해결된 건의 수
         const dsRes = await axios.get("http://localhost:5000/api/performance/dept-solved");
         setDeptSolved((dsRes.data || []).map((r) => ({
           name: DEPT_MAP[r.id] || `부서-${r.id}`,
           value: Number(r.value),
         })));
 
-        // 기대효과
+        // 4) 기대효과
         const efRes = await axios.get("http://localhost:5000/api/performance/expected-effects");
         setEffects(efRes.data || { avg_productivity: null, total_cost_saving: 0, safety_improvements: 0 });
 
-        // 최근 해결된 건
+        // 5) 최근 해결된 건
         const recentRes = await axios.get("http://localhost:5000/api/performance/recent-solved");
         setRecentSolved(recentRes.data || null);
       } catch (err) {
@@ -235,7 +242,7 @@ const Dashboard = () => {
         <Header />
         <div className="dashboard-container">
 
-          {/* 일 단위 건의 수 - BarChart */}
+          {/* 일 단위 건의 수 - BarChart (월~금) */}
           <div className="card">
             <div className="card-title">일 단위 건의 수</div>
             <div className="card-content" style={{ height: 300 }}>
@@ -246,74 +253,77 @@ const Dashboard = () => {
                   <YAxis stroke="#333" />
                   <Tooltip />
                   <Legend content={<CustomBarLegend />}/>
-                  {/* <Bar dataKey="total" fill="#4a6cf7" name="총 건의" />
-                  <Bar dataKey="solved" fill="#69bff8" name="완료 건의" /> */}
-                <Bar dataKey="total" fill="#1e40af" name="총 건의" />   {/* navy blue (blue-800) */}
-<Bar dataKey="solved" fill="#60a5fa" name="완료 건의" /> {/* sky blue (blue-400) */}
-
-
+                  <Bar dataKey="total" fill="#1e40af" name="총 건의" />
+                  <Bar dataKey="solved" fill="#60a5fa" name="완료 건의" />
                 </BarChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* 일 단위 LineChart */}
+          {/* 해결된 이슈 흐름 - LineChart (누적/우상향, X축=일, 점 표시) */}
           <div className="card">
-            <div className="card-title">해결된 이슈 흐름</div>
+            <div className="card-title">해결된 이슈 흐름(누적)</div>
             <div className="card-content" style={{ height: 300 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={suggestionTrend.day || []}>
+                <LineChart data={suggestionTrend.cum || []}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e3eaf5" />
-                  <XAxis dataKey="day" stroke="#333" />
+                  {/* ✅ X축은 '일(1~31)' */}
+                  <XAxis dataKey="d" stroke="#333" />
                   <YAxis stroke="#333" />
-                  <Tooltip />
+                  {/* 툴팁에 전체 날짜를 보여주도록 labelFormatter 사용 */}
+                  <Tooltip
+                    labelFormatter={(label, payload) => {
+                      const full = payload?.[0]?.payload?.date; // YYYY-MM-DD
+                      return full || `${label}일`;
+                    }}
+                  />
                   <Legend content={<CustomLineLegend />}/>
-                  {/* <Line type="monotone" dataKey="total" stroke="#4a6cf7" strokeWidth={3} />
-                  <Line type="monotone" dataKey="solved" stroke="#69bff8" strokeWidth={3} /> */}
-                <Line
+                  <Line
                     type="monotone"
                     dataKey="total"
-                    stroke="#3b82f6" // 기본 파랑 (팔레트 2번)
+                    stroke="#3b82f6"
                     strokeWidth={3}
-                    dot={false}
-                    activeDot={{ r: 4, stroke: "#3b82f6", fill: "#fff" }}
+                    dot={{ r: 3 }}                               // ✅ 점 표시
+                    activeDot={{ r: 5, stroke: "#3b82f6", fill: "#fff" }}
+                    name="누적 총 건의"
                   />
                   <Line
                     type="monotone"
                     dataKey="solved"
-                    stroke="#1e40af" // 네이비 블루 (팔레트 3번)
+                    stroke="#1e40af"
                     strokeWidth={3}
-                    dot={false}
-                    activeDot={{ r: 4, stroke: "#1e40af", fill: "#fff" }}
+                    dot={{ r: 3 }}                               // ✅ 점 표시
+                    activeDot={{ r: 5, stroke: "#1e40af", fill: "#fff" }}
+                    name="누적 완료 건의"
                   />
                 </LineChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* 최근 해결된 문제 */}
+          {/* 최신 해결 사례 */}
           <div className="card">
             <div className="card-title">최신 해결 사례</div>
             <div className="card-content">
-  {recentSolved ? (
-    <div className="recent-solved-box">
-      <div className="recent-solved-summary">
-        {recentSolved.effect_summary} <br />
-        <small>({new Date(recentSolved.resolved_at).toLocaleString()})</small>
-      </div>
-      <img
-        src="http://localhost:5000/uploads/14.png"
-        alt="모니터링 개선 이미지"
-        className="recent-solved-image"
-      />
-    </div>
-  ) : (
-    <span>데이터 없음</span>
-  )}
-</div>
+              {recentSolved ? (
+                <div className="recent-solved-box">
+                  <div className="recent-solved-summary">
+                    {recentSolved.effect_summary} <br />
+                    <small>({new Date(recentSolved.resolved_at).toLocaleString()})</small>
+                  </div>
+                  <img
+                    src="http://localhost:5000/uploads/14.png"
+                    alt="모니터링 개선 이미지"
+                    className="recent-solved-image"
+                  />
+                </div>
+              ) : (
+                <span>데이터 없음</span>
+              )}
+            </div>
           </div>
 
-          {/* 부서별 전체 건의 수 - Pie */}
+          {/* 부서별 전체 건의 수 */}
           <div className="card">
             <div className="card-title">부서별 전체 건의 수</div>
             <div className="card-content" style={{ height: 300 }}>
@@ -324,14 +334,14 @@ const Dashboard = () => {
                       <Cell key={index} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
-                  <Legend   content={<CustomLegend />} />
+                  <Legend content={<CustomLegend />} />
                   <Tooltip />
                 </PieChart>
               </ResponsiveContainer>
             </div>
           </div>
 
-          {/* 부서별 해결된 건의 수 - 도넛 */}
+          {/* 부서별 해결된 건의 수 */}
           <div className="card">
             <div className="card-title">부서별 해결된 건의 수</div>
             <div className="card-content" style={{ height: 300 }}>
@@ -349,42 +359,39 @@ const Dashboard = () => {
             </div>
           </div>
 
-          {/* 기대효과 */}
+          {/* 실적 지표 */}
           <div className="card">
-  <div className="card-title">실적 지표</div>
-  <div className="card-content">
-    <ul className="effect-list">
-  <li className="effect-item efficiency">
-    <div className="effect-label">작업 효율성 평균</div>
-    <div className="effect-box">
-      <span className="effect-icon"><i class="fa-solid fa-gear"></i></span>
-      <div className="effect-value">
-        {effects.avg_productivity ? Number(effects.avg_productivity).toFixed(2) : "데이터 없음"}%
-      </div>
-    </div>
-  </li>
-  <li className="effect-item safety">
-    <div className="effect-label">안전 개선 완료 건수</div>
-    <div className="effect-box">
-      <span className="effect-icon"><i class="fa-solid fa-helmet-safety"></i></span>
-      <div className="effect-value">{effects.safety_improvements ?? 0} 건</div>
-    </div>
-  </li>
-  <li className="effect-item saving">
-    <div className="effect-label">총 원가 절감</div>
-    <div className="effect-box">
-      <span className="effect-icon"><i class="fa-solid fa-sack-dollar"></i></span>
-      <div className="effect-value">
-        {effects.total_cost_saving ? Number(effects.total_cost_saving).toLocaleString() : 0} 원
-      </div>
-    </div>
-  </li>
-</ul>
-
-
-  </div>
-</div>
-
+            <div className="card-title">실적 지표</div>
+            <div className="card-content">
+              <ul className="effect-list">
+                <li className="effect-item efficiency">
+                  <div className="effect-label">작업 효율성 평균</div>
+                  <div className="effect-box">
+                    <span className="effect-icon"><i className="fa-solid fa-gear"></i></span>
+                    <div className="effect-value">
+                      {effects.avg_productivity ? Number(effects.avg_productivity).toFixed(2) : "데이터 없음"}%
+                    </div>
+                  </div>
+                </li>
+                <li className="effect-item safety">
+                  <div className="effect-label">안전 개선 완료 건수</div>
+                  <div className="effect-box">
+                    <span className="effect-icon"><i className="fa-solid fa-helmet-safety"></i></span>
+                    <div className="effect-value">{effects.safety_improvements ?? 0} 건</div>
+                  </div>
+                </li>
+                <li className="effect-item saving">
+                  <div className="effect-label">총 원가 절감</div>
+                  <div className="effect-box">
+                    <span className="effect-icon"><i className="fa-solid fa-sack-dollar"></i></span>
+                    <div className="effect-value">
+                      {effects.total_cost_saving ? Number(effects.total_cost_saving).toLocaleString() : 0} 원
+                    </div>
+                  </div>
+                </li>
+              </ul>
+            </div>
+          </div>
 
         </div>
       </main>

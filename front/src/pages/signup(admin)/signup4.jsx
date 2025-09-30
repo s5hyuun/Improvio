@@ -33,7 +33,7 @@ export default function Signup4() {
 
         {step === 1 && (
           /* 기존: <section className="content flex justify-center items-center min-h-screen bg-gray-100"> */
-          <section className="content">
+          <section className="signupcontent">
             <h1 className="signup-title">회원가입(관리자용)</h1>
 
             <div className="big-block">
