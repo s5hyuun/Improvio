@@ -25,14 +25,29 @@ export default function Sidebar() {
 
   const location = useLocation();
   const isCommunity = location.pathname.startsWith("/community");
-
   const isAuthPage = /\/login|\/signup/i.test(location.pathname);
 
   const readAuth = () => {
     try {
       const raw = localStorage.getItem(AUTH_KEY);
       if (!raw) return null;
-      return JSON.parse(raw);
+      const a = JSON.parse(raw);
+
+      const roleRaw =
+        a?.role ?? a?.user?.role ?? a?.claims?.role ?? a?.roles?.[0] ?? a?.auth?.role ?? a?.privilege;
+
+      const role =
+        typeof roleRaw === "string" ? roleRaw.toLowerCase() :
+        typeof roleRaw === "number" ? roleRaw : "";
+
+      const department_id =
+        a?.department_id ?? a?.department ?? a?.user?.department_id ?? a?.profile?.department_id ?? null;
+
+      const department_name =
+        a?.department_name ?? a?.user?.department_name ??
+        (Number.isInteger(department_id) ? DEPT_LABEL_BY_NUM[department_id] : null) ?? null;
+
+      return { ...a, role, department_id, department_name };
     } catch {
       return null;
     }
@@ -49,8 +64,10 @@ export default function Sidebar() {
     };
   }, []);
 
-  const role = String(auth?.role || "").toLowerCase();
-  const isAdmin = role === "admin" || role === "manager";
+  const role = auth?.role ?? "";
+  const isAdmin =
+    role === "admin" || role === "manager" ||
+    (typeof role === "number" && [1, 9].includes(role));
 
   const isLoggedIn = !!auth;
   const showAnonProfile = !isLoggedIn || isAuthPage;
@@ -124,6 +141,13 @@ export default function Sidebar() {
             <span className="ico">{icon("chat")}</span>
             <span>Community</span>
           </NavLink>
+
+          {isAdmin && (
+            <NavLink to="/manager" className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}>
+              <span className="ico">{icon("shield")}</span>
+              <span>관리자</span>
+            </NavLink>
+          )}
         </nav>
 
         {!isCommunity && (
