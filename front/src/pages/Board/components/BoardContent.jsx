@@ -1,8 +1,7 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import styles from "../../../styles/Board.module.css";
 
-const API = "http://localhost:5000";
-const STORAGE_KEY = "proposal_items_cache_v1";
+const BASE = "http://localhost:5000";
 
 /** "a/b c.jpg" → "a/b%20c.jpg" (슬래시는 유지, 세그먼트만 인코딩) */
 function encodePathSegments(path) {
@@ -16,33 +15,50 @@ function encodePathSegments(path) {
     .join("/");
 }
 
-/** description/body HTML에서 <img> 첫 src 추출 */
+/** /uploads 아래의 정적 파일 URL 만들기 */
+function toUploadsUrl(filePath) {
+  const encoded = encodePathSegments(filePath);
+  if (!encoded) return null;
+  // 이미 절대 URL이면 그대로
+  if (/^https?:\/\//i.test(filePath)) return filePath;
+  return `${BASE}/uploads/${encoded}`;
+}
+
+/** HTML에서 첫번째 <img src> 추출 */
 function extractImgFromHtml(html) {
   if (!html) return null;
   try {
     const div = document.createElement("div");
     div.innerHTML = html;
     const img = div.querySelector("img");
-    const src = img?.getAttribute("src");
-    return src || null;
+    return img?.getAttribute("src") || null;
   } catch {
     return null;
   }
 }
 
-/** 다양한 형태의 이미지 소스를 표준 image_url로 수렴 */
-function resolveImage(row) {
-  const base = "http://localhost:5000";
+/** 확장자 (소문자) */
+function extOf(p) {
+  if (!p) return "";
+  const clean = String(p).split("?")[0];
+  const i = clean.lastIndexOf(".");
+  return i >= 0 ? clean.slice(i + 1).toLowerCase() : "";
+}
 
-  // 1) 본문 HTML에서 우선 추출
+/** 썸네일 후보를 고르는 공통 로직 */
+function pickImageUrlFromSuggestion(suggestion) {
+  // 1) description/body 내 <img src>
   const fromHtml =
-    extractImgFromHtml(row.description) || extractImgFromHtml(row.body);
+    extractImgFromHtml(suggestion?.description) ||
+    extractImgFromHtml(suggestion?.body);
   if (fromHtml) {
-    const u = toAbsoluteUrl(fromHtml, base);
-    if (u) return u;
+    const e = extOf(fromHtml);
+    if (["jpg", "jpeg", "png"].includes(e)) {
+      return /^https?:\/\//i.test(fromHtml) ? fromHtml : toUploadsUrl(fromHtml);
+    }
   }
 
-  // 2) 단일 키
+  // 2) 평면 키들
   const flatKeys = [
     "image_url",
     "imageUrl",
@@ -59,78 +75,20 @@ function resolveImage(row) {
     "preview_url",
   ];
   for (const k of flatKeys) {
-    if (row[k]) {
-      const u = toAbsoluteUrl(row[k], base);
-      if (u) return u;
-    }
-  }
-
-  // 3) 배열 키
-  const arrayKeys = ["images", "photos", "attachments", "files", "pictures"];
-  for (const k of arrayKeys) {
-    const arr = row[k];
-    if (Array.isArray(arr)) {
-      for (const x of arr) {
-        if (!x) continue;
-        let cand = null;
-        if (typeof x === "string") cand = x;
-        else if (typeof x === "object") {
-          cand =
-            x.url ||
-            x.path ||
-            x.file_url ||
-            x.file_path ||
-            x.image_url ||
-            x.preview_url ||
-            null;
-        }
-        const u = toAbsoluteUrl(cand, base);
-        if (u) return u;
-      }
-    }
+    const v = suggestion?.[k];
+    if (!v) continue;
+    const e = extOf(v);
+    if (!["jpg", "jpeg", "png"].includes(e)) continue;
+    return /^https?:\/\//i.test(v) ? v : toUploadsUrl(v);
   }
 
   return null;
 }
 
-// Proposal.jsx의 규칙과 동일한 어댑터 + image_url 매핑
-function adaptFromDB(row) {
-  const id = row.id ?? row.suggestion_id ?? row.suggestionId;
-  const body = row.body ?? row.description ?? "";
-  const dept = row.dept ?? row.department_name ?? null;
-  const author = row.author ?? row.name ?? null;
-  const created_at =
-    row.created_at ?? row.createdAt ?? new Date().toISOString();
-
-  const priority =
-    typeof row.priority === "number"
-      ? row.priority
-      : typeof row.avg_score === "number"
-      ? row.avg_score
-      : null;
-
-  let status = row.status;
-  if (!["pending", "approved", "completed"].includes(status)) {
-    const lower = String(row.status ?? "").toLowerCase();
-    if (lower.includes("progress")) status = "approved";
-    else if (lower.includes("complete")) status = "completed";
-    else status = "pending";
-  }
-
-  const urgent =
-    typeof row.urgent === "boolean" ? row.urgent : !!row.is_urgent || false;
-
-  const image_url = resolveImage(row);
-
-  return {
-    id,
-    suggestion_id: row.suggestion_id ?? id,
-    title: row.title ?? "(제목 없음)",
-    description: row.description ?? body,
-    body,
-    dept,
-    department_name: row.department_name ?? dept,
-    author,
+function BoardContent({ suggestion, onClick }) {
+  const {
+    title,
+    description = "",
     created_at,
     author_id,
     vote_count = 0,
@@ -234,20 +192,20 @@ function adaptFromDB(row) {
     description.length > 60 ? `${description.slice(0, 60)}...` : description;
 
   return (
-    <div className={styles.contentContainer} onClick={onClick}>
-      <h3>{title}</h3>
-      <div className={styles.description}>{description}</div>
+    <div
+      className={styles.contentContainer}
+      onClick={onClick}
+      style={{ display: "flex", alignItems: "center", gap: 12 }}
+    >
+      {/* 텍스트 */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <h3 className={styles.cardTitle} style={{ marginBottom: 6 }}>
+          {title}
+        </h3>
 
-      <div className="main">
-        {/* Header에 onSearch 연결 */}
-        <Header
-          isLoggedIn={true}
-          setIsLoggedIn={() => {}}
-          onSearch={(results, active) => {
-            setSearchResults(results || []);
-            setIsSearching(!!active);
-          }}
-        />
+        <div className={styles.description} style={{ marginBottom: 8 }}>
+          {shortDesc}
+        </div>
 
         <div className={styles.contentUser}>
           <div title="작성자">

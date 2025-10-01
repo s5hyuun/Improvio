@@ -22,7 +22,7 @@ export default function SignupStep2({ onComplete }) {
 
   // 🔥 컴포넌트 로드 시 부서 목록 API 호출
   useEffect(() => {
-    fetch("http://localhost:4000/api/departments")
+    fetch("http://localhost:5000/api/departments")
       .then((res) => res.json())
       .then((data) => setDepartments(data))
       .catch((err) => console.error("부서 불러오기 실패:", err));
@@ -62,7 +62,7 @@ export default function SignupStep2({ onComplete }) {
     }
 
     try {
-      const res = await fetch("http://localhost:4000/api/auth/register", {
+      const res = await fetch("http://localhost:5000/api/auth/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

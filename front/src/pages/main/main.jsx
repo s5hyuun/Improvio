@@ -23,7 +23,7 @@ export default function Dashboard() {
 
   async function translateText(text, targetLang) {
     try {
-      const res = await axios.post("http://localhost:4000/api/translate", { text, targetLang });
+      const res = await axios.post("http://localhost:5000/api/translate", { text, targetLang });
       return res.data.translatedText;
     } catch (err) {
       console.error("번역 실패:", err);
@@ -35,11 +35,11 @@ export default function Dashboard() {
     async function fetchAll() {
       try {
         // 1. 총 건수
-        const countsRes = await axios.get("http://localhost:4000/api/performance/counts");
+        const countsRes = await axios.get("http://localhost:5000/api/performance/counts");
         setTotalCount(countsRes.data || { total: 0, today: 0 });
 
         // 2. 주간 트렌드
-        const trendRes = await axios.get("http://localhost:4000/api/performance/weekly-trend");
+        const trendRes = await axios.get("http://localhost:5000/api/performance/weekly-trend");
         const trendFormatted = (trendRes.data || []).map(item => {
           const d = new Date(item.day);
           const label = `${d.getMonth() + 1}-${String(d.getDate()).padStart(2, "0")}`;
@@ -48,7 +48,7 @@ export default function Dashboard() {
         setSuggestionTrend(trendFormatted);
 
         // 3. 부서별 오늘 건의
-        const dtRes = await axios.get("http://localhost:4000/api/performance/dept-today");
+        const dtRes = await axios.get("http://localhost:5000/api/performance/dept-today");
         let dtFormatted = (dtRes.data || []).map(r => ({
           name: DEPT_MAP[r.id] || `Dept-${r.id}`,
           value: Number(r.value),
@@ -62,7 +62,7 @@ export default function Dashboard() {
         setDeptToday(dtFormatted);
 
         // 4. 부서별 해결 건의
-        const dsRes = await axios.get("http://localhost:4000/api/performance/dept-solved");
+        const dsRes = await axios.get("http://localhost:5000/api/performance/dept-solved");
         let dsFormatted = (dsRes.data || []).map(r => ({
           name: DEPT_MAP[r.id] || `Dept-${r.id}`,
           value: Number(r.value),
@@ -76,11 +76,11 @@ export default function Dashboard() {
         setDeptSolved(dsFormatted);
 
         // 5. 기대효과
-        const efRes = await axios.get("http://localhost:4000/api/performance/expected-effects");
+        const efRes = await axios.get("http://localhost:5000/api/performance/expected-effects");
         setEffects(efRes.data || { avg_productivity: null, total_cost_saving: 0, safety_improvements: 0 });
 
         // 6. 최근 해결된 건
-        const recentRes = await axios.get("http://localhost:4000/api/performance/recent-solved");
+        const recentRes = await axios.get("http://localhost:5000/api/performance/recent-solved");
         let recentData = recentRes.data || null;
         if (recentData && i18n.language !== "ko") {
           recentData.effect_summary = await translateText(recentData.effect_summary, i18n.language);

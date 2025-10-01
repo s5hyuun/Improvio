@@ -36,7 +36,9 @@ app.use(express.json());
 app.use("/api/performance", performanceRouter);
 
 // React 빌드 static 서빙
-app.use(express.static(path.join(__dirname, "dist")));
+const buildPath = path.join(__dirname, "../front/backend/dist");
+
+app.use(express.static(buildPath));
 
 // SPA 라우팅 (React 라우터 지원)
 
@@ -1118,12 +1120,8 @@ app.post("/api/posts/:postId/comments", async (req, res) => {
   }
 });
 
-app.get((req, res) => {
-  if (req.path.startsWith("/api")) {
-    // API 요청이면 404
-    return res.status(404).json({ error: "API endpoint not found" });
-  }
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(buildPath, "index.html"));
 });
 // server.js
 

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState , useMemo } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import styles from "../../styles/Board.module.css";
@@ -168,7 +168,7 @@ function BoardPage() {
   // 번역 API 호출 함수
   async function translateText(text, lang) {
     try {
-      const res = await fetch("http://localhost:4000/api/translate", {
+      const res = await fetch("http://localhost:5000/api/translate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text, targetLang: lang.toUpperCase() }),
@@ -185,7 +185,7 @@ function BoardPage() {
   useEffect(() => {
     async function fetchAndTranslate() {
       try {
-        const res = await fetch("http://localhost:4000/api/suggestions");
+        const res = await fetch("http://localhost:5000/api/suggestions");
         const data = await res.json();
 
         const lang = i18n.language || "ko";
@@ -285,7 +285,7 @@ function BoardPage() {
                 onClose={() => setWrite(false)}
                 onSubmit={async (formData) => {
                   try {
-                    await fetch("http://localhost:4000/api/suggestions", {
+                    await fetch("http://localhost:5000/api/suggestions", {
                       method: "POST",
                       body: formData,
                     });

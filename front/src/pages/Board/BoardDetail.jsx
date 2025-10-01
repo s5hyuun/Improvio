@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState} from "react";
 import styles from "../../styles/Board.module.css";
 import BoardComment from "./components/BoardComment";
 
@@ -29,7 +29,7 @@ function BoardDetail({ suggestion, onClose }) {
   const fetchData = async () => {
     try {
       const data = await fetch(
-        `http://localhost:4000/api/suggestions/${suggestion.suggestion_id}/details`
+        `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/details`
       ).then((res) => res.json());
 
       setDetail(data);
@@ -62,7 +62,7 @@ function BoardDetail({ suggestion, onClose }) {
   const handleVote = async () => {
     try {
       await fetch(
-        `http://localhost:4000/api/suggestions/${suggestion.suggestion_id}/vote`,
+        `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/vote`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -80,7 +80,7 @@ function BoardDetail({ suggestion, onClose }) {
   const handleDislike = async () => {
     try {
       await fetch(
-        `http://localhost:4000/api/suggestions/${suggestion.suggestion_id}/dislike`,
+        `http://localhost:5000/api/suggestions/${suggestion.suggestion_id}/dislike`,
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
@@ -100,7 +100,7 @@ function BoardDetail({ suggestion, onClose }) {
     if (!newComment.trim()) return;
     setSubmitting(true);
     try {
-      const res = await fetch("http://localhost:4000/api/comments", {
+      const res = await fetch("http://localhost:5000/api/comments", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
