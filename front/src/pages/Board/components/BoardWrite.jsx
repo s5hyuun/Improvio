@@ -22,36 +22,53 @@ function BoardWrite({ onClose, onSubmit, user }) {
     const picked = Array.from(fileList || []);
     setFiles((prev) => [...prev, ...picked]);
   };
+
   const handleFileChange = (e) => {
     addFiles(e.target.files);
     e.target.value = "";
   };
+
   const handleDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
     addFiles(e.dataTransfer.files);
   };
+
   const handleDragOver = (e) => {
     e.preventDefault();
     setDragOver(true);
   };
+
   const handleDragLeave = () => setDragOver(false);
+
   const removeFile = (index) =>
     setFiles((prev) => prev.filter((_, i) => i !== index));
 
-  const submit = () => {
-     if (!user || !user.user_id) {
-    alert("로그인이 필요합니다.");
-    return;
-  }
-    const fd = new FormData();
-    fd.append("title", title);
-    fd.append("description", description);
-    fd.append("expected_effect", expect);
+  const isFormValid =
+    title.trim().length > 0 &&
+    description.trim().length > 0 &&
+    expect.trim().length > 0;
 
+  const submit = () => {
+    if (!user || !user.user_id) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    if (!isFormValid) {
+      alert("제목, 내용, 기대효과는 필수 입력 항목입니다.");
+      return;
+    }
+
+    const fd = new FormData();
+    fd.append("title", title.trim());
+    fd.append("description", description.trim());
+    fd.append("expected_effect", expect.trim());
     files.forEach((f) => fd.append("files", f));
+
     onSubmit(fd);
   };
+
   const DEPARTMENTS = {
     1: "R&D",
     2: "해외영업",
@@ -64,6 +81,7 @@ function BoardWrite({ onClose, onSubmit, user }) {
     9: "경영지원",
     10: "안전",
   };
+
   return (
     <div
       className={styles.overlay}
@@ -83,18 +101,18 @@ function BoardWrite({ onClose, onSubmit, user }) {
               </div>
               <div>
                 <i className="fa-regular fa-building"></i>
-                {DEPARTMENTS[user?.department_id]}
+                {DEPARTMENTS[user?.department_id] || "부서 없음"}
               </div>
               <div>
                 <i className="fa-regular fa-calendar"></i>
-                {new Date().toISOString().slice(0, 10)} {/* YYYY-MM-DD */}
+                {new Date().toISOString().slice(0, 10)}
               </div>
             </div>
           </div>
           <button onClick={onClose}>❌</button>
         </div>
 
-        {/* ✅ 가운데 스크롤 본문 */}
+        {/* 본문 */}
         <div className={styles.writeBody}>
           <div className={styles.writeTitle}>
             <div>개선 제안 제목</div>
@@ -171,9 +189,9 @@ function BoardWrite({ onClose, onSubmit, user }) {
           </div>
         </div>
 
-        {/* ✅ 하단 고정 버튼 (그리드 3행) */}
+        {/* 하단 버튼 */}
         <div className={styles.writeSubmit}>
-          <button onClick={submit} disabled={!title || !description || !expect}>
+          <button onClick={submit} disabled={!isFormValid}>
             등록
           </button>
         </div>

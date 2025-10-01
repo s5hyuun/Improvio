@@ -494,6 +494,8 @@ i {
   margin-top: 8px;
   border-top: 1px solid #eceff2;
   z-index: 10;
+   display: flex;
+  justify-content: flex-end;
 }
 .writeSubmit {
   position: sticky;
@@ -514,6 +516,12 @@ i {
   cursor: pointer;
   display: inline-block;
   margin-left: auto;
+}
+.writeSubmit > button:disabled {
+  background-color: #d1d5db; /* gray-300 */
+  color: #9ca3af;            /* gray-400 */
+  cursor: not-allowed;
+  opacity: 0.8;
 }
 /* =============file =========================*/
 .hiddenFileInput {
