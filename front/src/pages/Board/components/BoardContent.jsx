@@ -54,9 +54,19 @@ function pickImageUrl(suggestion, base = "http://localhost:5000") {
 
   // 3. 평평한 필드 탐색
   const flatKeys = [
-    "image_url", "imageUrl", "image", "photo_url", "photo",
-    "thumbnail_url", "thumb_url", "attachment_url", "file_url",
-    "file_path", "image_path", "upload_path", "preview_url",
+    "image_url",
+    "imageUrl",
+    "image",
+    "photo_url",
+    "photo",
+    "thumbnail_url",
+    "thumb_url",
+    "attachment_url",
+    "file_url",
+    "file_path",
+    "image_path",
+    "upload_path",
+    "preview_url",
   ];
   for (const key of flatKeys) {
     if (suggestion[key]) {
@@ -76,8 +86,12 @@ function pickImageUrl(suggestion, base = "http://localhost:5000") {
           if (u) return u;
         } else if (typeof item === "object") {
           const innerKeys = [
-            item.url, item.path, item.file_url, item.file_path,
-            item.image_url, item.preview_url
+            item.url,
+            item.path,
+            item.file_url,
+            item.file_path,
+            item.image_url,
+            item.preview_url,
           ];
           for (const val of innerKeys) {
             if (val) {
@@ -183,6 +197,7 @@ function BoardContent({ suggestion, onClick }) {
             style={{ cursor: "pointer" }}
           >
             <i className="fa-regular fa-thumbs-down"></i> {dislikes}
+            &nbsp;&nbsp;&nbsp;
           </div>
 
           <div title="댓글 수">
