@@ -1052,14 +1052,6 @@ app.post("/api/posts", upload.array("images", 10), async (req, res) => {
     conn.release();
   }
 });
-app.get((req, res) => {
-  if (req.path.startsWith("/api")) {
-    // API 요청이면 404
-    return res.status(404).json({ error: "API endpoint not found" });
-  }
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
-// server.js
 app.get("/api/posts/:postId/comments", async (req, res) => {
   const { postId } = req.params;
   try {
@@ -1077,6 +1069,7 @@ app.get("/api/posts/:postId/comments", async (req, res) => {
     res.status(500).json({ error: "댓글 불러오기 실패" });
   }
 });
+
 app.post("/api/posts/:postId/comments", async (req, res) => {
   const { postId } = req.params;
   const { content, user_id } = req.body;
@@ -1106,6 +1099,15 @@ app.post("/api/posts/:postId/comments", async (req, res) => {
     res.status(500).json({ error: "댓글 추가 실패" });
   }
 });
+
+app.get((req, res) => {
+  if (req.path.startsWith("/api")) {
+    // API 요청이면 404
+    return res.status(404).json({ error: "API endpoint not found" });
+  }
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+// server.js
 
 app.listen(5000, () => {
   console.log("http://localhost:5000");
