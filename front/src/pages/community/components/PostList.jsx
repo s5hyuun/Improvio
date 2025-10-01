@@ -4,6 +4,7 @@ import styles from "../../../styles/Market.module.css";
 import PostWrite from "./PostWrite";
 
 const LS_KEY = "liked_posts";
+const VIEW_KEY_PREFIX = "viewed_";
 
 /** 로컬스토리지 좋아요 집합 */
 function readLikedSet() {
@@ -149,38 +150,6 @@ function PostList() {
     };
   }, []);
 
-  // ✅ 등록 API (PostWrite에서 onSubmit 호출 시 사용)
-  const handleSubmit = async (newPost) => {
-    const authUser = JSON.parse(localStorage.getItem("auth_user"));
-    if (!authUser?.user_id) {
-      alert("로그인 후 글을 작성해주세요.");
-      return;
-    }
-    const res = await fetch("http://localhost:5000/api/posts", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        board_id: boardId,
-        user_id: authUser.user_id,
-        ...newPost,
-      }),
-    });
-    if (res.ok) {
-      const saved = await res.json();
-      setPosts((prev) => [
-        {
-          ...saved,
-          _liked: false,
-          like_count: saved.like_count ?? saved.likes ?? 0,
-          comment_count: saved.comment_count ?? 0,
-          views: saved.views ?? 0,
-        },
-        ...prev,
-      ]);
-      setIsWriting(false);
-    }
-  };
-
   // ✅ 시간 표기
   const timeAgo = (ts) => {
     const t = new Date(ts || Date.now()).getTime();
@@ -194,20 +163,21 @@ function PostList() {
     return `${Math.floor(diff / d)}일 전`;
   };
 
-  // ✅ 게시글 열기(조회수 즉시 증가 + 네비게이션)
+  // ✅ 게시글 열기(조회수 즉시 증가 + 네비게이션, 중복 방지)
   const openPost = (pid) => {
     const idStr = String(pid);
-    // 즉시 업데이트(목록에서 보이는 조회수 증가)
-    try {
-      window.dispatchEvent(
-        new CustomEvent("post:viewIncreased", { detail: { postId: idStr } })
-      );
-    } catch {}
-
-    // (선택) 서버 반영
-    // fetch(`http://localhost:5000/api/posts/${idStr}/view`, { method: "POST" })
-    //   .catch((e) => console.warn("조회수 증가 서버 반영 실패:", e));
-
+    const viewKey = `${VIEW_KEY_PREFIX}${idStr}`;
+    if (sessionStorage.getItem(viewKey) !== "1") {
+      try {
+        sessionStorage.setItem(viewKey, "1");
+        // 목록 숫자 즉시 +1
+        window.dispatchEvent(
+          new CustomEvent("post:viewIncreased", { detail: { postId: idStr } })
+        );
+        // (선택) 서버 반영
+        // fetch(`http://localhost:5000/api/posts/${idStr}/view`, { method: "POST" }).catch(()=>{});
+      } catch {}
+    }
     nav(`/community/${idStr}`);
   };
 
@@ -248,6 +218,7 @@ function PostList() {
               role="button"
               tabIndex={0}
               onKeyDown={(e) => {
+                if (e.isComposing) return;
                 if (e.key === "Enter" || e.key === " ") {
                   e.preventDefault();
                   openPost(post.post_id);
@@ -277,8 +248,6 @@ function PostList() {
                       <i className="fa-regular fa-eye" aria-hidden="true" />
                       {views}
                     </div>
-
-                    {/* ❤️ 눌렀다는 표시(색만 변경) */}
                     <div className={styles.mkmetaItem}>
                       <i
                         className={
@@ -293,8 +262,6 @@ function PostList() {
                   </div>
                 </div>
               </div>
-              {/* 필요 시 썸네일:
-              <div className={styles.mkthumb} aria-hidden="true">사진</div> */}
             </div>
           );
         })}

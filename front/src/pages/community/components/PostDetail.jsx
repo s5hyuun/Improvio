@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import styles from "../../../styles/Market.module.css";
 
 const LS_KEY = "liked_posts";
+const VIEW_KEY_PREFIX = "viewed_"; // sessionStorage로 중복 조회수 방지
 
 /** 로컬스토리지에 저장된 좋아요 집합 읽기 */
 function readLikedSet() {
@@ -29,22 +30,50 @@ function PostDetail() {
   const [newComment, setNewComment] = useState("");
   const [liked, setLiked] = useState(false);
 
-  // 게시글 조회
+  // 게시글 조회 (+ 필요 시 최초 1회 조회수 증가)
   useEffect(() => {
+    let mounted = true;
     fetch(`http://localhost:5000/api/posts/${postId}`)
       .then((res) => res.json())
       .then((data) => {
-        setPost(data);
-        // 서버 응답에 사용자 좋아요 여부가 없다면 로컬스토리지 기준으로 결정
+        if (!mounted) return;
+
+        // 좋아요 초기값
         const likedSet = readLikedSet();
         const isLiked =
           data?.user_liked ?? likedSet.has(String(data?.post_id ?? postId));
         setLiked(!!isLiked);
+
+        // 상세로 "바로 접속"한 경우에도 조회수 1 증가(중복 방지)
+        const viewKey = `${VIEW_KEY_PREFIX}${postId}`;
+        const alreadyViewed = sessionStorage.getItem(viewKey) === "1";
+
+        const baseViews = data?.views ?? 0;
+        const views = alreadyViewed ? baseViews : baseViews + 1;
+
+        // 목록에도 반영되도록 이벤트 브로드캐스트(이미 목록에서 눌렀다면 중복 방지 키가 세팅돼 있음)
+        if (!alreadyViewed) {
+          try {
+            sessionStorage.setItem(viewKey, "1");
+            window.dispatchEvent(
+              new CustomEvent("post:viewIncreased", {
+                detail: { postId: String(data?.post_id ?? postId) },
+              })
+            );
+          } catch {}
+          // (선택) 서버 반영
+          // fetch(`http://localhost:5000/api/posts/${postId}/view`, { method: "POST" }).catch(()=>{});
+        }
+
+        setPost({ ...data, views });
       })
       .catch((err) => console.error(err));
+    return () => {
+      mounted = false;
+    };
   }, [postId]);
 
-  // 간단한 timeAgo
+  // timeAgo
   const timeAgo = (ts) => {
     if (!ts) return "";
     const t = new Date(ts).getTime();
@@ -60,6 +89,7 @@ function PostDetail() {
 
   const totalComments = post?.comment_count ?? post?.comments?.length ?? 0;
   const likeCount = post?.like_count ?? post?.likes ?? 0;
+  const viewCount = post?.views ?? 0;
 
   // 댓글 등록 (즉시 카운트 + 브로드캐스트)
   const addComment = async () => {
@@ -72,7 +102,7 @@ function PostDetail() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             content: newComment,
-            user_id: 1, // TODO: 로그인한 사용자 ID
+            user_id: 1, // TODO: 로그인 사용자 ID
           }),
         }
       );
@@ -81,7 +111,8 @@ function PostDetail() {
       setPost((prev) => {
         const prevList = prev?.comments ?? [];
         const newCount = (prev?.comment_count ?? prevList.length) + 1;
-        // 목록에 즉시 반영
+
+        // 목록 즉시 반영
         try {
           window.dispatchEvent(
             new CustomEvent("post:commentAdded", {
@@ -92,6 +123,7 @@ function PostDetail() {
             })
           );
         } catch {}
+
         return {
           ...prev,
           comments: [...prevList, saved],
@@ -112,7 +144,7 @@ function PostDetail() {
     const likedSet = readLikedSet();
     const willLike = !liked;
 
-    // 낙관적 업데이트
+    // 낙관적 업데이트: 숫자 즉시 반영
     setLiked(willLike);
     setPost((prev) => ({
       ...prev,
@@ -127,28 +159,17 @@ function PostDetail() {
     else likedSet.delete(currentId);
     writeLikedSet(likedSet);
 
-    // 다른 컴포넌트 동기화
+    // 목록 동기화
     try {
       window.dispatchEvent(
         new CustomEvent("post:likeToggled", {
-          detail: {
-            postId: currentId,
-            liked: willLike,
-          },
+          detail: { postId: currentId, liked: willLike },
         })
       );
     } catch {}
 
     // (선택) 서버 반영
-    // try {
-    //   await fetch(`http://localhost:5000/api/posts/${postId}/like`, {
-    //     method: "POST",
-    //     headers: { "Content-Type": "application/json" },
-    //     body: JSON.stringify({ like: willLike }),
-    //   });
-    // } catch (e) {
-    //   console.warn("서버 좋아요 반영 실패(로컬 유지):", e);
-    // }
+    // await fetch(`http://localhost:5000/api/posts/${postId}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ like: willLike }) }).catch(()=>{});
   };
 
   if (!post) return <div>Loading...</div>;
@@ -180,7 +201,7 @@ function PostDetail() {
           </div>
         )}
 
-        {/* 메타(작성자/시간/댓글/좋아요 수) */}
+        {/* 메타(작성자/시간/댓글/좋아요/조회수) */}
         <div className={styles.mkmetaRow} style={{ marginTop: 8 }}>
           <div className={styles.mkmetaLeft}>
             {post.author && (
@@ -197,7 +218,6 @@ function PostDetail() {
               {totalComments}
             </div>
 
-            {/* ❤️ 좋아요(클릭 가능) */}
             <button
               type="button"
               className={styles.mkmetaItem}
@@ -220,6 +240,12 @@ function PostDetail() {
               />
               {likeCount}
             </button>
+
+            {/* 👁 조회수 숫자 표기 */}
+            <div className={styles.mkmetaItem}>
+              <i className="fa-regular fa-eye" aria-hidden="true" />
+              {viewCount}
+            </div>
           </div>
         </div>
 
