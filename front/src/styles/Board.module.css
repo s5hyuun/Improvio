@@ -1,7 +1,8 @@
+
 .boardContainer {
   background-color: #f9f9f9;
   /* height: 100vh; */
-  height: calc(100vh - 75.66px);
+  height: calc(100vh - 85px);
   padding: 30px;
   display: flex;
   flex-direction: column;
