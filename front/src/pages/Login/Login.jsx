@@ -8,7 +8,7 @@ import SignupAll from "../signupall/signupall";
 export default function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false); // 👈 비밀번호 표시 여부
+  const [showPassword, setShowPassword] = useState(false); 
   const [tab, setTab] = useState("signin"); // "signin" | "signup"
   const navigate = useNavigate();
 
