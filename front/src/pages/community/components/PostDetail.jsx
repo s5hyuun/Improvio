@@ -83,7 +83,9 @@ function PostDetail() {
 
         // 좋아요 초기화
         const likedSet = readLikedSet();
-        setLiked(!!(data?.user_liked ?? likedSet.has(String(data?.post_id ?? idStr))));
+        setLiked(
+          !!(data?.user_liked ?? likedSet.has(String(data?.post_id ?? idStr)))
+        );
 
         // 조회수 1회 증가(세션 중복 방지)
         const ssKey = `${SS_VIEW_KEY_PREFIX}${idStr}`;
@@ -121,14 +123,18 @@ function PostDetail() {
 
     const fetchCommentsOnly = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/posts/${idStr}/comments`);
+        const res = await fetch(
+          `http://localhost:5000/api/posts/${idStr}/comments`
+        );
         const list = await res.json();
         setPost((prev) => {
           if (!prev) return prev;
           return {
             ...prev,
             comments: Array.isArray(list) ? list : [],
-            comment_count: Array.isArray(list) ? list.length : (prev.comment_count ?? 0),
+            comment_count: Array.isArray(list)
+              ? list.length
+              : prev.comment_count ?? 0,
           };
         });
       } catch (err) {
@@ -164,7 +170,9 @@ function PostDetail() {
     if (!ts) return "";
     const t = new Date(ts).getTime();
     const diff = Date.now() - t;
-    const m = 60 * 1000, h = 60 * m, d = 24 * h;
+    const m = 60 * 1000,
+      h = 60 * m,
+      d = 24 * h;
     if (diff < m) return "방금 전";
     if (diff < h) return `${Math.floor(diff / m)}분 전`;
     if (diff < d) return `${Math.floor(diff / h)}시간 전`;
@@ -174,9 +182,14 @@ function PostDetail() {
   if (!post) return <div>Loading...</div>;
 
   const deltas = readDeltas()[String(post.post_id ?? postId)] || {
-    likes: 0, views: 0, comments: 0,
+    likes: 0,
+    views: 0,
+    comments: 0,
   };
-  const likeCount = getDisplayCount(post?.like_count ?? post?.likes, deltas.likes);
+  const likeCount = getDisplayCount(
+    post?.like_count ?? post?.likes,
+    deltas.likes
+  );
   const viewCount = getDisplayCount(post?.views, deltas.views);
   const totalComments = getDisplayCount(
     post?.comment_count ?? post?.comments?.length ?? 0,
@@ -189,14 +202,17 @@ function PostDetail() {
     if (!newComment.trim()) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/posts/${idStr}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          content: newComment.trim(),
-          user_id: currentUser?.user_id ?? 1,
-        }),
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/posts/${idStr}/comments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            content: newComment.trim(),
+            user_id: currentUser?.user_id ?? 1,
+          }),
+        }
+      );
       const saved = await res.json();
 
       setPost((prev) => ({
@@ -232,7 +248,8 @@ function PostDetail() {
     if (!commentId) return;
 
     // 본인 댓글만 삭제 (무소음 처리)
-    if (!currentUser?.user_id || currentUser.user_id !== comment.user_id) return;
+    if (!currentUser?.user_id || currentUser.user_id !== comment.user_id)
+      return;
 
     // 1) 화면에서 즉시 제거 + 카운트 감소
     setPost((prev) => {
@@ -261,11 +278,14 @@ function PostDetail() {
 
     // 2) 서버 삭제 요청 (실패 시 조용히 로그만 남기고, 폴링이 다시 맞춰줌)
     try {
-      await fetch(`http://localhost:5000/api/posts/${idStr}/comments/${commentId}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: currentUser.user_id }),
-      }).then((r) => {
+      await fetch(
+        `http://localhost:5000/api/posts/${idStr}/comments/${commentId}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: currentUser.user_id }),
+        }
+      ).then((r) => {
         if (!r.ok) throw new Error(`delete failed: ${r.status}`);
       });
     } catch (err) {
@@ -282,7 +302,10 @@ function PostDetail() {
     setLiked(willLike);
     bumpDelta(idStr, "likes", willLike ? 1 : -1);
     const del = readDeltas()[idStr] || { likes: 0, views: 0, comments: 0 };
-    const nextLikeCount = getDisplayCount(post?.like_count ?? post?.likes, del.likes);
+    const nextLikeCount = getDisplayCount(
+      post?.like_count ?? post?.likes,
+      del.likes
+    );
 
     if (willLike) likedSet.add(idStr);
     else likedSet.delete(idStr);
@@ -325,7 +348,9 @@ function PostDetail() {
 
         <div className={styles.mkmetaRow} style={{ marginTop: 8 }}>
           <div className={styles.mkmetaLeft}>
-            {post.author && <div className={styles.mkmetaItem}>{post.author}</div>}
+            {post.author && (
+              <div className={styles.mkmetaItem}>{post.author}</div>
+            )}
             {post.created_at && (
               <div className={styles.mkmetaItem}>
                 <i className="fa-regular fa-clock" aria-hidden="true" />
@@ -368,7 +393,7 @@ function PostDetail() {
         {/* 댓글 입력 */}
         <div className={styles.mkcommentsSection}>
           <div className={styles.mkcommentsHeader}>
-            댓글 <span className={styles.mkcommentsCount}>{totalComments / 2}</span>
+            댓글 <span className={styles.mkcommentsCount}>{totalComments}</span>
           </div>
 
           <div className={styles.mkcommentDock}>
@@ -411,7 +436,9 @@ function PostDetail() {
                     className={styles.mkcommentHead}
                     style={{ display: "flex", alignItems: "center", gap: 10 }}
                   >
-                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                    <div
+                      style={{ display: "flex", gap: 10, alignItems: "center" }}
+                    >
                       <div className={styles.mkcommentAvatar} />
                       <div className={styles.mkcommentMeta}>
                         <div className={styles.mkcommentAuthor}>
