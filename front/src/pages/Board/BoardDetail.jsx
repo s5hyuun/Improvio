@@ -223,7 +223,7 @@ function BoardDetail({ suggestion, onClose }) {
                       // 확장자 추출
                       const ext = cleanPath.split(".").pop().toLowerCase();
                       // jpg와 jpeg만 허용
-                      return ["jpg", "jpeg"].includes(ext);
+                      return ["jpg", "jpeg", "png"].includes(ext);
                     })
                     .map((att) => (
                       <img
