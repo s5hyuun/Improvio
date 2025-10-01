@@ -11,7 +11,7 @@ function encodePathSegments(path) {
     .replace(/\\/g, "/")
     .split("?")[0]
     .split("/")
-    .map(seg => encodeURIComponent(seg))
+    .map((seg) => encodeURIComponent(seg))
     .join("/");
 }
 
@@ -108,23 +108,53 @@ function BoardContent({ suggestion, onClick }) {
 
   // 2차: 상세를 한 번 조회해서 attachments에서 썸네일 결정
   const [detailThumb, setDetailThumb] = useState(null);
+  useEffect(() => {
+    let abort = false;
+
+    async function loadStats() {
+      try {
+        const res = await fetch(
+          `${BASE}/api/suggestions/${suggestion_id}/details`
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!abort) {
+          setVotes(data.vote_count ?? 0);
+          setDislikes(data.dislike_count ?? 0);
+          setCommentCount((data.comments || []).length);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    loadStats();
+
+    return () => {
+      abort = true;
+    };
+  }, [suggestion_id]);
 
   useEffect(() => {
     let abort = false;
     async function loadDetailThumb() {
       try {
-        const res = await fetch(`${BASE}/api/suggestions/${suggestion_id}/details`);
+        const res = await fetch(
+          `${BASE}/api/suggestions/${suggestion_id}/details`
+        );
         if (!res.ok) return; // 실패 시 썸네일 없이 진행
         const data = await res.json();
 
         // attachments에서 jpg/jpeg/png 우선
-        const first = (data.attachments || []).find(att => {
+        const first = (data.attachments || []).find((att) => {
           const e = extOf(att?.file_path || att?.path || att?.url);
           return ["jpg", "jpeg", "png"].includes(e);
         });
 
         if (!abort && first) {
-          setDetailThumb(toUploadsUrl(first.file_path || first.path || first.url));
+          setDetailThumb(
+            toUploadsUrl(first.file_path || first.path || first.url)
+          );
         }
       } catch {
         // 무시
@@ -133,7 +163,9 @@ function BoardContent({ suggestion, onClick }) {
 
     // primaryUrl이 이미 있으면 상세 호출 불필요
     if (!primaryUrl) loadDetailThumb();
-    return () => { abort = true; };
+    return () => {
+      abort = true;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [suggestion_id, primaryUrl]);
 
@@ -148,8 +180,8 @@ function BoardContent({ suggestion, onClick }) {
         body: JSON.stringify({ user_id: 1, score }), // TODO: 실제 로그인 사용자로 교체
       });
       if (res.ok) {
-        if (score === 1) setVotes(v => v + 1);
-        else if (score === -1) setDislikes(d => d + 1);
+        if (score === 1) setVotes((v) => v + 1);
+        else if (score === -1) setDislikes((d) => d + 1);
       }
     } catch (err) {
       console.error(err);
@@ -187,19 +219,26 @@ function BoardContent({ suggestion, onClick }) {
 
         <div className={styles.contentUser} style={{ marginTop: 6 }}>
           <div
-            onClick={(e) => { e.stopPropagation(); handleVote(1); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              handleVote(1);
+            }}
             title="좋아요"
             style={{ cursor: "pointer" }}
           >
             <i className="fa-regular fa-thumbs-up"></i> {votes}
           </div>
 
-        <div
-            onClick={(e) => { e.stopPropagation(); handleVote(-1); }}
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              handleVote(-1);
+            }}
             title="싫어요"
             style={{ cursor: "pointer" }}
           >
             <i className="fa-regular fa-thumbs-down"></i> {dislikes}
+            &nbsp;&nbsp;&nbsp;
           </div>
 
           <div title="댓글 수">
@@ -226,7 +265,12 @@ function BoardContent({ suggestion, onClick }) {
             src={imageUrl}
             alt="첨부 이미지"
             loading="lazy"
-            style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
             onError={(e) => {
               // 깨질 경우 카드에서 감춤
               e.currentTarget.parentElement.style.display = "none";
