@@ -162,6 +162,9 @@ h3 {
 .contentUser div:first-child {
   margin-right: 10px;
 }
+.contentUser div:nth-child(2) {
+  margin-right: 10px;
+}
 .noContent {
   display: flex;
   justify-content: center;

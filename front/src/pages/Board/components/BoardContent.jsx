@@ -10,16 +10,16 @@ import BoardWrite from "./components/BoardWrite";
 const API = "http://localhost:5000";
 const STORAGE_KEY = "proposal_items_cache_v1";
 
-function toAbsoluteUrl(raw, base = "http://localhost:5000") {
-  if (!raw) return null;
-  let s = String(raw).trim().replace(/['"]/g, "");
-  s = s.replace(/\\/g, "/");
-  if (!/^https?:\/\//i.test(s) && !s.startsWith("/")) s = `/${s}`;
-  try {
-    return new URL(s, base).href;
-  } catch {
-    return null;
-  }
+/** "a/b c.jpg" → "a/b%20c.jpg" (슬래시는 유지, 세그먼트만 인코딩) */
+function encodePathSegments(path) {
+  if (!path) return "";
+  return String(path)
+    .replace(/['"]/g, "")
+    .replace(/\\/g, "/")
+    .split("?")[0]
+    .split("/")
+    .map((seg) => encodeURIComponent(seg))
+    .join("/");
 }
 
 /** description/body HTML에서 <img> 첫 src 추출 */
@@ -138,116 +138,106 @@ function adaptFromDB(row) {
     department_name: row.department_name ?? dept,
     author,
     created_at,
-    priority,
-    status,
-    urgent,
-    image_url, // ✅ 표준화된 이미지 URL
-  };
-}
+    author_id,
+    vote_count = 0,
+    dislike_count = 0,
+    comment_count = 0,
+    suggestion_id,
+    username,
+  } = suggestion;
 
-function loadCache() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
-}
-
-function mergeById(serverList, cacheList) {
-  const map = new Map(cacheList.map((x) => [x.id, x]));
-  return serverList.map((s) => {
-    const m = map.get(s.id);
-    return m ? { ...s, status: m.status, urgent: m.urgent } : s;
-  });
-}
-
-function BoardPage() {
-  const [suggestions, setSuggestions] = useState([]);
-  const [selected, setSelected] = useState(null);
-  const [write, setWrite] = useState(false);
-
-  // 기본값: 전체 보기
-  const [dept, setDept] = useState("");
-
-  // 검색 상태
-  const [searchResults, setSearchResults] = useState([]);
-  const [isSearching, setIsSearching] = useState(false);
-
-  // 초기 로드: 서버 + 캐시 병합
-  useEffect(() => {
-    let mounted = true;
-    (async () => {
-      try {
-        const res = await fetch(`${API}:5000/api/suggestions`);
-        const data = await res.json();
-        let server = Array.isArray(data.suggestions)
-          ? data.suggestions.map(adaptFromDB)
-          : [];
-
-        const cache = loadCache();
-        if (cache.length) server = mergeById(server, cache);
-        if (mounted) setSuggestions(server);
-      } catch (err) {
-        console.error(err);
-        if (mounted) setSuggestions([]);
-      }
-    })();
-    return () => {
-      mounted = false;
-    };
-  }, []);
-
-  // 부서 변경 이벤트(사이드바에서 브로드캐스트)
-  useEffect(() => {
-    function handler(e) {
-      setDept(e.detail?.dept ?? "");
-    }
-    window.addEventListener("dept:changed", handler);
-    return () => window.removeEventListener("dept:changed", handler);
-  }, []);
-
-  // Proposal.jsx에서 쏘는 상태/긴급 변경을 즉시 반영
-  useEffect(() => {
-    const onStatus = (e) => {
-      const { id, status } = e.detail || {};
-      if (!id) return;
-      setSuggestions((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, status } : x))
-      );
-    };
-    const onUrgent = (e) => {
-      const { id, urgent } = e.detail || {};
-      if (!id) return;
-      setSuggestions((prev) =>
-        prev.map((x) => (x.id === id ? { ...x, urgent } : x))
-      );
-    };
-    window.addEventListener("suggestion:status", onStatus);
-    window.addEventListener("suggestion:urgent", onUrgent);
-    return () => {
-      window.removeEventListener("suggestion:status", onStatus);
-      window.removeEventListener("suggestion:urgent", onUrgent);
-    };
-  }, []);
-
-  // 검색 결과 vs 전체(검색 결과도 정규화하여 동일 로직 적용)
-  const dataSourceRaw = isSearching ? searchResults : suggestions;
-  const dataSource = useMemo(
-    () => (Array.isArray(dataSourceRaw) ? dataSourceRaw.map(adaptFromDB) : []),
-    [dataSourceRaw]
+  const [votes, setVotes] = useState(vote_count);
+  const [dislikes, setDislikes] = useState(dislike_count);
+  const [commentsNum, setCommentsNum] = useState(comment_count);
+  // 1차: 리스트 객체만으로 썸네일 추출 (없으면 null)
+  const primaryUrl = useMemo(
+    () => pickImageUrlFromSuggestion(suggestion),
+    [suggestion]
   );
 
-  // dept === "" 이면 전체 보기
-  const filtered = dept
-    ? dataSource.filter((s) => (s.dept ?? s.department_name) === dept)
-    : dataSource;
+  // 2차: 상세를 한 번 조회해서 attachments에서 썸네일 결정
+  const [detailThumb, setDetailThumb] = useState(null);
+  useEffect(() => {
+    let abort = false;
 
-  const proposals = filtered.filter((s) => s.status === "pending");
-  const inProgress = filtered.filter((s) => s.status === "approved");
-  const completed = filtered.filter((s) => s.status === "completed");
+    async function loadStats() {
+      try {
+        const res = await fetch(
+          `${BASE}/api/suggestions/${suggestion_id}/details`
+        );
+        if (!res.ok) return;
+        const data = await res.json();
+        if (!abort) {
+          setVotes(data.vote_count ?? 0);
+          setDislikes(data.dislike_count ?? 0);
+          setCommentsNum((data.comments || []).length);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
 
-  const cleanText = (text = "") => String(text).replace(/<\/?mark>/g, "");
+    loadStats();
+    return () => {
+      abort = true;
+    };
+  }, [suggestion_id]);
+
+  useEffect(() => {
+    let abort = false;
+    async function loadDetailThumb() {
+      try {
+        const res = await fetch(
+          `${BASE}/api/suggestions/${suggestion_id}/details`
+        );
+        if (!res.ok) return; // 실패 시 썸네일 없이 진행
+        const data = await res.json();
+
+        // attachments에서 jpg/jpeg/png 우선
+        const first = (data.attachments || []).find((att) => {
+          const e = extOf(att?.file_path || att?.path || att?.url);
+          return ["jpg", "jpeg", "png"].includes(e);
+        });
+
+        if (!abort && first) {
+          setDetailThumb(
+            toUploadsUrl(first.file_path || first.path || first.url)
+          );
+        }
+      } catch {
+        // 무시
+      }
+    }
+
+    // primaryUrl이 이미 있으면 상세 호출 불필요
+    if (!primaryUrl) loadDetailThumb();
+    return () => {
+      abort = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [suggestion_id, primaryUrl]);
+
+  // 최종 썸네일: 리스트→상세 순으로 결정
+  const imageUrl = primaryUrl || detailThumb;
+
+  const handleVote = async (score) => {
+    try {
+      const res = await fetch(`${BASE}/api/suggestions/${suggestion_id}/vote`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: 1, score }), // TODO: 실제 로그인 사용자로 교체
+      });
+      if (res.ok) {
+        if (score === 1) setVotes((v) => v + 1);
+        else if (score === -1) setDislikes((d) => d + 1);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const shortDesc =
+    description.length > 60 ? `${description.slice(0, 60)}...` : description;
 
   return (
     <div className="app">
@@ -264,130 +254,76 @@ function BoardPage() {
           }}
         />
 
-        <div className={styles.boardContainer}>
-          <div className={styles.boardTitle}>
-            <div>
-              <p>개선 제안 시스템</p>
-              <p>현장 직원들의 불편사항 및 개선 아이디어를 공유해주세요</p>
-            </div>
-            <button onClick={() => setWrite(true)}>+ 글쓰기</button>
-            {write && (
-              <BoardWrite
-                user={JSON.parse(localStorage.getItem("auth_user"))}
-                onClose={() => setWrite(false)}
-                onSubmit={async (formData) => {
-                  try {
-                    const user = JSON.parse(localStorage.getItem("auth_user"));
-                    if (user) {
-                      formData.append("user_id", user.user_id);
-                      formData.append("department_id", user.department_id);
-                    }
+        <div className={styles.contentUser}>
+          <div title="작성자">
+            <i className="fa-regular fa-user"></i> 익명{author_id}
+          </div>
+          <div title="작성일">
+            <i className="fa-regular fa-calendar"></i>{" "}
+            {new Date(created_at).toLocaleDateString()}
+          </div>
+        </div>
 
-                    await fetch(`${API}:5000/api/suggestions`, {
-                      method: "POST",
-                      body: formData,
-                    });
-
-                    const res = await fetch(`${API}:5000/api/suggestions`);
-                    const data = await res.json();
-                    const server = Array.isArray(data)
-                      ? data.map(adaptFromDB)
-                      : [];
-                    const cache = loadCache();
-                    setSuggestions(
-                      cache.length ? mergeById(server, cache) : server
-                    );
-                    setWrite(false);
-                  } catch (err) {
-                    console.error(err);
-                    alert("저장 중 오류가 발생했습니다.");
-                  }
-                }}
-              />
-            )}
+        <div className={styles.contentUser} style={{ marginTop: 6 }}>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              handleVote(1);
+            }}
+            title="좋아요"
+            style={{ cursor: "pointer" }}
+          >
+            <i className="fa-regular fa-thumbs-up"></i> {votes}
           </div>
 
-          <div className={styles.boardContents}>
-            <div className={styles.boardColumn}>
-              <div>Proposal</div>
-              <div className={styles.cardRow}>
-                {proposals.length > 0 ? (
-                  proposals.map((s) => (
-                    <BoardContent
-                      key={s.id ?? s.suggestion_id}
-                      suggestion={{
-                        ...s,
-                        title: cleanText(s.title),
-                        description: cleanText(s.description),
-                      }}
-                      onClick={() => setSelected(s)}
-                    />
-                  ))
-                ) : (
-                  <div className={styles.noContent}>
-                    {isSearching
-                      ? "검색 결과가 없습니다."
-                      : "등록된 제안이 없습니다."}
-                  </div>
-                )}
-              </div>
-            </div>
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              handleVote(-1);
+            }}
+            title="싫어요"
+            style={{ cursor: "pointer" }}
+          >
+            <i className="fa-regular fa-thumbs-down"></i> {dislikes}
+            &nbsp;
+          </div>
 
-            <div className={styles.boardColumn}>
-              <div>In Progress</div>
-              <div className={styles.cardRow}>
-                {inProgress.length > 0 ? (
-                  inProgress.map((s) => (
-                    <BoardContent
-                      key={s.id ?? s.suggestion_id}
-                      suggestion={{
-                        ...s,
-                        title: cleanText(s.title),
-                        description: cleanText(s.description),
-                      }}
-                      onClick={() => setSelected(s)}
-                    />
-                  ))
-                ) : (
-                  <div className={styles.noContent}>
-                    {isSearching
-                      ? "검색 결과가 없습니다."
-                      : "진행 중인 제안이 없습니다."}
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className={styles.boardColumn}>
-              <div>Complete</div>
-              <div className={styles.cardRow}>
-                {completed.length > 0 ? (
-                  completed.map((s) => (
-                    <BoardContent
-                      key={s.id ?? s.suggestion_id}
-                      suggestion={{
-                        ...s,
-                        title: cleanText(s.title),
-                        description: cleanText(s.description),
-                      }}
-                      onClick={() => setSelected(s)}
-                    />
-                  ))
-                ) : (
-                  <div className={styles.noContent}>
-                    {isSearching
-                      ? "검색 결과가 없습니다."
-                      : "완료된 제안이 없습니다."}
-                  </div>
-                )}
-              </div>
-            </div>
+          <div title="댓글 수">
+            <i className="fa-regular fa-comment"></i> {commentsNum}
           </div>
         </div>
       </div>
 
-      {selected && (
-        <BoardDetail suggestion={selected} onClose={() => setSelected(null)} />
+      {/* 이미지 썸네일 */}
+      {imageUrl && (
+        <div
+          style={{
+            flex: "0 0 auto",
+            width: 96,
+            height: 96,
+            borderRadius: 8,
+            overflow: "hidden",
+            border: "1px solid #e2e8f0",
+          }}
+          onClick={(e) => e.stopPropagation()}
+          title="첨부 이미지"
+        >
+          <img
+            src={imageUrl}
+            alt="첨부 이미지"
+            loading="lazy"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              display: "block",
+            }}
+            onError={(e) => {
+              // 깨질 경우 카드에서 감춤
+              e.currentTarget.parentElement.style.display = "none";
+            }}
+          />
+        </div>
       )}
     </div>
   );
