@@ -22,7 +22,6 @@ function toAbsoluteUrl(raw, base = "http://localhost:5000") {
   }
 }
 
-/** description/body HTML에서 <img> 첫 src 추출 */
 function extractImgFromHtml(html) {
   if (!html) return null;
   try {
@@ -36,11 +35,8 @@ function extractImgFromHtml(html) {
   }
 }
 
-/** 다양한 형태의 이미지 소스를 표준 image_url로 수렴 */
 function resolveImage(row) {
   const base = "http://localhost:5000";
-
-  // 1) 본문 HTML에서 우선 추출
   const fromHtml =
     extractImgFromHtml(row.description) || extractImgFromHtml(row.body);
   if (fromHtml) {
@@ -48,7 +44,6 @@ function resolveImage(row) {
     if (u) return u;
   }
 
-  // 2) 단일 키
   const flatKeys = [
     "image_url",
     "imageUrl",
@@ -71,7 +66,6 @@ function resolveImage(row) {
     }
   }
 
-  // 3) 배열 키
   const arrayKeys = ["images", "photos", "attachments", "files", "pictures"];
   for (const k of arrayKeys) {
     const arr = row[k];
@@ -99,7 +93,6 @@ function resolveImage(row) {
   return null;
 }
 
-// Proposal.jsx의 규칙과 동일한 어댑터 + image_url 매핑
 function adaptFromDB(row) {
   const id = row.id ?? row.suggestion_id ?? row.suggestionId;
   const body = row.body ?? row.description ?? "";
@@ -141,7 +134,7 @@ function adaptFromDB(row) {
     priority,
     status,
     urgent,
-    image_url, // ✅ 표준화된 이미지 URL
+    image_url,
   };
 }
 
@@ -166,15 +159,10 @@ function BoardPage() {
   const [suggestions, setSuggestions] = useState([]);
   const [selected, setSelected] = useState(null);
   const [write, setWrite] = useState(false);
-
-  // 기본값: 전체 보기
   const [dept, setDept] = useState("");
-
-  // 검색 상태
   const [searchResults, setSearchResults] = useState([]);
   const [isSearching, setIsSearching] = useState(false);
 
-  // 초기 로드: 서버 + 캐시 병합
   useEffect(() => {
     let mounted = true;
     (async () => {
@@ -184,21 +172,16 @@ function BoardPage() {
         let server = Array.isArray(data.suggestions)
           ? data.suggestions.map(adaptFromDB)
           : [];
-
         const cache = loadCache();
         if (cache.length) server = mergeById(server, cache);
         if (mounted) setSuggestions(server);
-      } catch (err) {
-        console.error(err);
+      } catch {
         if (mounted) setSuggestions([]);
       }
     })();
-    return () => {
-      mounted = false;
-    };
+    return () => (mounted = false);
   }, []);
 
-  // 부서 변경 이벤트(사이드바에서 브로드캐스트)
   useEffect(() => {
     function handler(e) {
       setDept(e.detail?.dept ?? "");
@@ -207,7 +190,6 @@ function BoardPage() {
     return () => window.removeEventListener("dept:changed", handler);
   }, []);
 
-  // Proposal.jsx에서 쏘는 상태/긴급 변경을 즉시 반영
   useEffect(() => {
     const onStatus = (e) => {
       const { id, status } = e.detail || {};
@@ -231,14 +213,12 @@ function BoardPage() {
     };
   }, []);
 
-  // 검색 결과 vs 전체(검색 결과도 정규화하여 동일 로직 적용)
   const dataSourceRaw = isSearching ? searchResults : suggestions;
   const dataSource = useMemo(
     () => (Array.isArray(dataSourceRaw) ? dataSourceRaw.map(adaptFromDB) : []),
     [dataSourceRaw]
   );
 
-  // dept === "" 이면 전체 보기
   const filtered = dept
     ? dataSource.filter((s) => (s.dept ?? s.department_name) === dept)
     : dataSource;
@@ -252,9 +232,7 @@ function BoardPage() {
   return (
     <div className="app">
       <Sidebar />
-
       <div className="main">
-        {/* Header에 onSearch 연결 */}
         <Header
           isLoggedIn={true}
           setIsLoggedIn={() => {}}
@@ -263,7 +241,6 @@ function BoardPage() {
             setIsSearching(!!active);
           }}
         />
-
         <div className={styles.boardContainer}>
           <div className={styles.boardTitle}>
             <div>
@@ -288,16 +265,8 @@ function BoardPage() {
                       body: formData,
                     });
 
-                    const res = await fetch(`${API}:5000/api/suggestions`);
-                    const data = await res.json();
-                    const server = Array.isArray(data)
-                      ? data.map(adaptFromDB)
-                      : [];
-                    const cache = loadCache();
-                    setSuggestions(
-                      cache.length ? mergeById(server, cache) : server
-                    );
-                    setWrite(false);
+                    // ✅ 새 글 작성 후 바로 페이지 새로고침
+                    window.location.reload();
                   } catch (err) {
                     console.error(err);
                     alert("저장 중 오류가 발생했습니다.");
