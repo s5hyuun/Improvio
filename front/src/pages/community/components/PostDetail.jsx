@@ -1,6 +1,6 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import PostComment from "../components/PostComment";
+import PostComment from "./PostComment";
 import styles from "../../../styles/Community.module.css";
 import { useTranslation } from "react-i18next"; 
 
