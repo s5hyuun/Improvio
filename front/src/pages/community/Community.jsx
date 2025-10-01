@@ -4,12 +4,16 @@ import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import HotPost from "./components/HotPost";
 import styles from "../../styles/Community.module.css";
+import { useTranslation } from "react-i18next";
+
 
 function Community() {
   const [boards, setBoards] = useState([]);
   const [hotPosts, setHotPosts] = useState([]);
   const nav = useNavigate();
   const location = useLocation(); // ✅ 현재 경로 사용
+  const { t } = useTranslation();
+
 
   // ✅ 현재 URL에서 board_id 추출 (예: /community/board/5)
   const currentBoardId = (() => {
@@ -46,7 +50,7 @@ function Community() {
         <Header />
         <div className={styles.commContainer}>
           <div className={styles.commBoards}>
-            <div>게시판 목록</div>
+            <div>{t("community.boardList")}</div>
             <ul>
               {boards.map((board) => {
                 const isActive = currentBoardId === Number(board.board_id);
@@ -73,7 +77,7 @@ function Community() {
 
           <div className={styles.commRightbar}>
             <div className={styles.commHot}>
-              <div>🔥HOT 게시글</div>
+              <div>{t("community.hotPosts")}</div>
               {hotPosts.map((post) => (
                 <HotPost key={post.post_id} post={post} />
               ))}

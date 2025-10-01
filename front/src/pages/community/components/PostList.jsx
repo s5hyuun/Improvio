@@ -2,12 +2,13 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import styles from "../../../styles/Market.module.css";
 import PostWrite from "./PostWrite";
+import { useTranslation } from "react-i18next";
 
 const LS_LIKED_POSTS = "liked_posts";
 const LS_POST_DELTAS = "post_count_deltas";
 const SS_VIEW_KEY_PREFIX = "viewed_";
 
-/** ---- 공통 유틸: 델타 저장/적용 ---- */
+// ------------------- 유틸 -------------------
 function readDeltas() {
   try {
     return JSON.parse(localStorage.getItem(LS_POST_DELTAS)) || {};
@@ -15,11 +16,13 @@ function readDeltas() {
     return {};
   }
 }
+
 function getDisplayCount(serverValue, deltaValue) {
   const s = Number.isFinite(serverValue) ? serverValue : 0;
   const d = Number.isFinite(deltaValue) ? deltaValue : 0;
   return Math.max(0, s + d);
 }
+
 function readLikedSet() {
   try {
     const raw = localStorage.getItem(LS_LIKED_POSTS);
@@ -29,50 +32,34 @@ function readLikedSet() {
   }
 }
 
+// ------------------- 번역 -------------------
+async function translateText(text, lang) {
+  try {
+    const res = await fetch("http://localhost:5000/api/translate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ text, targetLang: lang.toUpperCase() }),
+    });
+    const data = await res.json();
+    return data?.translatedText ?? text ?? "";
+  } catch (err) {
+    console.error("번역 실패:", err);
+    return text ?? "";
+  }
+}
+
+// ------------------- PostList 컴포넌트 -------------------
 function PostList() {
   const { boardId } = useParams();
   const nav = useNavigate();
+  const { t, i18n } = useTranslation();
 
   const [posts, setPosts] = useState([]);
   const [isWriting, setIsWriting] = useState(false);
 
-  // 보드 메타
-  const norm = (id = "") => {
-    const s = String(id).toLowerCase();
-    const numMap = {
-      1: "free",
-      2: "rookie",
-      3: "secret",
-      4: "info",
-      5: "market",
-      6: "issue",
-    };
-    if (numMap[s]) return numMap[s];
-    if (["free", "자유", "자유게시판"].includes(s)) return "free";
-    if (["rookie", "newbie", "new", "junior", "신입", "신입게시판"].includes(s))
-      return "rookie";
-    if (["secret", "private", "비밀", "비밀게시판"].includes(s))
-      return "secret";
-    if (["info", "information", "tips", "정보", "정보게시판"].includes(s))
-      return "info";
-    if (["market", "장터", "장터게시판"].includes(s)) return "market";
-    if (
-      [
-        "issue",
-        "issues",
-        "current",
-        "news",
-        "시사",
-        "시사/이슈",
-        "이슈",
-      ].includes(s)
-    )
-      return "issue";
-    return "etc";
-  };
-
+  // ------------------- 게시판 메타 -------------------
   const boardMeta = useMemo(() => {
-    const key = norm(boardId);
+    const key = String(boardId ?? "").toLowerCase();
     const map = {
       free: { title: "자유게시판", icon: "fa-solid fa-message" },
       rookie: { title: "신입게시판", icon: "fa-solid fa-user-graduate" },
@@ -85,44 +72,59 @@ function PostList() {
     return map[key] || map.etc;
   }, [boardId]);
 
-  // 목록 로드: 서버값 + 로컬 델타 반영해 화면에 뿌림
+  // ------------------- 게시글 로드 -------------------
   useEffect(() => {
     let aborted = false;
     const likedSet = readLikedSet();
     const deltas = readDeltas();
 
-    fetch(`http://localhost:5000/api/posts?board_id=${boardId}`)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("받은 data:", data);
-        if (aborted) return;
+    async function fetchPosts() {
+      try {
+        let data = await fetch(`http://localhost:5000/api/posts?board_id=${boardId}`).then((res) => res.json());
+        if (!Array.isArray(data)) data = [];
 
-        const arr = Array.isArray(data) ? data : [];
-        const merged = arr.map((p) => {
-          const id = String(p.post_id);
-          const d = deltas[id] || { likes: 0, views: 0, comments: 0 };
+        const lang = i18n.language || "ko";
 
-          return {
-            ...p,
-            _liked: likedSet.has(id),
-            like_count: getDisplayCount(p.like_count ?? p.likes, d.likes),
-            comment_count: getDisplayCount(
-              p.comment_count ?? p.comments,
-              d.comments
-            ),
-            views: getDisplayCount(p.views, d.views),
-          };
-        });
+        // 번역 적용
+        if (lang !== "ko") {
+          data = await Promise.all(
+            data.map(async (p) => ({
+              ...p,
+              title: await translateText(p.title ?? "", lang),
+              content: await translateText(p.content ?? p.body ?? "", lang),
+            }))
+          );
+        }
 
-        setPosts(merged);
-      })
-      .catch((err) => console.error(err));
+        // 로컬 델타 + 좋아요 적용
+        const merged = data
+          .map((p) => {
+            if (!p || typeof p !== "object") return null;
+            const id = String(p.post_id);
+            const d = deltas[id] || { likes: 0, views: 0, comments: 0 };
+            return {
+              ...p,
+              _liked: likedSet.has(id),
+              like_count: getDisplayCount(p.like_count ?? p.likes, d.likes),
+              comment_count: getDisplayCount(p.comment_count ?? p.comments, d.comments),
+              views: getDisplayCount(p.views, d.views),
+            };
+          })
+          .filter(Boolean); // null 제거
+
+        if (!aborted) setPosts(merged);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchPosts();
     return () => {
       aborted = true;
     };
-  }, [boardId]);
+  }, [boardId, i18n.language]);
 
-  // 상세에서 온 브로드캐스트 반영(최종 숫자 우선)
+  // ------------------- 브로드캐스트 이벤트 -------------------
   useEffect(() => {
     const onLike = (e) => {
       const { postId, liked, like_count } = e.detail || {};
@@ -130,34 +132,22 @@ function PostList() {
       setPosts((prev) =>
         prev.map((p) =>
           String(p.post_id) === String(postId)
-            ? {
-                ...p,
-                _liked: !!liked,
-                like_count: Math.max(0, like_count ?? p.like_count ?? 0),
-              }
+            ? { ...p, _liked: !!liked, like_count: Math.max(0, like_count ?? p.like_count ?? 0) }
             : p
         )
       );
     };
-
     const onComment = (e) => {
       const { postId, comment_count } = e.detail || {};
       if (!postId) return;
       setPosts((prev) =>
         prev.map((p) =>
           String(p.post_id) === String(postId)
-            ? {
-                ...p,
-                comment_count: Math.max(
-                  0,
-                  comment_count ?? (p.comment_count ?? 0) + 1
-                ),
-              }
+            ? { ...p, comment_count: Math.max(0, comment_count ?? (p.comment_count ?? 0) + 1) }
             : p
         )
       );
     };
-
     const onView = (e) => {
       const { postId, views } = e.detail || {};
       if (!postId) return;
@@ -173,6 +163,7 @@ function PostList() {
     window.addEventListener("post:likeToggled", onLike);
     window.addEventListener("post:commentAdded", onComment);
     window.addEventListener("post:viewIncreased", onView);
+
     return () => {
       window.removeEventListener("post:likeToggled", onLike);
       window.removeEventListener("post:commentAdded", onComment);
@@ -180,7 +171,7 @@ function PostList() {
     };
   }, []);
 
-  // 시간 표기
+  // ------------------- 시간 포맷 -------------------
   const timeAgo = (ts) => {
     const t = new Date(ts || Date.now()).getTime();
     const diff = Date.now() - t;
@@ -193,25 +184,18 @@ function PostList() {
     return `${Math.floor(diff / d)}일 전`;
   };
 
-  // 카드 클릭: 조회수 +1(세션 중복 방지), 그리고 상세로 이동
+  // ------------------- 게시글 클릭 -------------------
   const openPost = (pid) => {
     const idStr = String(pid);
     const ssKey = `${SS_VIEW_KEY_PREFIX}${idStr}`;
     if (sessionStorage.getItem(ssKey) !== "1") {
       sessionStorage.setItem(ssKey, "1");
-      // 목록에서 즉시 반영(최종 숫자 계산은 상세가 다시 브로드캐스트하므로 여기서는 +1만 가시화)
       setPosts((prev) =>
         prev.map((p) =>
           String(p.post_id) === idStr ? { ...p, views: (p.views ?? 0) + 1 } : p
         )
       );
-      try {
-        window.dispatchEvent(
-          new CustomEvent("post:viewIncreased", { detail: { postId: idStr } })
-        );
-      } catch {}
-      // (선택) 서버 반영:
-      // fetch(`http://localhost:5000/api/posts/${idStr}/view`, { method: "POST" }).catch(()=>{});
+      window.dispatchEvent(new CustomEvent("post:viewIncreased", { detail: { postId: idStr } }));
     }
     nav(`/community/${idStr}`);
   };
@@ -234,7 +218,7 @@ function PostList() {
         </button>
       </div>
 
-      {/* 리스트 */}
+      {/* 게시글 리스트 */}
       <div className={styles.mklist}>
         {posts.map((post, idx) => {
           const title = post.title ?? "";
@@ -248,9 +232,7 @@ function PostList() {
           return (
             <div
               key={post.post_id}
-              className={`${styles.mkcard} ${
-                idx === 0 ? styles.mkfirstCard : ""
-              }`}
+              className={`${styles.mkcard} ${idx === 0 ? styles.mkfirstCard : ""}`}
               onClick={() => openPost(post.post_id)}
               role="button"
               tabIndex={0}
@@ -287,9 +269,7 @@ function PostList() {
                     </div>
                     <div className={styles.mkmetaItem}>
                       <i
-                        className={
-                          isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart"
-                        }
+                        className={isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart"}
                         aria-hidden="true"
                         style={{ color: isLiked ? "#ff0505" : "inherit" }}
                         title={isLiked ? "좋아요 누름" : "좋아요 안 누름"}
@@ -316,22 +296,12 @@ function PostList() {
             const res = await fetch("http://localhost:5000/api/posts", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                board_id: boardId,
-                user_id: authUser.user_id,
-                ...newPost,
-              }),
+              body: JSON.stringify({ board_id: boardId, user_id: authUser.user_id, ...newPost }),
             });
             if (res.ok) {
               const saved = await res.json();
               setPosts((prev) => [
-                {
-                  ...saved,
-                  _liked: false,
-                  like_count: saved.like_count ?? 0,
-                  comment_count: saved.comment_count ?? 0,
-                  views: saved.views ?? 0,
-                },
+                { ...saved, _liked: false, like_count: saved.like_count ?? 0, comment_count: saved.comment_count ?? 0, views: saved.views ?? 0 },
                 ...prev,
               ]);
               setIsWriting(false);
