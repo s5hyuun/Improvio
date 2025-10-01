@@ -181,7 +181,10 @@ function BoardPage() {
       try {
         const res = await fetch(`${API}:5000/api/suggestions`);
         const data = await res.json();
-        let server = Array.isArray(data) ? data.map(adaptFromDB) : [];
+        let server = Array.isArray(data.suggestions)
+          ? data.suggestions.map(adaptFromDB)
+          : [];
+
         const cache = loadCache();
         if (cache.length) server = mergeById(server, cache);
         if (mounted) setSuggestions(server);
