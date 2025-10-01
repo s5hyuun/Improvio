@@ -1,3 +1,4 @@
+// PostDetail.jsx
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import styles from "../../../styles/Market.module.css";
@@ -5,6 +6,7 @@ import styles from "../../../styles/Market.module.css";
 const LS_LIKED_POSTS = "liked_posts"; // Set<string(postId)>
 const LS_POST_DELTAS = "post_count_deltas"; // { [postId]: { likes: number, views: number, comments: number } }
 const SS_VIEW_KEY_PREFIX = "viewed_"; // sessionStorage 중복 조회 방지
+const AUTH_KEY = "auth_user"; // 로그인 사용자 로컬 스토리지 키 ★추가
 
 /** ---- 공통 유틸: 델타 저장/적용 ---- */
 function readDeltas() {
@@ -24,7 +26,7 @@ function bumpDelta(postId, key, amount) {
   const id = String(postId);
   all[id] = all[id] || { likes: 0, views: 0, comments: 0 };
   all[id][key] = (all[id][key] || 0) + amount;
-  // 음수 방지: 화면용 델타는 0 미만이면 0으로(특히 likes)
+  // 음수 방지: 화면용 델타는 0 미만이면 0으로(특히 likes/comments)
   if (key !== "views" && all[id][key] < 0) all[id][key] = 0;
   writeDeltas(all);
   return all[id];
@@ -54,6 +56,18 @@ function PostDetail() {
   const [post, setPost] = useState(null);
   const [newComment, setNewComment] = useState("");
   const [liked, setLiked] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null); // ★추가: 로그인 사용자
+
+  // 로그인 사용자 로드 ★추가
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(AUTH_KEY);
+      if (raw) setCurrentUser(JSON.parse(raw));
+      else setCurrentUser(null);
+    } catch {
+      setCurrentUser(null);
+    }
+  }, []);
 
   // 상세 진입: 게시글 로드 + 조회수 1회 가산(세션 중복 방지)
   useEffect(() => {
@@ -140,7 +154,10 @@ function PostDetail() {
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ content: newComment.trim(), user_id: 1 }),
+          body: JSON.stringify({
+            content: newComment.trim(),
+            user_id: currentUser?.user_id ?? 1, // 로그인 사용자 없으면 1
+          }),
         }
       );
       const saved = await res.json();
@@ -169,6 +186,68 @@ function PostDetail() {
       setNewComment("");
     } catch (err) {
       console.error("댓글 등록 실패:", err);
+    }
+  };
+
+  // 댓글 삭제 ★추가
+  const deleteComment = async (comment) => {
+    const idStr = String(post.post_id ?? postId);
+    const commentId = String(comment.postcomment_id ?? comment.id);
+    if (!commentId) return;
+
+    // 권한 체크(클라이언트 단)
+    if (!currentUser?.user_id || currentUser.user_id !== comment.user_id) {
+      alert("본인이 작성한 댓글만 삭제할 수 있습니다.");
+      return;
+    }
+
+    const ok = window.confirm("해당 댓글을 삭제하시겠습니까?");
+    if (!ok) return;
+
+    try {
+      const res = await fetch(
+        `http://localhost:5000/api/comments/${commentId}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        alert(j?.error || "댓글 삭제에 실패했습니다.");
+        return;
+      }
+
+      // 화면 즉시 반영
+      setPost((prev) => {
+        const nextComments = (prev?.comments ?? []).filter(
+          (c) => String(c.postcomment_id) !== commentId
+        );
+        const serverCountBase =
+          prev?.comment_count ?? prev?.comments?.length ?? 0;
+        const nextCount = Math.max(0, serverCountBase - 1);
+        return {
+          ...prev,
+          comments: nextComments,
+          comment_count: nextCount,
+        };
+      });
+
+      // 델타도 정리(목록과 동기화를 위해 -1 시도)
+      const after = bumpDelta(idStr, "comments", -1);
+      const nextCommentsCnt = getDisplayCount(
+        (post?.comment_count ?? post?.comments?.length ?? 0) - 1,
+        after.comments
+      );
+
+      try {
+        window.dispatchEvent(
+          new CustomEvent("post:commentDeleted", {
+            detail: { postId: idStr, comment_count: nextCommentsCnt },
+          })
+        );
+      } catch {}
+    } catch (err) {
+      console.error("댓글 삭제 실패:", err);
+      alert("서버 오류가 발생했습니다.");
     }
   };
 
@@ -201,13 +280,6 @@ function PostDetail() {
         })
       );
     } catch {}
-
-    // (선택) 서버 반영:
-    // await fetch(`http://localhost:5000/api/posts/${idStr}/like`, {
-    //   method: "POST",
-    //   headers: { "Content-Type": "application/json" },
-    //   body: JSON.stringify({ like: willLike }),
-    // }).catch(()=>{});
   };
 
   return (
@@ -322,29 +394,64 @@ function PostDetail() {
             </div>
           </div>
 
-          {/* 기존 댓글 렌더링(좋아요는 PostComment.jsx에서 처리하는 경우 별도 사용) */}
+          {/* 기존 댓글 렌더링 */}
           <div className={styles.mkcommentsList}>
-            {(post.comments ?? []).map((c) => (
-              <div key={c.postcomment_id} className={styles.mkcommentItem}>
-                <div className={styles.mkcommentHead}>
-                  <div className={styles.mkcommentAvatar} />
-                  <div className={styles.mkcommentMeta}>
-                    <div className={styles.mkcommentAuthor}>
-                      {c.author ?? c.user_name ?? "익명"}
+            {(post.comments ?? []).map((c) => {
+              const isOwner =
+                !!currentUser?.user_id &&
+                Number(currentUser.user_id) === Number(c.user_id);
+
+              return (
+                <div key={c.postcomment_id} className={styles.mkcommentItem}>
+                  <div
+                    className={styles.mkcommentHead}
+                    style={{ display: "flex", alignItems: "center", gap: 10 }}
+                  >
+                    {/* 왼쪽: 아바타/작성자 */}
+                    <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                      <div className={styles.mkcommentAvatar} />
+                      <div className={styles.mkcommentMeta}>
+                        <div className={styles.mkcommentAuthor}>
+                          {c.author ?? c.user_name ?? "익명"}
+                        </div>
+                        <div className={styles.mkcommentTime}>
+                          {timeAgo(c.created_at)}
+                        </div>
+                      </div>
                     </div>
-                    <div className={styles.mkcommentTime}>
-                      {timeAgo(c.created_at)}
-                    </div>
+
+                    {/* 오른쪽: 삭제 버튼(본인 댓글만) ★추가 */}
+                    {isOwner && (
+                      <div style={{ marginLeft: "auto" }}>
+                        <button
+                          type="button"
+                          onClick={() => deleteComment(c)}
+                          className={styles.mkcommentDelBtn}
+                          aria-label="댓글 삭제"
+                          title="댓글 삭제"
+                          style={{
+                            background: "transparent",
+                            border: "1px solid #ddd",
+                            borderRadius: 6,
+                            padding: "4px 8px",
+                            cursor: "pointer",
+                          }}
+                        >
+                          <i className="fa-regular fa-trash-can" /> 삭제
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div
+                    className={styles.mkcommentBody}
+                    style={{ whiteSpace: "pre-wrap" }}
+                  >
+                    {c.content ?? c.text}
                   </div>
                 </div>
-                <div
-                  className={styles.mkcommentBody}
-                  style={{ whiteSpace: "pre-wrap" }}
-                >
-                  {c.content ?? c.text}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>
