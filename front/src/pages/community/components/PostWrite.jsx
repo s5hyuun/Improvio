@@ -76,9 +76,9 @@ function PostWrite({ onSubmit, onCancel }) {
     e.preventDefault();
 
     if (!userId) {
-  alert("로그인이 필요합니다.");
-  return;
-}
+      alert("로그인이 필요합니다.");
+      return;
+    }
 
     if (!title.trim() || !content.trim()) {
       alert("제목과 내용을 입력해주세요.");
@@ -105,8 +105,10 @@ function PostWrite({ onSubmit, onCancel }) {
         setTitle("");
         setContent("");
         setImages([]);
-        onSubmit?.(data);   // ✅ 부모에게 등록 완료 알림
-        onCancel?.();       // ✅ 모달 닫기
+        onSubmit?.(data); // ✅ 부모에게 등록 완료 알림
+        onCancel?.(); // ✅ 모달 닫기
+
+        window.location.reload();
       } else {
         alert("등록 실패: " + data.error);
       }
