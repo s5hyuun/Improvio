@@ -1056,7 +1056,7 @@ app.get("/api/posts/:postId/comments", async (req, res) => {
   const { postId } = req.params;
   try {
     const [rows] = await pool.query(
-      `SELECT c.postcomment_id, c.content, c.created_at, u.user_name
+      `SELECT c.postcomment_id, c.content, c.created_at, u.username
        FROM postcomment c
        JOIN user u ON c.user_id = u.user_id
        WHERE c.post_id = ?
