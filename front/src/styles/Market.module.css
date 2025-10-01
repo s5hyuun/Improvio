@@ -342,7 +342,8 @@
   transition: background-color .15s ease, box-shadow .15s ease, transform .05s ease !important; 
 }
 .mksendBtn i {
-  color: #2563eb !important;
+  /* color: #2563eb !important; */
+  color: #fff !important;
   font-size: 14px !important;
   pointer-events: none !important;
 }
