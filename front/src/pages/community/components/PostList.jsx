@@ -24,43 +24,21 @@ function PostList() {
   const [posts, setPosts] = useState([]);
   const [isWriting, setIsWriting] = useState(false);
 
-  // ✅ 숫자/문자 → 키 매핑
+  // 숫자/문자 → 키 매핑
   const norm = (id = "") => {
     const s = String(id).toLowerCase();
-    const numMap = {
-      1: "free",
-      2: "rookie",
-      3: "secret",
-      4: "info",
-      5: "market",
-      6: "issue",
-    };
+    const numMap = { 1: "free", 2: "rookie", 3: "secret", 4: "info", 5: "market", 6: "issue" };
     if (numMap[s]) return numMap[s];
-
     if (["free", "자유", "자유게시판"].includes(s)) return "free";
-    if (["rookie", "newbie", "new", "junior", "신입", "신입게시판"].includes(s))
-      return "rookie";
-    if (["secret", "private", "비밀", "비밀게시판"].includes(s))
-      return "secret";
-    if (["info", "information", "tips", "정보", "정보게시판"].includes(s))
-      return "info";
+    if (["rookie", "newbie", "new", "junior", "신입", "신입게시판"].includes(s)) return "rookie";
+    if (["secret", "private", "비밀", "비밀게시판"].includes(s)) return "secret";
+    if (["info", "information", "tips", "정보", "정보게시판"].includes(s)) return "info";
     if (["market", "장터", "장터게시판"].includes(s)) return "market";
-    if (
-      [
-        "issue",
-        "issues",
-        "current",
-        "news",
-        "시사",
-        "시사/이슈",
-        "이슈",
-      ].includes(s)
-    )
-      return "issue";
+    if (["issue", "issues", "current", "news", "시사", "시사/이슈", "이슈"].includes(s)) return "issue";
     return "etc";
   };
 
-  // ✅ 보드 메타(아이콘 + 타이틀)
+  // 보드 메타
   const boardMeta = useMemo(() => {
     const key = norm(boardId);
     const map = {
@@ -75,7 +53,7 @@ function PostList() {
     return map[key] || map.etc;
   }, [boardId]);
 
-  // ✅ 목록 API + 로컬 좋아요 반영
+  // 목록 API + 로컬 좋아요 반영
   useEffect(() => {
     let aborted = false;
     fetch(`http://localhost:5000/api/posts?board_id=${boardId}`)
@@ -98,10 +76,10 @@ function PostList() {
     };
   }, [boardId]);
 
-  // ✅ 상세에서 발생한 이벤트들을 반영
+  // 상세에서 발생한 이벤트들을 반영
   useEffect(() => {
     const onLike = (e) => {
-      const { postId, liked } = e.detail || {};
+      const { postId, liked, like_count } = e.detail || {};
       if (!postId) return;
       setPosts((prev) =>
         prev.map((p) =>
@@ -109,7 +87,10 @@ function PostList() {
             ? {
                 ...p,
                 _liked: !!liked,
-                like_count: Math.max(0, (p.like_count ?? 0) + (liked ? 1 : -1)),
+                like_count:
+                  typeof like_count === "number"
+                    ? Math.max(0, like_count)
+                    : Math.max(0, (p.like_count ?? 0) + (liked ? 1 : -1)),
               }
             : p
         )
@@ -122,19 +103,19 @@ function PostList() {
       setPosts((prev) =>
         prev.map((p) =>
           String(p.post_id) === String(postId)
-            ? { ...p, comment_count: comment_count ?? (p.comment_count ?? 0) + 1 }
+            ? { ...p, comment_count: typeof comment_count === "number" ? comment_count : (p.comment_count ?? 0) + 1 }
             : p
         )
       );
     };
 
     const onView = (e) => {
-      const { postId } = e.detail || {};
+      const { postId, views } = e.detail || {};
       if (!postId) return;
       setPosts((prev) =>
         prev.map((p) =>
           String(p.post_id) === String(postId)
-            ? { ...p, views: (p.views ?? 0) + 1 }
+            ? { ...p, views: typeof views === "number" ? views : (p.views ?? 0) + 1 }
             : p
         )
       );
@@ -150,20 +131,18 @@ function PostList() {
     };
   }, []);
 
-  // ✅ 시간 표기
+  // 시간 표기
   const timeAgo = (ts) => {
     const t = new Date(ts || Date.now()).getTime();
     const diff = Date.now() - t;
-    const m = 60 * 1000,
-      h = 60 * m,
-      d = 24 * h;
+    const m = 60 * 1000, h = 60 * m, d = 24 * h;
     if (diff < m) return "방금 전";
     if (diff < h) return `${Math.floor(diff / m)}분 전`;
     if (diff < d) return `${Math.floor(diff / h)}시간 전`;
     return `${Math.floor(diff / d)}일 전`;
   };
 
-  // ✅ 게시글 열기(조회수 즉시 증가 + 네비게이션, 중복 방지)
+  // 게시글 열기(조회수 즉시 증가 + 네비게이션, 중복 방지)
   const openPost = (pid) => {
     const idStr = String(pid);
     const viewKey = `${VIEW_KEY_PREFIX}${idStr}`;
@@ -172,7 +151,9 @@ function PostList() {
         sessionStorage.setItem(viewKey, "1");
         // 목록 숫자 즉시 +1
         window.dispatchEvent(
-          new CustomEvent("post:viewIncreased", { detail: { postId: idStr } })
+          new CustomEvent("post:viewIncreased", {
+            detail: { postId: idStr },
+          })
         );
         // (선택) 서버 반영
         // fetch(`http://localhost:5000/api/posts/${idStr}/view`, { method: "POST" }).catch(()=>{});
@@ -250,9 +231,7 @@ function PostList() {
                     </div>
                     <div className={styles.mkmetaItem}>
                       <i
-                        className={
-                          isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart"
-                        }
+                        className={isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart"}
                         aria-hidden="true"
                         style={{ color: isLiked ? "#ff0505" : "inherit" }}
                         title={isLiked ? "좋아요 누름" : "좋아요 안 누름"}
@@ -270,7 +249,30 @@ function PostList() {
       {/* 글쓰기 모달 */}
       {isWriting && (
         <PostWrite
-          onSubmit={handleSubmit}
+          onSubmit={async (newPost) => {
+            const authUser = JSON.parse(localStorage.getItem("auth_user"));
+            if (!authUser?.user_id) {
+              alert("로그인 후 글을 작성해주세요.");
+              return;
+            }
+            const res = await fetch("http://localhost:5000/api/posts", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                board_id: boardId,
+                user_id: authUser.user_id,
+                ...newPost,
+              }),
+            });
+            if (res.ok) {
+              const saved = await res.json();
+              setPosts((prev) => [
+                { ...saved, _liked: false, like_count: saved.like_count ?? 0, comment_count: saved.comment_count ?? 0, views: saved.views ?? 0 },
+                ...prev,
+              ]);
+              setIsWriting(false);
+            }
+          }}
           onCancel={() => setIsWriting(false)}
         />
       )}

@@ -44,20 +44,20 @@ function PostDetail() {
           data?.user_liked ?? likedSet.has(String(data?.post_id ?? postId));
         setLiked(!!isLiked);
 
-        // 상세로 "바로 접속"한 경우에도 조회수 1 증가(중복 방지)
+        // 상세로 바로 접속한 경우에도 조회수 1 증가(세션 중복 방지)
         const viewKey = `${VIEW_KEY_PREFIX}${postId}`;
         const alreadyViewed = sessionStorage.getItem(viewKey) === "1";
 
         const baseViews = data?.views ?? 0;
-        const views = alreadyViewed ? baseViews : baseViews + 1;
+        const nextViews = alreadyViewed ? baseViews : baseViews + 1;
 
-        // 목록에도 반영되도록 이벤트 브로드캐스트(이미 목록에서 눌렀다면 중복 방지 키가 세팅돼 있음)
         if (!alreadyViewed) {
           try {
             sessionStorage.setItem(viewKey, "1");
+            // 목록과 동기화
             window.dispatchEvent(
               new CustomEvent("post:viewIncreased", {
-                detail: { postId: String(data?.post_id ?? postId) },
+                detail: { postId: String(data?.post_id ?? postId), views: nextViews },
               })
             );
           } catch {}
@@ -65,7 +65,7 @@ function PostDetail() {
           // fetch(`http://localhost:5000/api/posts/${postId}/view`, { method: "POST" }).catch(()=>{});
         }
 
-        setPost({ ...data, views });
+        setPost({ ...data, views: nextViews });
       })
       .catch((err) => console.error(err));
     return () => {
@@ -78,9 +78,7 @@ function PostDetail() {
     if (!ts) return "";
     const t = new Date(ts).getTime();
     const diff = Date.now() - t;
-    const m = 60 * 1000,
-      h = 60 * m,
-      d = 24 * h;
+    const m = 60 * 1000, h = 60 * m, d = 24 * h;
     if (diff < m) return "방금 전";
     if (diff < h) return `${Math.floor(diff / m)}분 전`;
     if (diff < d) return `${Math.floor(diff / h)}시간 전`;
@@ -101,7 +99,7 @@ function PostDetail() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            content: newComment,
+            content: newComment.trim(),
             user_id: 1, // TODO: 로그인 사용자 ID
           }),
         }
@@ -145,31 +143,32 @@ function PostDetail() {
     const willLike = !liked;
 
     // 낙관적 업데이트: 숫자 즉시 반영
+    let nextLikeCount = (post?.like_count ?? post?.likes ?? 0) + (willLike ? 1 : -1);
+    if (nextLikeCount < 0) nextLikeCount = 0;
+
     setLiked(willLike);
-    setPost((prev) => ({
-      ...prev,
-      like_count: Math.max(
-        0,
-        (prev?.like_count ?? prev?.likes ?? 0) + (willLike ? 1 : -1)
-      ),
-    }));
+    setPost((prev) => ({ ...prev, like_count: nextLikeCount }));
 
     // 로컬스토리지 갱신
     if (willLike) likedSet.add(currentId);
     else likedSet.delete(currentId);
     writeLikedSet(likedSet);
 
-    // 목록 동기화
+    // 목록 동기화(증감 후 카운트 전달)
     try {
       window.dispatchEvent(
         new CustomEvent("post:likeToggled", {
-          detail: { postId: currentId, liked: willLike },
+          detail: { postId: currentId, liked: willLike, like_count: nextLikeCount },
         })
       );
     } catch {}
 
     // (선택) 서버 반영
-    // await fetch(`http://localhost:5000/api/posts/${postId}/like`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ like: willLike }) }).catch(()=>{});
+    // await fetch(`http://localhost:5000/api/posts/${postId}/like`, {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ like: willLike }),
+    // }).catch(()=>{});
   };
 
   if (!post) return <div>Loading...</div>;
@@ -218,6 +217,7 @@ function PostDetail() {
               {totalComments}
             </div>
 
+            {/* ❤️ 좋아요 */}
             <button
               type="button"
               className={styles.mkmetaItem}
@@ -238,18 +238,18 @@ function PostDetail() {
                 aria-hidden="true"
                 style={{ color: liked ? "#ff0505" : "inherit" }}
               />
-              {likeCount}
+              {post?.like_count ?? 0}
             </button>
 
-            {/* 👁 조회수 숫자 표기 */}
+            {/* 👁 조회수 */}
             <div className={styles.mkmetaItem}>
               <i className="fa-regular fa-eye" aria-hidden="true" />
-              {viewCount}
+              {post?.views ?? 0}
             </div>
           </div>
         </div>
 
-        {/* 댓글 섹션 */}
+        {/* 댓글 섹션(간단 입력) */}
         <div className={styles.mkcommentsSection}>
           <div className={styles.mkcommentsHeader}>
             댓글 <span className={styles.mkcommentsCount}>{totalComments}</span>
@@ -297,10 +297,7 @@ function PostDetail() {
                   </div>
                 </div>
 
-                <div
-                  className={styles.mkcommentBody}
-                  style={{ whiteSpace: "pre-wrap" }}
-                >
+                <div className={styles.mkcommentBody} style={{ whiteSpace: "pre-wrap" }}>
                   {c.content ?? c.text}
                 </div>
 

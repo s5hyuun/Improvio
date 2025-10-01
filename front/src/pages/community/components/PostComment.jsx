@@ -1,19 +1,39 @@
 import { useEffect, useState } from "react";
 import styles from "../../../styles/Community.module.css";
 
+const COMMENT_LS_KEY = "liked_comments"; // [commentId] 배열 저장
+
+function readLikedComments() {
+  try {
+    const raw = localStorage.getItem(COMMENT_LS_KEY);
+    return new Set(raw ? JSON.parse(raw) : []);
+  } catch {
+    return new Set();
+  }
+}
+function writeLikedComments(set) {
+  try {
+    localStorage.setItem(COMMENT_LS_KEY, JSON.stringify(Array.from(set)));
+  } catch {}
+}
+
 function PostComment({ postId, currentUser }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
+  const [likedSet, setLikedSet] = useState(() => readLikedComments());
 
   // 댓글 불러오기
   const fetchComments = async () => {
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/posts/${postId}/comments`
-      );
+      const res = await fetch(`http://localhost:5000/api/posts/${postId}/comments`);
       const data = await res.json();
-      setComments(data || []);
+      const withLikeState = (data || []).map((c) => ({
+        ...c,
+        _liked: likedSet.has(String(c.postcomment_id)),
+        like_count: c.like_count ?? 0,
+      }));
+      setComments(withLikeState);
     } catch (err) {
       console.error("댓글 불러오기 실패:", err);
     }
@@ -21,6 +41,7 @@ function PostComment({ postId, currentUser }) {
 
   useEffect(() => {
     fetchComments();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
   // 댓글 작성
@@ -35,22 +56,33 @@ function PostComment({ postId, currentUser }) {
 
     setSubmitting(true);
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/posts/${postId}/comments`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            user_id: currentUser.user_id,
-            content: newComment.trim(),
-          }),
-        }
-      );
+      const res = await fetch(`http://localhost:5000/api/posts/${postId}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id: currentUser.user_id,
+          content: newComment.trim(),
+        }),
+      });
 
       const data = await res.json();
       if (res.ok && data) {
-        setComments([data, ...comments]); // 새 댓글 상단에 추가
+        const inserted = {
+          ...data,
+          _liked: false,
+          like_count: data.like_count ?? 0,
+        };
+        setComments((prev) => [inserted, ...prev]);
         setNewComment("");
+
+        // 상단 카운트(목록/상세)와 동기화
+        try {
+          window.dispatchEvent(
+            new CustomEvent("post:commentAdded", {
+              detail: { postId: String(postId) },
+            })
+          );
+        } catch {}
       } else {
         alert(data?.error || "댓글 작성 실패");
       }
@@ -60,6 +92,37 @@ function PostComment({ postId, currentUser }) {
     } finally {
       setSubmitting(false);
     }
+  };
+
+  // 댓글 좋아요 토글
+  const toggleCommentLike = async (commentId) => {
+    const idStr = String(commentId);
+    const willLike = !likedSet.has(idStr);
+
+    setComments((prev) =>
+      prev.map((c) =>
+        String(c.postcomment_id) === idStr
+          ? {
+              ...c,
+              _liked: willLike,
+              like_count: Math.max(0, (c.like_count ?? 0) + (willLike ? 1 : -1)),
+            }
+          : c
+      )
+    );
+
+    const nextSet = new Set(likedSet);
+    if (willLike) nextSet.add(idStr);
+    else nextSet.delete(idStr);
+    setLikedSet(nextSet);
+    writeLikedComments(nextSet);
+
+    // (선택) 서버 반영
+    // await fetch(`http://localhost:5000/api/comments/${idStr}/like`, {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ like: willLike }),
+    // }).catch(()=>{});
   };
 
   return (
@@ -88,7 +151,34 @@ function PostComment({ postId, currentUser }) {
               <span>{formatDate(c.created_at)}</span>
             </div>
           </div>
-          <div>{c.content}</div>
+
+          <div className={styles.postCommentRight}>
+            <div className={styles.postCommentContent}>{c.content}</div>
+
+            <button
+              type="button"
+              className={styles.commentLikeBtn}
+              onClick={() => toggleCommentLike(c.postcomment_id)}
+              aria-label={c._liked ? "댓글 좋아요 취소" : "댓글 좋아요"}
+              title={c._liked ? "좋아요 취소" : "좋아요"}
+              style={{
+                display: "inline-flex",
+                gap: 6,
+                alignItems: "center",
+                background: "transparent",
+                border: 0,
+                cursor: "pointer",
+                padding: 0,
+              }}
+            >
+              <i
+                className={c._liked ? "fa-solid fa-heart" : "fa-regular fa-heart"}
+                aria-hidden="true"
+                style={{ color: c._liked ? "#ff0505" : "inherit" }}
+              />
+              <span>{c.like_count ?? 0}</span>
+            </button>
+          </div>
         </div>
       ))}
     </div>
