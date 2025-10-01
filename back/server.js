@@ -10,7 +10,7 @@ import fs from "fs";
 import mime from "mime"; // npm install mime
 import { fileURLToPath } from "url";
 import performanceRouter from "./routes/performance.js";
-import 'dotenv/config';
+import "dotenv/config";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -21,7 +21,7 @@ app.use(cors({}));
 app.use(express.json());
 const HF_API_TOKEN = process.env.HF_API_TOKEN;
 if (!HF_API_TOKEN) {
-  console.warn('⚠️  HF_API_TOKEN이 설정되지 않았습니다. .env 확인하세요.');
+  console.warn("⚠️  HF_API_TOKEN이 설정되지 않았습니다. .env 확인하세요.");
 }
 
 app.use("/api/performance", performanceRouter);
@@ -132,8 +132,10 @@ app.get("/api/suggestions", async (req, res) => {
       LEFT JOIN User u ON s.user_id = u.user_id left join department d on s.department_id=d.department_id
       ORDER BY s.created_at DESC
     `);
-
-    res.json(suggestions);
+    const [[{ count }]] = await pool.query(`
+  SELECT COUNT(*) AS count FROM User WHERE role = 'employee'
+`);
+    res.json({ suggestions, totalEmployees: count });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Database error" });

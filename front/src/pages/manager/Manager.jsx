@@ -38,7 +38,7 @@ export default function Manager() {
   // 공지
   const [activeNoticeCount, setActiveNoticeCount] = useState(0);
   const [urgentNotices, setUrgentNotices] = useState([]); // active && urgent
-
+  const [totalEmployees, setTotalEmployees] = useState(0);
   // 초기 공지 로드
   useEffect(() => {
     try {
@@ -102,10 +102,13 @@ export default function Manager() {
       try {
         const res = await fetch(`${API}/api/suggestions`);
         const data = await res.json();
-        const list = Array.isArray(data) ? data.map(adaptFromDB) : [];
+        const list = Array.isArray(data.suggestions)
+          ? data.suggestions.map(adaptFromDB)
+          : [];
         if (!mounted) return;
         setItems(list);
         setUrgentItems(list.filter((x) => x.urgent));
+        setTotalEmployees(data.totalEmployees ?? 0);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(list));
       } catch {
         if (!mounted) return;
@@ -115,9 +118,39 @@ export default function Manager() {
           setUrgentItems(cached.filter((x) => x.urgent));
         } else {
           const fallback = [
-            { id: 1, title: "제목", body: "내용", dept: "R&D", author: "익명 직원", created_at: "2024-01-15", priority: 85, status: "pending", urgent: true },
-            { id: 2, title: "제목", body: "내용", dept: "경영지원", author: "익명 직원", created_at: "2024-01-10", priority: 62, status: "approved", urgent: false },
-            { id: 3, title: "제목", body: "내용", dept: "안전", author: "익명 직원", created_at: "2023-12-20", priority: 92, status: "completed", urgent: false },
+            {
+              id: 1,
+              title: "제목",
+              body: "내용",
+              dept: "R&D",
+              author: "익명 직원",
+              created_at: "2024-01-15",
+              priority: 85,
+              status: "pending",
+              urgent: true,
+            },
+            {
+              id: 2,
+              title: "제목",
+              body: "내용",
+              dept: "경영지원",
+              author: "익명 직원",
+              created_at: "2024-01-10",
+              priority: 62,
+              status: "approved",
+              urgent: false,
+            },
+            {
+              id: 3,
+              title: "제목",
+              body: "내용",
+              dept: "안전",
+              author: "익명 직원",
+              created_at: "2023-12-20",
+              priority: 92,
+              status: "completed",
+              urgent: false,
+            },
           ];
           setItems(fallback);
           setUrgentItems(fallback.filter((x) => x.urgent));
@@ -183,9 +216,7 @@ export default function Manager() {
     if (id == null) return;
 
     // 1) 즉시 제거
-    setUrgentNotices((prev) =>
-      prev.filter((x) => !sameId(getNoticeId(x), id))
-    );
+    setUrgentNotices((prev) => prev.filter((x) => !sameId(getNoticeId(x), id)));
 
     try {
       // 2) 로컬스토리지 업데이트(다양한 스키마 대응)
@@ -221,14 +252,17 @@ export default function Manager() {
       await fetch(`${API}/api/notices/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ urgent: false, is_urgent: false, urgentFlag: false }),
+        body: JSON.stringify({
+          urgent: false,
+          is_urgent: false,
+          urgentFlag: false,
+        }),
       });
     } catch {}
   };
 
   // 통계 카드
   const stats = useMemo(() => {
-    const totalEmployees = 5;
     const totalSuggestions = items.length;
     const urgentCount = urgentItems.length;
     const activeNotices = activeNoticeCount;
@@ -238,7 +272,7 @@ export default function Manager() {
       { label: "활성 공지", value: activeNotices },
       { label: "긴급 제안", value: urgentCount },
     ];
-  }, [items, urgentItems, activeNoticeCount]);
+  }, [items, urgentItems, activeNoticeCount, totalEmployees]);
 
   // 카드/레이아웃 인라인 백업 스타일
   const gridStyle = {
@@ -271,39 +305,38 @@ export default function Manager() {
     });
 
   const urgentSplitFallback = {
-     display: "grid",
-  gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", // 자식이 넘치지 않도록
-  gap: "16px",
-  marginTop: 24,
-  alignItems: "stretch",
-  height: "100%",   // 부모(content)의 남는 높이를 그대로 받음
-  minHeight: 0, 
+    display: "grid",
+    gridTemplateColumns: "minmax(0, 1fr) minmax(0, 1fr)", // 자식이 넘치지 않도록
+    gap: "16px",
+    marginTop: 24,
+    alignItems: "stretch",
+    height: "100%", // 부모(content)의 남는 높이를 그대로 받음
+    minHeight: 0,
   };
   const columnFallback = {
-  background: "#fff",
-  borderRadius: 16,
-  border: "1px solid #e5e7eb",
-  boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
-  display: "flex",
-  flexDirection: "column",
-  minHeight: 0,    // 🔑 자식 스크롤 허용
-  height: "100%",  // 🔑 urgentSplit의 높이를 꽉 채움
-};
+    background: "#fff",
+    borderRadius: 16,
+    border: "1px solid #e5e7eb",
+    boxShadow: "0 2px 6px rgba(0,0,0,0.08)",
+    display: "flex",
+    flexDirection: "column",
+    minHeight: 0, // 🔑 자식 스크롤 허용
+    height: "100%", // 🔑 urgentSplit의 높이를 꽉 채움
+  };
 
-const headerRowFallback = {
-  padding: "16px 20px",
-  fontWeight: 700,
-  borderBottom: "1px solid #f1f5f9",
-  flex: "0 0 auto", // 헤더는 고정
-};
+  const headerRowFallback = {
+    padding: "16px 20px",
+    fontWeight: 700,
+    borderBottom: "1px solid #f1f5f9",
+    flex: "0 0 auto", // 헤더는 고정
+  };
 
-const scrollAreaFallback = {
-  overflowY: "auto",
-  padding: 16,
-  flex: "1 1 auto", // 🔑 남는 공간을 스크롤 영역이 차지
-  minHeight: 0,     // 🔑 flex 스크롤 이슈 방지
-};
-
+  const scrollAreaFallback = {
+    overflowY: "auto",
+    padding: 16,
+    flex: "1 1 auto", // 🔑 남는 공간을 스크롤 영역이 차지
+    minHeight: 0, // 🔑 flex 스크롤 이슈 방지
+  };
 
   return (
     <div className="app">
@@ -312,13 +345,21 @@ const scrollAreaFallback = {
         onSelectDept={(id) => setCurrentDeptId(id || "all")}
       />
 
-      <main className="main" style={{ display: "flex", flexDirection: "column", height: "100vh" }}>
+      <main
+        className="main"
+        style={{ display: "flex", flexDirection: "column", height: "100vh" }}
+      >
         <Header />
-        <section className="content" style={{ flex: 1, minHeight: 0, overflow: "hidden" }}>
+        <section
+          className="content"
+          style={{ flex: 1, minHeight: 0, overflow: "hidden" }}
+        >
           <div className={styles.btn}>
             <button
               type="button"
-              className={`${styles.button} ${active === "dashboard" ? styles.active : ""}`}
+              className={`${styles.button} ${
+                active === "dashboard" ? styles.active : ""
+              }`}
               onClick={() => setActive("dashboard")}
               aria-pressed={active === "dashboard"}
             >
@@ -326,7 +367,9 @@ const scrollAreaFallback = {
             </button>
             <button
               type="button"
-              className={`${styles.button} ${active === "employee" ? styles.active : ""}`}
+              className={`${styles.button} ${
+                active === "employee" ? styles.active : ""
+              }`}
               onClick={() => setActive("employee")}
               aria-pressed={active === "employee"}
             >
@@ -334,7 +377,9 @@ const scrollAreaFallback = {
             </button>
             <button
               type="button"
-              className={`${styles.button} ${active === "suggestion" ? styles.active : ""}`}
+              className={`${styles.button} ${
+                active === "suggestion" ? styles.active : ""
+              }`}
               onClick={() => setActive("suggestion")}
               aria-pressed={active === "suggestion"}
             >
@@ -342,7 +387,9 @@ const scrollAreaFallback = {
             </button>
             <button
               type="button"
-              className={`${styles.button} ${active === "notice" ? styles.active : ""}`}
+              className={`${styles.button} ${
+                active === "notice" ? styles.active : ""
+              }`}
               onClick={() => setActive("notice")}
               aria-pressed={active === "notice"}
             >
@@ -354,7 +401,12 @@ const scrollAreaFallback = {
             <>
               <div style={gridStyle} aria-label="대시보드 통계">
                 {stats.map((s, i) => (
-                  <div key={i} style={cardStyle} role="status" aria-live="polite">
+                  <div
+                    key={i}
+                    style={cardStyle}
+                    role="status"
+                    aria-live="polite"
+                  >
                     <div style={valueStyle}>{s.value}</div>
                     <div style={labelStyle}>{s.label}</div>
                   </div>
@@ -362,67 +414,123 @@ const scrollAreaFallback = {
               </div>
 
               {/* 긴급 공지 / 긴급 제안 1:1 가로 배치 */}
-              <div className={styles.urgentSplit || ""} style={styles.urgentSplit ? undefined : urgentSplitFallback}>
+              <div
+                className={styles.urgentSplit || ""}
+                style={styles.urgentSplit ? undefined : urgentSplitFallback}
+              >
                 {/* 긴급 공지 */}
-                <section className={styles.urgentColumn || ""} role="region" aria-label="긴급 공지" style={styles.urgentColumn ? undefined : columnFallback}>
-                  <div className={styles.urgentColumnHeader || ""} style={styles.urgentColumnHeader ? undefined : headerRowFallback}>
+                <section
+                  className={styles.urgentColumn || ""}
+                  role="region"
+                  aria-label="긴급 공지"
+                  style={styles.urgentColumn ? undefined : columnFallback}
+                >
+                  <div
+                    className={styles.urgentColumnHeader || ""}
+                    style={
+                      styles.urgentColumnHeader ? undefined : headerRowFallback
+                    }
+                  >
                     🚨 긴급 공지
                   </div>
 
-                  <div className={styles.urgentScroll || ""} style={styles.urgentScroll ? undefined : scrollAreaFallback}>
+                  <div
+                    className={styles.urgentScroll || ""}
+                    style={styles.urgentScroll ? undefined : scrollAreaFallback}
+                  >
                     <div style={{ display: "grid", gap: 16 }}>
                       {urgentNotices.length === 0 ? (
-                        <div className={styles.urgentCard} style={{ color: "#c2410c" }}>
+                        <div
+                          className={styles.urgentCard}
+                          style={{ color: "#c2410c" }}
+                        >
                           현재 긴급 공지가 없습니다.
                         </div>
                       ) : (
-                        urgentNotices.slice().sort(sortByTitle).map((n) => {
-                          const nid = getNoticeId(n);
-                          return (
-                            <div key={nid} className={styles.urgentCard}>
-                              <div className={styles.urgentCardText}>
-                                <div className={styles.rowTitle}>{n.title || "제목"}</div>
-                                <div className={styles.rowMeta}>
-                                  {(n.dept ?? "부서 미상") + " · "}
-                                  {String(n.created_at || n.createdAt || "").slice(0, 10)}
+                        urgentNotices
+                          .slice()
+                          .sort(sortByTitle)
+                          .map((n) => {
+                            const nid = getNoticeId(n);
+                            return (
+                              <div key={nid} className={styles.urgentCard}>
+                                <div className={styles.urgentCardText}>
+                                  <div className={styles.rowTitle}>
+                                    {n.title || "제목"}
+                                  </div>
+                                  <div className={styles.rowMeta}>
+                                    {(n.dept ?? "부서 미상") + " · "}
+                                    {String(
+                                      n.created_at || n.createdAt || ""
+                                    ).slice(0, 10)}
+                                  </div>
                                 </div>
+                                <button
+                                  type="button"
+                                  className={styles.urgentRowBtn}
+                                  onClick={() => unmarkNotice(n)}
+                                >
+                                  긴급 해제
+                                </button>
                               </div>
-                              <button type="button" className={styles.urgentRowBtn} onClick={() => unmarkNotice(n)}>
-                                긴급 해제
-                              </button>
-                            </div>
-                          );
-                        })
+                            );
+                          })
                       )}
                     </div>
                   </div>
                 </section>
 
                 {/* 긴급 제안 */}
-                <section className={styles.urgentColumn || ""} role="region" aria-label="긴급 제안" style={styles.urgentColumn ? undefined : columnFallback}>
-                  <div className={styles.urgentColumnHeader || ""} style={styles.urgentColumnHeader ? undefined : headerRowFallback}>
+                <section
+                  className={styles.urgentColumn || ""}
+                  role="region"
+                  aria-label="긴급 제안"
+                  style={styles.urgentColumn ? undefined : columnFallback}
+                >
+                  <div
+                    className={styles.urgentColumnHeader || ""}
+                    style={
+                      styles.urgentColumnHeader ? undefined : headerRowFallback
+                    }
+                  >
                     🚨 긴급 제안
                   </div>
 
-                  <div className={styles.urgentScroll || ""} style={styles.urgentScroll ? undefined : scrollAreaFallback}>
+                  <div
+                    className={styles.urgentScroll || ""}
+                    style={styles.urgentScroll ? undefined : scrollAreaFallback}
+                  >
                     {loading || urgentItems.length === 0 ? (
-                      <div className={styles.urgentCard} style={{ color: "#c2410c" }}>
+                      <div
+                        className={styles.urgentCard}
+                        style={{ color: "#c2410c" }}
+                      >
                         현재 긴급 제안이 없습니다.
                       </div>
                     ) : (
-                      urgentItems.slice().sort(sortByTitle).map((u) => (
-                        <div key={u.id} className={styles.urgentCard}>
-                          <div className={styles.urgentCardText}>
-                            <div className={styles.rowTitle}>{u.title || "제목"}</div>
-                            <div className={styles.rowMeta}>
-                              {u.dept ?? "부서 미상"} · {String(u.created_at).slice(0, 10)}
+                      urgentItems
+                        .slice()
+                        .sort(sortByTitle)
+                        .map((u) => (
+                          <div key={u.id} className={styles.urgentCard}>
+                            <div className={styles.urgentCardText}>
+                              <div className={styles.rowTitle}>
+                                {u.title || "제목"}
+                              </div>
+                              <div className={styles.rowMeta}>
+                                {u.dept ?? "부서 미상"} ·{" "}
+                                {String(u.created_at).slice(0, 10)}
+                              </div>
                             </div>
+                            <button
+                              type="button"
+                              className={styles.urgentRowBtn}
+                              onClick={() => unmarkUrgent(u)}
+                            >
+                              긴급 해제
+                            </button>
                           </div>
-                          <button type="button" className={styles.urgentRowBtn} onClick={() => unmarkUrgent(u)}>
-                            긴급 해제
-                          </button>
-                        </div>
-                      ))
+                        ))
                     )}
                   </div>
                 </section>
