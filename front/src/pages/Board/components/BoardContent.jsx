@@ -90,11 +90,12 @@ function BoardContent({ suggestion, onClick }) {
     title,
     description = "",
     created_at,
-    user_id,
+    author_id,
     vote_count = 0,
     dislike_count = 0,
     comment_count = 0,
     suggestion_id,
+    username,
   } = suggestion;
 
   const [votes, setVotes] = useState(vote_count);
@@ -208,7 +209,7 @@ function BoardContent({ suggestion, onClick }) {
 
         <div className={styles.contentUser}>
           <div title="작성자">
-            <i className="fa-regular fa-user"></i> 익명{user_id}
+            <i className="fa-regular fa-user"></i> 익명{author_id}
           </div>
           <div title="작성일">
             <i className="fa-regular fa-calendar"></i>{" "}

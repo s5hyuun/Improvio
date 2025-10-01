@@ -121,7 +121,7 @@ app.get("/api/suggestions", async (req, res) => {
   try {
     const [suggestions] = await pool.query(`
       SELECT s.*,
-             u.name AS user_name, d.department_name,
+             u.name AS user_name, d.department_name, u.user_id AS author_id,
              -- 댓글 수
              (SELECT COUNT(*) 
               FROM Comment c 

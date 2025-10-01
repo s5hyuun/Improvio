@@ -120,7 +120,7 @@ function adaptFromDB(row) {
     typeof row.urgent === "boolean" ? row.urgent : !!row.is_urgent || false;
 
   const image_url = resolveImage(row);
-
+  const author_id = row.author_id ?? row.user_id ?? null;
   return {
     id,
     suggestion_id: row.suggestion_id ?? id,
@@ -135,6 +135,7 @@ function adaptFromDB(row) {
     status,
     urgent,
     image_url,
+    author_id,
   };
 }
 
