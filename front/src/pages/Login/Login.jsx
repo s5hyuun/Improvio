@@ -23,7 +23,7 @@ export default function Login() {
       const data = await response.json();
 
       if (data.success) {
-        // 🔹 서버가 반환하는 데이터에 맞게 auth_user 저장
+        
         // data.user 또는 data.data 등에 유저 정보가 들어있다면 여기에 맞춰 넣어야 함
         const userData = {
           user_id: data.user?.user_id,
