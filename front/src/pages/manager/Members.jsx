@@ -1,3 +1,4 @@
+// Members.jsx
 import React, { useEffect, useMemo, useState } from "react";
 import styles from "../../styles/Members.module.css";
 
@@ -16,7 +17,6 @@ export default function Member({ selectedDeptId = "all" }) {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (alive) {
-          // 초기값: 모든 직원 상태를 '활성'으로 설정
           const membersWithStatus = data.map((m) => ({
             ...m,
             status: m.status ?? "활성",
@@ -40,24 +40,23 @@ export default function Member({ selectedDeptId = "all" }) {
     return members.filter((m) => m.department_id === selectedDeptId);
   }, [members, selectedDeptId]);
 
-  // 상태 토글 함수
   const toggleStatus = async (userId) => {
+    // 낙관적 업데이트
+    let nextStatus = null;
     setMembers((prev) =>
-      prev.map((m) =>
-        m.user_id === userId
-          ? { ...m, status: m.status === "활성" ? "비활성" : "활성" }
-          : m
-      )
+      prev.map((m) => {
+        if (m.user_id !== userId) return m;
+        const toggled = m.status === "활성" ? "비활성" : "활성";
+        nextStatus = toggled;
+        return { ...m, status: toggled };
+      })
     );
 
-    // 서버에도 상태 업데이트
     try {
-      const member = members.find((m) => m.user_id === userId);
-      const newStatus = member.status === "활성" ? "비활성" : "활성";
       await fetch(`http://localhost:5000/api/members/${userId}/status`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ status: newStatus }),
+        body: JSON.stringify({ status: nextStatus }),
       });
     } catch (e) {
       console.error("상태 업데이트 실패:", e);
@@ -65,8 +64,31 @@ export default function Member({ selectedDeptId = "all" }) {
   };
 
   return (
-    <div className={styles.wrap}>
-      <div className={styles.card}>
+    // 페이지 루트: 부모가 flex여도 내부 스크롤이 가능하도록 보장
+    <div
+      className={styles.wrap}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: "1 1 auto",
+        minHeight: 0, // ★ 중요: 자식 스크롤 영역이 높이를 계산할 수 있도록
+      }}
+    >
+      {/* 스크롤 영역 */}
+      <div
+        role="region"
+        aria-label="직원 목록"
+        tabIndex={0}
+        className={styles.card}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          flex: "1 1 auto",
+          minHeight: 0,             // ★ 중요
+          overflowY: "auto",        // ★ 중요
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
         <div className={styles.tableHead}>
           <div>직원명</div>
           <div>부서</div>
@@ -75,6 +97,10 @@ export default function Member({ selectedDeptId = "all" }) {
         </div>
 
         {loading && <div className={styles.empty}>불러오는 중…</div>}
+
+        {!loading && err && (
+          <div className={styles.empty}>{err}</div>
+        )}
 
         {!loading && !err && filtered.length === 0 && (
           <div className={styles.empty}>
@@ -104,7 +130,6 @@ export default function Member({ selectedDeptId = "all" }) {
                     borderRadius: "999px",
                     fontWeight: 700,
                     fontSize: "12px",
-                    
                   }}
                 >
                   {m.status}

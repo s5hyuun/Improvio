@@ -1,3 +1,4 @@
+// Proposal.jsx
 import React, { useState, useEffect, useMemo } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
@@ -34,7 +35,6 @@ export function SuggestionList() {
   const [loading, setLoading] = useState(true);
 
   const [filter, setFilter] = useState("");
-
   const [deptFilter, setDeptFilter] = useState(() => {
     try {
       return localStorage.getItem(STORAGE_DEPT_KEY) || "";
@@ -108,7 +108,6 @@ export function SuggestionList() {
   }, []);
 
   const updateStatus = async (id, next) => {
-    // 1) 로컬 상태/캐시 갱신
     let changedItem = null;
     setItems((prev) => {
       const updated = prev.map((x) =>
@@ -118,14 +117,12 @@ export function SuggestionList() {
       return updated;
     });
 
-    // 2) 다른 페이지로 실시간 브로드캐스트
     window.dispatchEvent(
       new CustomEvent("suggestion:status", {
         detail: { id, status: next, item: changedItem },
       })
     );
 
-    // 3) 서버 반영
     try {
       await fetch(`${API}/api/suggestions/${id}`, {
         method: "PUT",
@@ -186,10 +183,26 @@ export function SuggestionList() {
     });
   }, [items, filter, deptFilter]);
 
-  if (loading) return <div className={styles.loading}>불러오는 중…</div>;
+  if (loading) {
+    return (
+      <div className={styles.loading} style={{ padding: 16 }}>
+        불러오는 중…
+      </div>
+    );
+  }
 
   return (
-    <div className={styles.wrap}>
+    // 페이지 루트: 헤더/사이드바 포함 레이아웃에서 내부 스크롤 확보
+    <div
+      className={styles.wrap}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: "1 1 auto",
+        minHeight: 0, // ★ 중요
+      }}
+    >
+      {/* 필터 바는 고정 영역 */}
       <div
         style={{
           display: "flex",
@@ -197,6 +210,7 @@ export function SuggestionList() {
           alignItems: "center",
           gap: 8,
           marginBottom: 10,
+          flex: "0 0 auto",
         }}
       >
         <label
@@ -231,7 +245,20 @@ export function SuggestionList() {
         </select>
       </div>
 
-      <div className={styles.list}>
+      {/* 스크롤 리스트 영역 */}
+      <div
+        className={styles.list}
+        role="region"
+        aria-label="제안 목록"
+        tabIndex={0}
+        style={{
+          display: "block",
+          flex: "1 1 auto",
+          minHeight: 0,             // ★ 중요
+          overflowY: "auto",        // ★ 중요
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
         {viewItems.map((item) => (
           <SuggestionCard
             key={item.id}
@@ -356,7 +383,6 @@ export function adaptFromDB(row) {
     id,
     title: row.title ?? "(제목 없음)",
     body,
-    // BoardPage 호환을 위해 description도 채워둡니다.
     description: row.description ?? body,
     dept,
     author,

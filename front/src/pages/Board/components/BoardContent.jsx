@@ -99,7 +99,7 @@ function BoardContent({ suggestion, onClick }) {
 
   const [votes, setVotes] = useState(vote_count);
   const [dislikes, setDislikes] = useState(dislike_count);
-
+  const [commentsNum, setCommentsNum] = useState(comment_count);
   // 1차: 리스트 객체만으로 썸네일 추출 (없으면 null)
   const primaryUrl = useMemo(
     () => pickImageUrlFromSuggestion(suggestion),
@@ -121,7 +121,7 @@ function BoardContent({ suggestion, onClick }) {
         if (!abort) {
           setVotes(data.vote_count ?? 0);
           setDislikes(data.dislike_count ?? 0);
-          setCommentCount((data.comments || []).length);
+          setCommentsNum((data.comments || []).length);
         }
       } catch (err) {
         console.error(err);
@@ -129,7 +129,6 @@ function BoardContent({ suggestion, onClick }) {
     }
 
     loadStats();
-
     return () => {
       abort = true;
     };
@@ -242,7 +241,7 @@ function BoardContent({ suggestion, onClick }) {
           </div>
 
           <div title="댓글 수">
-            <i className="fa-regular fa-comment"></i> {comment_count}
+            <i className="fa-regular fa-comment"></i> {commentsNum}
           </div>
         </div>
       </div>
