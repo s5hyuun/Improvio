@@ -238,7 +238,7 @@ function BoardContent({ suggestion, onClick }) {
             style={{ cursor: "pointer" }}
           >
             <i className="fa-regular fa-thumbs-down"></i> {dislikes}
-            &nbsp;&nbsp;&nbsp;
+            &nbsp;
           </div>
 
           <div title="댓글 수">
