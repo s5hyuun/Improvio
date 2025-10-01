@@ -6,7 +6,7 @@ import styles from "../../../styles/Market.module.css";
 const LS_LIKED_POSTS = "liked_posts"; // Set<string(postId)>
 const LS_POST_DELTAS = "post_count_deltas"; // { [postId]: { likes: number, views: number, comments: number } }
 const SS_VIEW_KEY_PREFIX = "viewed_"; // sessionStorage 중복 조회 방지
-const AUTH_KEY = "auth_user"; // 로그인 사용자 로컬 스토리지 키 ★추가
+const AUTH_KEY = "auth_user"; // 로그인 사용자 로컬 스토리지 키
 
 /** ---- 공통 유틸: 델타 저장/적용 ---- */
 function readDeltas() {
@@ -26,7 +26,6 @@ function bumpDelta(postId, key, amount) {
   const id = String(postId);
   all[id] = all[id] || { likes: 0, views: 0, comments: 0 };
   all[id][key] = (all[id][key] || 0) + amount;
-  // 음수 방지: 화면용 델타는 0 미만이면 0으로(특히 likes/comments)
   if (key !== "views" && all[id][key] < 0) all[id][key] = 0;
   writeDeltas(all);
   return all[id];
@@ -56,9 +55,9 @@ function PostDetail() {
   const [post, setPost] = useState(null);
   const [newComment, setNewComment] = useState("");
   const [liked, setLiked] = useState(false);
-  const [currentUser, setCurrentUser] = useState(null); // ★추가: 로그인 사용자
+  const [currentUser, setCurrentUser] = useState(null);
 
-  // 로그인 사용자 로드 ★추가
+  // 로그인 사용자 로드
   useEffect(() => {
     try {
       const raw = localStorage.getItem(AUTH_KEY);
@@ -69,7 +68,7 @@ function PostDetail() {
     }
   }, []);
 
-  // 상세 진입: 게시글 로드 + 조회수 1회 가산(세션 중복 방지)
+  // 상세/조회수 처리
   useEffect(() => {
     let mounted = true;
     const idStr = String(postId);
@@ -79,19 +78,16 @@ function PostDetail() {
       .then((data) => {
         if (!mounted) return;
 
-        // 좋아요 초기화
         const likedSet = readLikedSet();
         setLiked(
           !!(data?.user_liked ?? likedSet.has(String(data?.post_id ?? idStr)))
         );
 
-        // 조회수: 상세 직접 진입 시 1회 증가(세션 중복 방지)
         const ssKey = `${SS_VIEW_KEY_PREFIX}${idStr}`;
         const already = sessionStorage.getItem(ssKey) === "1";
         if (!already) {
           sessionStorage.setItem(ssKey, "1");
           const after = bumpDelta(idStr, "views", 1);
-          // 목록 동기화(최종 숫자 포함)
           const nextViews = getDisplayCount(data?.views, after.views);
           try {
             window.dispatchEvent(
@@ -111,14 +107,11 @@ function PostDetail() {
     };
   }, [postId]);
 
-  // timeAgo
   const timeAgo = (ts) => {
     if (!ts) return "";
     const t = new Date(ts).getTime();
     const diff = Date.now() - t;
-    const m = 60 * 1000,
-      h = 60 * m,
-      d = 24 * h;
+    const m = 60 * 1000, h = 60 * m, d = 24 * h;
     if (diff < m) return "방금 전";
     if (diff < h) return `${Math.floor(diff / m)}분 전`;
     if (diff < d) return `${Math.floor(diff / h)}시간 전`;
@@ -127,39 +120,30 @@ function PostDetail() {
 
   if (!post) return <div>Loading...</div>;
 
-  // 화면 표시용 최종 카운트(서버 값 + 델타)
   const deltas = readDeltas()[String(post.post_id ?? postId)] || {
-    likes: 0,
-    views: 0,
-    comments: 0,
+    likes: 0, views: 0, comments: 0,
   };
-  const likeCount = getDisplayCount(
-    post?.like_count ?? post?.likes,
-    deltas.likes
-  );
+  const likeCount = getDisplayCount(post?.like_count ?? post?.likes, deltas.likes);
   const viewCount = getDisplayCount(post?.views, deltas.views);
   const totalComments = getDisplayCount(
     post?.comment_count ?? post?.comments?.length ?? 0,
     deltas.comments
   );
 
-  // 댓글 등록(성공 시 숫자 즉시 +1)
+  // 댓글 등록
   const addComment = async () => {
     const idStr = String(post.post_id ?? postId);
     if (!newComment.trim()) return;
 
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/posts/${idStr}/comments`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            content: newComment.trim(),
-            user_id: currentUser?.user_id ?? 1, // 로그인 사용자 없으면 1
-          }),
-        }
-      );
+      const res = await fetch(`http://localhost:5000/api/posts/${idStr}/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: newComment.trim(),
+          user_id: currentUser?.user_id ?? 1,
+        }),
+      });
       const saved = await res.json();
 
       setPost((prev) => ({
@@ -174,7 +158,6 @@ function PostDetail() {
         after.comments
       );
 
-      // 목록 동기화(최종 숫자)
       try {
         window.dispatchEvent(
           new CustomEvent("post:commentAdded", {
@@ -189,90 +172,73 @@ function PostDetail() {
     }
   };
 
-  // 댓글 삭제 ★추가
+  // 댓글 삭제 (확인창/alert 없이, 낙관적 UI)
   const deleteComment = async (comment) => {
     const idStr = String(post.post_id ?? postId);
     const commentId = String(comment.postcomment_id ?? comment.id);
     if (!commentId) return;
 
-    // 권한 체크(클라이언트 단)
-    if (!currentUser?.user_id || currentUser.user_id !== comment.user_id) {
-      alert("본인이 작성한 댓글만 삭제할 수 있습니다.");
-      return;
-    }
+    // 본인 댓글만 삭제 (무소음 처리)
+    if (!currentUser?.user_id || currentUser.user_id !== comment.user_id) return;
 
-    const ok = window.confirm("해당 댓글을 삭제하시겠습니까?");
-    if (!ok) return;
-
+    // 1) 화면 먼저 제거 + 카운트 감소
+    setPost((prev) => {
+      const nextComments = (prev?.comments ?? []).filter(
+        (c) => String(c.postcomment_id) !== commentId
+      );
+      const base = prev?.comment_count ?? prev?.comments?.length ?? 0;
+      return {
+        ...prev,
+        comments: nextComments,
+        comment_count: Math.max(0, base - 1),
+      };
+    });
+    const after = bumpDelta(idStr, "comments", -1);
+    const nextCommentsCnt = getDisplayCount(
+      (post?.comment_count ?? post?.comments?.length ?? 0) - 1,
+      after.comments
+    );
     try {
-      const res = await fetch(
-        `http://localhost:5000/api/comments/${commentId}`,
-        { method: "DELETE" }
+      window.dispatchEvent(
+        new CustomEvent("post:commentDeleted", {
+          detail: { postId: idStr, comment_count: nextCommentsCnt },
+        })
       );
+    } catch {}
 
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        alert(j?.error || "댓글 삭제에 실패했습니다.");
-        return;
-      }
-
-      // 화면 즉시 반영
-      setPost((prev) => {
-        const nextComments = (prev?.comments ?? []).filter(
-          (c) => String(c.postcomment_id) !== commentId
-        );
-        const serverCountBase =
-          prev?.comment_count ?? prev?.comments?.length ?? 0;
-        const nextCount = Math.max(0, serverCountBase - 1);
-        return {
-          ...prev,
-          comments: nextComments,
-          comment_count: nextCount,
-        };
+    // 2) 서버 삭제 요청 (실패해도 조용히 로그만)
+    try {
+      await fetch(
+        `http://localhost:5000/api/posts/${idStr}/comments/${commentId}`,
+        {
+          method: "DELETE",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id: currentUser.user_id }),
+        }
+      ).then((r) => {
+        if (!r.ok) throw new Error(`delete failed: ${r.status}`);
       });
-
-      // 델타도 정리(목록과 동기화를 위해 -1 시도)
-      const after = bumpDelta(idStr, "comments", -1);
-      const nextCommentsCnt = getDisplayCount(
-        (post?.comment_count ?? post?.comments?.length ?? 0) - 1,
-        after.comments
-      );
-
-      try {
-        window.dispatchEvent(
-          new CustomEvent("post:commentDeleted", {
-            detail: { postId: idStr, comment_count: nextCommentsCnt },
-          })
-        );
-      } catch {}
     } catch (err) {
-      console.error("댓글 삭제 실패:", err);
-      alert("서버 오류가 발생했습니다.");
+      console.warn("댓글 삭제 서버 반영 실패(화면은 유지):", err);
+      // 요구사항: 실패 알림/되돌리기 없이 조용히 진행
     }
   };
 
-  // ❤️ 좋아요 토글(성공 가정: 즉시 반영)
+  // 좋아요
   const toggleLike = async () => {
     const idStr = String(post.post_id ?? postId);
     const likedSet = readLikedSet();
     const willLike = !liked;
 
     setLiked(willLike);
-
-    // 델타 업데이트(+1/-1) 및 최종 카운트 산정
     bumpDelta(idStr, "likes", willLike ? 1 : -1);
     const del = readDeltas()[idStr] || { likes: 0, views: 0, comments: 0 };
-    const nextLikeCount = getDisplayCount(
-      post?.like_count ?? post?.likes,
-      del.likes
-    );
+    const nextLikeCount = getDisplayCount(post?.like_count ?? post?.likes, del.likes);
 
-    // 로컬 좋아요 세트 유지
     if (willLike) likedSet.add(idStr);
     else likedSet.delete(idStr);
     writeLikedSet(likedSet);
 
-    // 목록 동기화(최종 숫자 포함)
     try {
       window.dispatchEvent(
         new CustomEvent("post:likeToggled", {
@@ -291,7 +257,6 @@ function PostDetail() {
       <div className={styles.mkdetailWrap}>
         <div className={`${styles.mkmetaRow} ${styles.mkdetailTop}`} />
 
-        {/* 제목/본문 */}
         <div className={styles.mkdetailTitle}>{post.title}</div>
         <div className={styles.mkdetailBody}>{post.content}</div>
 
@@ -309,26 +274,19 @@ function PostDetail() {
           </div>
         )}
 
-        {/* 메타(작성자/시간/댓글/좋아요/조회수) */}
         <div className={styles.mkmetaRow} style={{ marginTop: 8 }}>
           <div className={styles.mkmetaLeft}>
-            {post.author && (
-              <div className={styles.mkmetaItem}>{post.author}</div>
-            )}
+            {post.author && <div className={styles.mkmetaItem}>{post.author}</div>}
             {post.created_at && (
               <div className={styles.mkmetaItem}>
                 <i className="fa-regular fa-clock" aria-hidden="true" />
                 {timeAgo(post.created_at)}
               </div>
             )}
-
-            {/* 댓글 수 */}
             <div className={styles.mkmetaItem}>
               <i className="fa-regular fa-comment" aria-hidden="true" />
               {totalComments}
             </div>
-
-            {/* ❤️ 좋아요 */}
             <button
               type="button"
               className={styles.mkmetaItem}
@@ -351,8 +309,6 @@ function PostDetail() {
               />
               {likeCount}
             </button>
-
-            {/* 👁 조회수 */}
             <div className={styles.mkmetaItem}>
               <i className="fa-regular fa-eye" aria-hidden="true" />
               {viewCount}
@@ -363,8 +319,7 @@ function PostDetail() {
         {/* 댓글 입력 */}
         <div className={styles.mkcommentsSection}>
           <div className={styles.mkcommentsHeader}>
-            댓글{" "}
-            <span className={styles.mkcommentsCount}>{totalComments / 2}</span>
+            댓글 <span className={styles.mkcommentsCount}>{totalComments / 2}</span>
           </div>
 
           <div className={styles.mkcommentDock}>
@@ -394,7 +349,7 @@ function PostDetail() {
             </div>
           </div>
 
-          {/* 기존 댓글 렌더링 */}
+          {/* 댓글 목록 */}
           <div className={styles.mkcommentsList}>
             {(post.comments ?? []).map((c) => {
               const isOwner =
@@ -407,7 +362,6 @@ function PostDetail() {
                     className={styles.mkcommentHead}
                     style={{ display: "flex", alignItems: "center", gap: 10 }}
                   >
-                    {/* 왼쪽: 아바타/작성자 */}
                     <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                       <div className={styles.mkcommentAvatar} />
                       <div className={styles.mkcommentMeta}>
@@ -420,7 +374,7 @@ function PostDetail() {
                       </div>
                     </div>
 
-                    {/* 오른쪽: 삭제 버튼(본인 댓글만) ★추가 */}
+                    {/* 삭제 버튼(본인만) */}
                     {isOwner && (
                       <div style={{ marginLeft: "auto" }}>
                         <button
