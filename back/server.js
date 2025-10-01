@@ -121,7 +121,7 @@ app.get("/api/suggestions", async (req, res) => {
   try {
     const [suggestions] = await pool.query(`
       SELECT s.*,
-             u.name AS user_name, d.department_name,
+             u.name AS user_name, d.department_name, u.user_id AS author_id,
              -- 댓글 수
              (SELECT COUNT(*) 
               FROM Comment c 
@@ -887,24 +887,37 @@ app.post("/api/login", async (req, res) => {
     res.status(500).json({ success: false, message: "서버 오류 발생" });
   }
 });
+
 // GET /api/posts?board_id=?
 app.get("/api/posts", async (req, res) => {
   try {
     const { board_id } = req.query;
+
     let query = `
-      SELECT p.post_id, p.board_id, p.title, p.content, p.user_id, p.created_at, u.username
+      SELECT 
+        p.post_id, 
+        p.board_id, 
+        p.title, 
+        p.content, 
+        p.user_id, 
+        p.created_at, 
+        u.username,
+        (SELECT COUNT(*) FROM postcomment c WHERE c.post_id = p.post_id) AS comment_count,
+        (SELECT COUNT(*) FROM post_like l WHERE l.post_id = p.post_id) AS like_count
       FROM post p
       LEFT JOIN user u ON p.user_id = u.user_id
     `;
+
     const params = [];
+
     if (board_id) {
       query += ` WHERE p.board_id = ?`;
       params.push(board_id);
     }
+
     query += ` ORDER BY p.created_at DESC`;
 
     const [posts] = await pool.query(query, params);
-
     res.json(posts);
   } catch (err) {
     console.error(err);
@@ -1052,19 +1065,11 @@ app.post("/api/posts", upload.array("images", 10), async (req, res) => {
     conn.release();
   }
 });
-app.get((req, res) => {
-  if (req.path.startsWith("/api")) {
-    // API 요청이면 404
-    return res.status(404).json({ error: "API endpoint not found" });
-  }
-  res.sendFile(path.join(__dirname, "dist", "index.html"));
-});
-// server.js
 app.get("/api/posts/:postId/comments", async (req, res) => {
   const { postId } = req.params;
   try {
     const [rows] = await pool.query(
-      `SELECT c.postcomment_id, c.content, c.created_at, u.user_name
+      `SELECT c.postcomment_id, c.content, c.created_at, u.username
        FROM postcomment c
        JOIN user u ON c.user_id = u.user_id
        WHERE c.post_id = ?
@@ -1077,6 +1082,7 @@ app.get("/api/posts/:postId/comments", async (req, res) => {
     res.status(500).json({ error: "댓글 불러오기 실패" });
   }
 });
+
 app.post("/api/posts/:postId/comments", async (req, res) => {
   const { postId } = req.params;
   const { content, user_id } = req.body;
@@ -1106,6 +1112,15 @@ app.post("/api/posts/:postId/comments", async (req, res) => {
     res.status(500).json({ error: "댓글 추가 실패" });
   }
 });
+
+app.get((req, res) => {
+  if (req.path.startsWith("/api")) {
+    // API 요청이면 404
+    return res.status(404).json({ error: "API endpoint not found" });
+  }
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
+});
+// server.js
 
 app.listen(5000, () => {
   console.log("http://localhost:5000");
