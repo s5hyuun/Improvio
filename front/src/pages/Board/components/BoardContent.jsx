@@ -1,13 +1,11 @@
 import { useState, useMemo } from "react";
 import styles from "../../../styles/Board.module.css";
 
-/** 상대/윈도우 경로 보정 + 절대 URL 생성 */
+/** 절대 URL 생성 (윈도우 경로 보정 포함) */
 function toAbsoluteUrl(raw, base = "http://localhost:5000") {
   if (!raw) return null;
   let s = String(raw).trim().replace(/['"]/g, "");
-  // 윈도우 경로 → URL 경로
   s = s.replace(/\\/g, "/");
-  // 'uploads/...' 처럼 앞에 슬래시가 없으면 붙여줌
   if (!/^https?:\/\//i.test(s) && !s.startsWith("/")) s = `/${s}`;
   try {
     return new URL(s, base).href;
@@ -16,7 +14,7 @@ function toAbsoluteUrl(raw, base = "http://localhost:5000") {
   }
 }
 
-/** description/body HTML에서 <img> 첫 src 추출 */
+/** HTML 내 <img> 태그에서 첫 src 추출 */
 function extractImgFromHtml(html) {
   if (!html) return null;
   try {
@@ -30,11 +28,22 @@ function extractImgFromHtml(html) {
   }
 }
 
-/** 카드 내부에서 사용할 안전한 이미지 URL 선택자 */
+/** 이미지 URL 선택 로직 */
 function pickImageUrl(suggestion, base = "http://localhost:5000") {
   if (!suggestion || typeof suggestion !== "object") return null;
 
-  // 1) 본문 HTML에서 이미지 찾기
+  // 1. attachments 우선
+  if (Array.isArray(suggestion.attachments)) {
+    for (const att of suggestion.attachments) {
+      const path = att.file_path || att.path;
+      const ext = path?.split(".").pop()?.toLowerCase();
+      if (["jpg", "jpeg", "png"].includes(ext)) {
+        return `${base}/uploads/${encodeURIComponent(path)}`;
+      }
+    }
+  }
+
+  // 2. HTML 내 이미지
   const fromHtml =
     extractImgFromHtml(suggestion.description) ||
     extractImgFromHtml(suggestion.body);
@@ -43,61 +52,42 @@ function pickImageUrl(suggestion, base = "http://localhost:5000") {
     if (u) return u;
   }
 
-  // 2) 널리 쓰이는 단일 필드들
+  // 3. 평평한 필드 탐색
   const flatKeys = [
-    "image_url",
-    "imageUrl",
-    "image",
-    "photo_url",
-    "photo",
-    "thumbnail_url",
-    "thumb_url",
-    "attachment_url",
-    "file_url",
-    "file_path",
-    "image_path",
-    "upload_path",
-    "preview_url",
+    "image_url", "imageUrl", "image", "photo_url", "photo",
+    "thumbnail_url", "thumb_url", "attachment_url", "file_url",
+    "file_path", "image_path", "upload_path", "preview_url",
   ];
-  const flatCandidates = flatKeys
-    .map((k) => suggestion[k])
-    .filter(Boolean)
-    .map((v) => toAbsoluteUrl(v, base))
-    .filter(Boolean);
-
-  if (flatCandidates.length) return flatCandidates[0];
-
-  // 3) 배열 형태(images/photos/attachments/files 등)
-  const arrayKeys = ["images", "photos", "attachments", "files", "pictures"];
-  const arrayCandidates = [];
-  arrayKeys.forEach((k) => {
-    const arr = suggestion[k];
-    if (Array.isArray(arr)) {
-      arr.forEach((x) => {
-        if (!x) return;
-        if (typeof x === "string") {
-          const u = toAbsoluteUrl(x, base);
-          if (u) arrayCandidates.push(u);
-        } else if (typeof x === "object") {
-          const cand =
-            x.url ||
-            x.path ||
-            x.file_url ||
-            x.file_path ||
-            x.image_url ||
-            x.preview_url;
-          const u = toAbsoluteUrl(cand, base);
-          if (u) arrayCandidates.push(u);
-        }
-      });
+  for (const key of flatKeys) {
+    if (suggestion[key]) {
+      const u = toAbsoluteUrl(suggestion[key], base);
+      if (u) return u;
     }
-  });
-  if (arrayCandidates.length) return arrayCandidates[0];
+  }
 
-  // 4) BoardPage에서 넘겨주는 표준화 필드
-  if (suggestion.image_url) {
-    const u = toAbsoluteUrl(suggestion.image_url, base);
-    if (u) return u;
+  // 4. 배열 속 객체 탐색
+  const arrayKeys = ["images", "photos", "attachments", "files", "pictures"];
+  for (const key of arrayKeys) {
+    const arr = suggestion[key];
+    if (Array.isArray(arr)) {
+      for (const item of arr) {
+        if (typeof item === "string") {
+          const u = toAbsoluteUrl(item, base);
+          if (u) return u;
+        } else if (typeof item === "object") {
+          const innerKeys = [
+            item.url, item.path, item.file_url, item.file_path,
+            item.image_url, item.preview_url
+          ];
+          for (const val of innerKeys) {
+            if (val) {
+              const u = toAbsoluteUrl(val, base);
+              if (u) return u;
+            }
+          }
+        }
+      }
+    }
   }
 
   return null;
@@ -127,7 +117,7 @@ function BoardContent({ suggestion, onClick }) {
         {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: 1, score }), // TODO: 실제 로그인 user_id 사용
+          body: JSON.stringify({ user_id: 1, score }), // TODO: 실제 로그인 사용자 반영
         }
       );
       if (res.ok) {
@@ -195,13 +185,13 @@ function BoardContent({ suggestion, onClick }) {
             <i className="fa-regular fa-thumbs-down"></i> {dislikes}
           </div>
 
-        <div title="댓글 수">
+          <div title="댓글 수">
             <i className="fa-regular fa-comment"></i> {comment_count}
           </div>
         </div>
       </div>
 
-      {/* 이미지 썸네일 (있을 때만) */}
+      {/* 썸네일 이미지 (있는 경우만) */}
       {imageUrl && (
         <div
           style={{
@@ -226,7 +216,6 @@ function BoardContent({ suggestion, onClick }) {
               display: "block",
             }}
             onError={(e) => {
-              // 로딩 실패 시 썸네일 영역 숨김
               e.currentTarget.parentElement.style.display = "none";
             }}
           />

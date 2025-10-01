@@ -98,12 +98,13 @@ export default function Member({ selectedDeptId = "all" }) {
                     cursor: "pointer",
                     border: "none",
                     background:
-                      m.status === "활성" ? "rgba(45,108,255,.12)" : "#db3b18",
-                    color: m.status === "활성" ? "#2d6cff" : "#fff",
+                      m.status === "활성" ? "rgba(45,108,255,.12)" : "#FFF1F1",
+                    color: m.status === "활성" ? "#2d6cff" : "#db3b18",
                     padding: "6px 10px",
                     borderRadius: "999px",
                     fontWeight: 700,
                     fontSize: "12px",
+                    
                   }}
                 >
                   {m.status}
