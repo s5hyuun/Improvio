@@ -8,6 +8,8 @@
   padding-bottom: 16px;
   padding-right: 120px;
   color: #1e3a8a;
+  padding: 12px 0;
+  flex: 0 0 auto;
 }
 
 .mkheader > i {
@@ -61,6 +63,12 @@
 
 .mklist {
   margin-top: 8px;
+   flex: 1 1 auto;           /* 남은 공간을 전부 사용 */
+  min-height: 0;            /* overflow 작동 필수 조건 */
+  overflow: auto;           /* ← 가운데 영역 스크롤 주인공 */
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .mkcard {
