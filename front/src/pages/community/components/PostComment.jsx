@@ -1,8 +1,8 @@
-// PostComment.jsx
-import { useCallback, useEffect, useState } from "react";
+// PostComment.jsx 
+import { useEffect, useState } from "react";
 import styles from "../../../styles/Community.module.css";
 
-const COMMENT_LS_KEY = "liked_comments"; 
+const COMMENT_LS_KEY = "liked_comments"; // Set<string(commentId)>
 
 function readLikedComments() {
   try {
@@ -18,23 +18,14 @@ function writeLikedComments(set) {
   } catch {}
 }
 
-function formatDate(s) {
-  if (!s) return "-";
-  const d = new Date(s);
-  const mm = `${d.getMonth() + 1}`.padStart(2, "0");
-  const dd = `${d.getDate()}`.padStart(2, "0");
-  const hh = `${d.getHours()}`.padStart(2, "0");
-  const mi = `${d.getMinutes()}`.padStart(2, "0");
-  return `${mm}/${dd} ${hh}:${mi}`;
-}
-
 function PostComment({ postId, currentUser }) {
   const [comments, setComments] = useState([]);
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [likedSet, setLikedSet] = useState(() => readLikedComments());
 
-  const fetchComments = useCallback(async () => {
+  // 댓글 불러오기(초기 좋아요 상태 적용)
+  const fetchComments = async () => {
     try {
       const res = await fetch(`http://localhost:5000/api/posts/${postId}/comments`);
       const data = await res.json();
@@ -47,16 +38,22 @@ function PostComment({ postId, currentUser }) {
     } catch (err) {
       console.error("댓글 불러오기 실패:", err);
     }
-  }, [postId, likedSet]);
+  };
 
   useEffect(() => {
     fetchComments();
-  }, [fetchComments]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [postId]);
 
+  // 댓글 작성
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!newComment.trim()) return;
-    if (!currentUser?.user_id) return; // 무소음 처리
+
+    if (!currentUser?.user_id) {
+      alert("로그인 후 댓글 작성이 가능합니다.");
+      return;
+    }
 
     setSubmitting(true);
     try {
@@ -72,62 +69,65 @@ function PostComment({ postId, currentUser }) {
       const data = await res.json();
       if (res.ok && data) {
         const inserted = { ...data, _liked: false, like_count: data.like_count ?? 0 };
-        // 낙관적 반영
         setComments((prev) => [inserted, ...prev]);
+        setNewComment("");
+
+        // 상세/목록 댓글수 동기화(최종 숫자는 상세에서 델타로 다시 계산)
         try {
           window.dispatchEvent(
             new CustomEvent("post:commentAdded", { detail: { postId: String(postId) } })
           );
         } catch {}
-        setNewComment("");
-
-        fetchComments();
+      } else {
+        alert(data?.error || "댓글 작성 실패");
       }
     } catch (err) {
       console.error("댓글 저장 실패:", err);
+      alert("서버 오류가 발생했습니다.");
     } finally {
       setSubmitting(false);
     }
   };
 
-  // 삭제: 확인/alert 없이 낙관적 처리 + posts/:postId/comments/:commentId 엔드포인트 사용
+  // 댓글 삭제 ★추가
   const handleDelete = async (comment) => {
-    const rawId = comment?.postcomment_id ?? comment?.id;
-    if (rawId === undefined || rawId === null) {
-      console.warn("잘못된 commentId(없음):", comment);
+    const commentId = String(comment.postcomment_id ?? comment.id);
+    if (!commentId) return;
+
+    // 권한 체크(클라이언트 단)
+    if (!currentUser?.user_id || Number(currentUser.user_id) !== Number(comment.user_id)) {
+      alert("본인이 작성한 댓글만 삭제할 수 있습니다.");
       return;
     }
-    const commentId = String(rawId);
-    if (!/^\d+$/.test(commentId)) {
-      console.warn("잘못된 commentId(숫자 아님):", commentId, comment);
-      return;
-    }
-    if (!currentUser?.user_id || Number(currentUser.user_id) !== Number(comment.user_id)) return;
 
-    // 1) 화면에서 즉시 제거
-    setComments((prev) => prev.filter((c) => String(c.postcomment_id) !== commentId));
-    try {
-      window.dispatchEvent(
-        new CustomEvent("post:commentDeleted", { detail: { postId: String(postId) } })
-      );
-    } catch {}
+    const ok = window.confirm("해당 댓글을 삭제하시겠습니까?");
+    if (!ok) return;
 
-    // 2) 서버 요청 (실패해도 조용히)
     try {
-      const r = await fetch(`http://localhost:5000/api/posts/${postId}/comments/${commentId}`, {
+      const res = await fetch(`http://localhost:5000/api/comments/${commentId}`, {
         method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_id: currentUser.user_id }),
       });
-      if (!r.ok) throw new Error(`delete failed: ${r.status}`);
+      if (!res.ok) {
+        const j = await res.json().catch(() => ({}));
+        alert(j?.error || "댓글 삭제에 실패했습니다.");
+        return;
+      }
+
+      setComments((prev) => prev.filter((c) => String(c.postcomment_id) !== commentId));
+
+      // 상세/목록과 숫자 동기화 이벤트
+      try {
+        window.dispatchEvent(
+          new CustomEvent("post:commentDeleted", { detail: { postId: String(postId) } })
+        );
+      } catch {}
     } catch (err) {
-      console.warn("댓글 삭제 서버 반영 실패(화면은 유지):", err);
-    } finally {
-      // 3) 서버 상태 재동기화(한 번 보강)
-      fetchComments();
+      console.error("댓글 삭제 실패:", err);
+      alert("서버 오류가 발생했습니다.");
     }
   };
 
+  // 댓글 좋아요 토글
   const toggleCommentLike = async (commentId) => {
     const idStr = String(commentId);
     const willLike = !likedSet.has(idStr);
@@ -146,7 +146,12 @@ function PostComment({ postId, currentUser }) {
     setLikedSet(next);
     writeLikedComments(next);
 
-    // 서버 반영은 생략(조용히)
+    // (선택) 서버 반영
+    // await fetch(`http://localhost:5000/api/comments/${idStr}/like`, {
+    //   method: "POST",
+    //   headers: { "Content-Type": "application/json" },
+    //   body: JSON.stringify({ like: willLike }),
+    // }).catch(()=>{});
   };
 
   return (
@@ -170,10 +175,8 @@ function PostComment({ postId, currentUser }) {
         const isOwner =
           !!currentUser?.user_id && Number(currentUser.user_id) === Number(c.user_id);
 
-        const key = String(c.postcomment_id ?? c.id ?? `${c.user_id}-${c.created_at}`);
-
         return (
-          <div key={key} className={styles.postCommentContainer}>
+          <div key={c.postcomment_id} className={styles.postCommentContainer}>
             <div className={styles.postCommentLeft}>
               <i className="fa-regular fa-user"></i>
               <div>
@@ -211,7 +214,7 @@ function PostComment({ postId, currentUser }) {
                   <span>{c.like_count ?? 0}</span>
                 </button>
 
-                {/* 삭제 버튼(본인만) */}
+                {/* 삭제 버튼(본인 댓글만) ★추가 */}
                 {isOwner && (
                   <button
                     type="button"
@@ -237,6 +240,16 @@ function PostComment({ postId, currentUser }) {
       })}
     </div>
   );
+}
+
+function formatDate(s) {
+  if (!s) return "-";
+  const d = new Date(s);
+  const mm = `${d.getMonth() + 1}`.padStart(2, "0");
+  const dd = `${d.getDate()}`.padStart(2, "0");
+  const hh = `${d.getHours()}`.padStart(2, "0");
+  const mi = `${d.getMinutes()}`.padStart(2, "0");
+  return `${mm}/${dd} ${hh}:${mi}`;
 }
 
 export default PostComment;
