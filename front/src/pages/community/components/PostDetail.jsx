@@ -1,12 +1,13 @@
 // PostDetail.jsx
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "../../../styles/Market.module.css";
 
 const LS_LIKED_POSTS = "liked_posts"; // Set<string(postId)>
 const LS_POST_DELTAS = "post_count_deltas"; // { [postId]: { likes: number, views: number, comments: number } }
 const SS_VIEW_KEY_PREFIX = "viewed_"; // sessionStorage 중복 조회 방지
 const AUTH_KEY = "auth_user"; // 로그인 사용자 로컬 스토리지 키
+const COMMENTS_POLL_MS = 5000; // ★ 모든 계정 동기화를 위한 폴링 주기(5s)
 
 /** ---- 공통 유틸: 델타 저장/적용 ---- */
 function readDeltas() {
@@ -56,6 +57,7 @@ function PostDetail() {
   const [newComment, setNewComment] = useState("");
   const [liked, setLiked] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+  const pollTimerRef = useRef(null);
 
   // 로그인 사용자 로드
   useEffect(() => {
@@ -68,21 +70,22 @@ function PostDetail() {
     }
   }, []);
 
-  // 상세/조회수 처리
+  // 상세/조회수 처리 + 최초 로드
   useEffect(() => {
     let mounted = true;
     const idStr = String(postId);
 
-    fetch(`http://localhost:5000/api/posts/${idStr}`)
-      .then((res) => res.json())
-      .then((data) => {
+    const load = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/posts/${idStr}`);
+        const data = await res.json();
         if (!mounted) return;
 
+        // 좋아요 초기화
         const likedSet = readLikedSet();
-        setLiked(
-          !!(data?.user_liked ?? likedSet.has(String(data?.post_id ?? idStr)))
-        );
+        setLiked(!!(data?.user_liked ?? likedSet.has(String(data?.post_id ?? idStr))));
 
+        // 조회수 1회 증가(세션 중복 방지)
         const ssKey = `${SS_VIEW_KEY_PREFIX}${idStr}`;
         const already = sessionStorage.getItem(ssKey) === "1";
         if (!already) {
@@ -99,13 +102,63 @@ function PostDetail() {
         }
 
         setPost(data);
-      })
-      .catch((err) => console.error(err));
+      } catch (err) {
+        console.error(err);
+      }
+    };
+
+    load();
 
     return () => {
       mounted = false;
     };
   }, [postId]);
+
+  // ====== 모든 계정 동기화: 댓글 폴링 & 포커스/가시성 재조회 ======
+  useEffect(() => {
+    if (!post?.post_id && !postId) return;
+    const idStr = String(post?.post_id ?? postId);
+
+    const fetchCommentsOnly = async () => {
+      try {
+        const res = await fetch(`http://localhost:5000/api/posts/${idStr}/comments`);
+        const list = await res.json();
+        setPost((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            comments: Array.isArray(list) ? list : [],
+            comment_count: Array.isArray(list) ? list.length : (prev.comment_count ?? 0),
+          };
+        });
+      } catch (err) {
+        // 조용히 무시(네트워크 일시 오류 등)
+      }
+    };
+
+    // 폴링 시작
+    pollTimerRef.current = window.setInterval(() => {
+      // 탭이 보일 때만 비용 소모
+      if (document.visibilityState === "visible") fetchCommentsOnly();
+    }, COMMENTS_POLL_MS);
+
+    // 포커스/가시성 변경 시 즉시 재조회
+    const onFocus = () => fetchCommentsOnly();
+    const onVis = () => {
+      if (document.visibilityState === "visible") fetchCommentsOnly();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, [post?.post_id, postId]);
 
   const timeAgo = (ts) => {
     if (!ts) return "";
@@ -172,7 +225,7 @@ function PostDetail() {
     }
   };
 
-  // 댓글 삭제 (확인창/alert 없이, 낙관적 UI)
+  // 댓글 삭제 (확인창/alert 없음, 낙관적 UI) + 서버 반영
   const deleteComment = async (comment) => {
     const idStr = String(post.post_id ?? postId);
     const commentId = String(comment.postcomment_id ?? comment.id);
@@ -181,7 +234,7 @@ function PostDetail() {
     // 본인 댓글만 삭제 (무소음 처리)
     if (!currentUser?.user_id || currentUser.user_id !== comment.user_id) return;
 
-    // 1) 화면 먼저 제거 + 카운트 감소
+    // 1) 화면에서 즉시 제거 + 카운트 감소
     setPost((prev) => {
       const nextComments = (prev?.comments ?? []).filter(
         (c) => String(c.postcomment_id) !== commentId
@@ -206,21 +259,17 @@ function PostDetail() {
       );
     } catch {}
 
-    // 2) 서버 삭제 요청 (실패해도 조용히 로그만)
+    // 2) 서버 삭제 요청 (실패 시 조용히 로그만 남기고, 폴링이 다시 맞춰줌)
     try {
-      await fetch(
-        `http://localhost:5000/api/posts/${idStr}/comments/${commentId}`,
-        {
-          method: "DELETE",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ user_id: currentUser.user_id }),
-        }
-      ).then((r) => {
+      await fetch(`http://localhost:5000/api/posts/${idStr}/comments/${commentId}`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: currentUser.user_id }),
+      }).then((r) => {
         if (!r.ok) throw new Error(`delete failed: ${r.status}`);
       });
     } catch (err) {
       console.warn("댓글 삭제 서버 반영 실패(화면은 유지):", err);
-      // 요구사항: 실패 알림/되돌리기 없이 조용히 진행
     }
   };
 

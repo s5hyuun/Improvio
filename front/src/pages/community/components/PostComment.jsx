@@ -1,8 +1,9 @@
 // PostComment.jsx
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import styles from "../../../styles/Community.module.css";
 
 const COMMENT_LS_KEY = "liked_comments"; // Set<string(commentId)>
+const COMMENTS_POLL_MS = 5000; // ★ 모든 계정 동기화를 위한 폴링 주기(5s)
 
 function readLikedComments() {
   try {
@@ -23,6 +24,7 @@ function PostComment({ postId, currentUser }) {
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [likedSet, setLikedSet] = useState(() => readLikedComments());
+  const pollRef = useRef(null);
 
   const fetchComments = async () => {
     try {
@@ -35,12 +37,31 @@ function PostComment({ postId, currentUser }) {
       }));
       setComments(withLikeState);
     } catch (err) {
-      console.error("댓글 불러오기 실패:", err);
+      // 조용히 무시
     }
   };
 
   useEffect(() => {
     fetchComments();
+
+    // 폴링 시작(가시성 보일 때만)
+    pollRef.current = window.setInterval(() => {
+      if (document.visibilityState === "visible") fetchComments();
+    }, COMMENTS_POLL_MS);
+
+    // 포커스/가시성 변경 시 즉시 재조회
+    const onFocus = () => fetchComments();
+    const onVis = () => {
+      if (document.visibilityState === "visible") fetchComments();
+    };
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [postId]);
 
@@ -80,13 +101,13 @@ function PostComment({ postId, currentUser }) {
     }
   };
 
-  // 삭제: 확인/alert 없이 낙관적 처리 + posts/:postId/comments/:commentId 엔드포인트 사용
+  // 삭제: 확인/alert 없이 낙관적 처리 + 서버 반영
   const handleDelete = async (comment) => {
     const commentId = String(comment.postcomment_id ?? comment.id);
     if (!commentId) return;
     if (!currentUser?.user_id || Number(currentUser.user_id) !== Number(comment.user_id)) return;
 
-    // 1) 화면에서 즉시 제거
+    // 화면 즉시 제거
     setComments((prev) => prev.filter((c) => String(c.postcomment_id) !== commentId));
     try {
       window.dispatchEvent(
@@ -94,7 +115,7 @@ function PostComment({ postId, currentUser }) {
       );
     } catch {}
 
-    // 2) 서버 요청 (실패해도 조용히)
+    // 서버 요청 (실패해도 조용히)
     try {
       await fetch(`http://localhost:5000/api/posts/${postId}/comments/${commentId}`, {
         method: "DELETE",
@@ -125,8 +146,6 @@ function PostComment({ postId, currentUser }) {
     else next.delete(idStr);
     setLikedSet(next);
     writeLikedComments(next);
-
-    // 서버 반영은 생략(조용히)
   };
 
   return (
