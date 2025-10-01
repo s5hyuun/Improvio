@@ -1,18 +1,47 @@
-// src/pages/Community/PostDetail.jsx
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-import styles from "../../../styles/Market.module.css"; // ✅ mk 스타일
+import styles from "../../../styles/Market.module.css";
+
+const LS_KEY = "liked_posts";
+
+/** 로컬스토리지에 저장된 좋아요 집합 읽기 */
+function readLikedSet() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(arr);
+  } catch {
+    return new Set();
+  }
+}
+
+/** 좋아요 집합 저장 */
+function writeLikedSet(set) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(Array.from(set)));
+  } catch {}
+}
 
 function PostDetail() {
   const { postId } = useParams();
   const nav = useNavigate();
   const [post, setPost] = useState(null);
   const [newComment, setNewComment] = useState("");
+  const [liked, setLiked] = useState(false);
 
+  // 게시글 조회
   useEffect(() => {
     fetch(`http://localhost:5000/api/posts/${postId}`)
       .then((res) => res.json())
-      .then((data) => setPost(data))
+      .then((data) => {
+        setPost(data);
+        // 서버 응답에 사용자 좋아요 여부가 없다면 로컬스토리지 기준으로 결정
+        const likedSet = readLikedSet();
+        const isLiked =
+          data?.user_liked ??
+          likedSet.has(String(data?.post_id ?? postId));
+        setLiked(!!isLiked);
+      })
       .catch((err) => console.error(err));
   }, [postId]);
 
@@ -31,10 +60,10 @@ function PostDetail() {
   };
 
   const totalComments = post?.comment_count ?? post?.comments?.length ?? 0;
-  // 댓글 등록 함수
+
+  // 댓글 등록
   const addComment = async () => {
     if (!newComment.trim()) return;
-
     try {
       const res = await fetch(
         `http://localhost:5000/api/posts/${postId}/comments`,
@@ -43,26 +72,70 @@ function PostDetail() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             content: newComment,
-            user_id: 1, // TODO: 로그인한 사용자 ID 넣기
+            user_id: 1, // TODO: 로그인한 사용자 ID
           }),
         }
       );
-
       const saved = await res.json();
-
-      // DB에 저장된 댓글을 현재 state에 추가
       setPost((prev) => ({
         ...prev,
-        comments: [...(prev.comments ?? []), saved],
+        comments: [...(prev?.comments ?? []), saved],
+        comment_count: (prev?.comment_count ?? prev?.comments?.length ?? 0) + 1,
       }));
-
-      setNewComment(""); // 입력창 초기화
+      setNewComment("");
     } catch (err) {
       console.error("댓글 등록 실패:", err);
     }
   };
 
+  // ❤️ 좋아요 토글 (로컬 우선 반영 + 이벤트 브로드캐스트)
+  const toggleLike = async () => {
+    if (!post) return;
+    const currentId = String(post.post_id ?? postId);
+    const likedSet = readLikedSet();
+    const willLike = !liked;
+
+    // 낙관적 업데이트
+    setLiked(willLike);
+    setPost((prev) => ({
+      ...prev,
+      like_count: Math.max(0, (prev?.like_count ?? prev?.likes ?? 0) + (willLike ? 1 : -1)),
+    }));
+
+    // 로컬스토리지 갱신
+    if (willLike) likedSet.add(currentId);
+    else likedSet.delete(currentId);
+    writeLikedSet(likedSet);
+
+    // 다른 컴포넌트 동기화
+    try {
+      window.dispatchEvent(
+        new CustomEvent("post:likeToggled", {
+          detail: {
+            postId: currentId,
+            liked: willLike,
+            like_count:
+              (post?.like_count ?? post?.likes ?? 0) + (willLike ? 1 : -1),
+          },
+        })
+      );
+    } catch {}
+
+    // (선택) 서버에 통지할 엔드포인트가 있다면 호출
+    // try {
+    //   await fetch(`http://localhost:5000/api/posts/${postId}/like`, {
+    //     method: "POST",
+    //     headers: { "Content-Type": "application/json" },
+    //     body: JSON.stringify({ like: willLike }),
+    //   });
+    // } catch (e) {
+    //   console.warn("서버 좋아요 반영 실패(로컬 유지):", e);
+    // }
+  };
+
   if (!post) return <div>Loading...</div>;
+
+  const likeCount = post?.like_count ?? post?.likes ?? 0;
 
   return (
     <>
@@ -76,6 +149,7 @@ function PostDetail() {
         {/* 제목/본문 */}
         <div className={styles.mkdetailTitle}>{post.title}</div>
         <div className={styles.mkdetailBody}>{post.content}</div>
+
         {post.attachments && post.attachments.length > 0 && (
           <div className={styles.mkAttachments}>
             {post.attachments.map((att) => (
@@ -89,7 +163,8 @@ function PostDetail() {
             ))}
           </div>
         )}
-        {/* 메타(작성자/시간/댓글/좋아요 수) — 아이콘/카운트만 표시 */}
+
+        {/* 메타(작성자/시간/댓글/좋아요 수) */}
         <div className={styles.mkmetaRow} style={{ marginTop: 8 }}>
           <div className={styles.mkmetaLeft}>
             {post.author && (
@@ -105,10 +180,30 @@ function PostDetail() {
               <i className="fa-regular fa-comment" aria-hidden="true" />
               {totalComments}
             </div>
-            <div className={styles.mkmetaItem}>
-              <i className="fa-regular fa-heart" aria-hidden="true" />
-              {post.like_count ?? 0}
-            </div>
+
+            {/* ❤️ 좋아요(클릭 가능) */}
+            <button
+              type="button"
+              className={styles.mkmetaItem}
+              onClick={toggleLike}
+              aria-label={liked ? "좋아요 취소" : "좋아요"}
+              style={{
+                display: "inline-flex",
+                gap: 6,
+                alignItems: "center",
+                cursor: "pointer",
+                background: "transparent",
+                border: 0,
+                padding: 0,
+              }}
+            >
+              <i
+                className={liked ? "fa-solid fa-heart" : "fa-regular fa-heart"}
+                aria-hidden="true"
+                style={{ color: liked ? "#ff0505" : "inherit" }}
+              />
+              {likeCount}
+            </button>
           </div>
         </div>
 
@@ -118,7 +213,6 @@ function PostDetail() {
             댓글 <span className={styles.mkcommentsCount}>{totalComments}</span>
           </div>
 
-          {/* 댓글 입력 (동작 로직은 기존처럼 미구현 상태) */}
           <div className={styles.mkcommentDock}>
             <input
               className={styles.mkcommentInputBar}
@@ -146,7 +240,6 @@ function PostDetail() {
             </div>
           </div>
 
-          {/* 댓글 리스트: mk 구조로 렌더링 */}
           <div className={styles.mkcommentsList}>
             {(post.comments ?? []).map((c) => (
               <div key={c.postcomment_id} className={styles.mkcommentItem}>

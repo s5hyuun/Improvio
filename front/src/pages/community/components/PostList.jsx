@@ -1,8 +1,20 @@
-// src/pages/Community/PostList.jsx
 import React, { useEffect, useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import styles from "../../../styles/Market.module.css"; // ✅ mk 스타일 사용
-import PostWrite from "./PostWrite"; // ✅ 모달 컴포넌트 임포트 (경로 확인)
+import styles from "../../../styles/Market.module.css";
+import PostWrite from "./PostWrite";
+
+const LS_KEY = "liked_posts";
+
+/** 로컬스토리지 좋아요 집합 */
+function readLikedSet() {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    const arr = raw ? JSON.parse(raw) : [];
+    return new Set(arr);
+  } catch {
+    return new Set();
+  }
+}
 
 function PostList() {
   const { boardId } = useParams();
@@ -62,13 +74,50 @@ function PostList() {
     return map[key] || map.etc;
   }, [boardId]);
 
-  // ✅ 목록 API
+  // ✅ 목록 API + 로컬 좋아요 반영
   useEffect(() => {
+    let aborted = false;
     fetch(`http://localhost:5000/api/posts?board_id=${boardId}`)
       .then((res) => res.json())
-      .then((data) => setPosts(data))
+      .then((data) => {
+        if (aborted) return;
+        const likedSet = readLikedSet();
+        const merged = (data ?? []).map((p) => ({
+          ...p,
+          _liked: likedSet.has(String(p.post_id)),
+          like_count: p.like_count ?? p.likes ?? 0,
+        }));
+        setPosts(merged);
+      })
       .catch((err) => console.error(err));
+    return () => {
+      aborted = true;
+    };
   }, [boardId]);
+
+  // ✅ PostDetail에서 발생한 좋아요 이벤트 반영
+  useEffect(() => {
+    const handler = (e) => {
+      const { postId, liked, like_count } = e.detail || {};
+      if (!postId) return;
+      setPosts((prev) =>
+        prev.map((p) =>
+          String(p.post_id) === String(postId)
+            ? {
+                ...p,
+                _liked: liked ?? p._liked,
+                like_count:
+                  typeof like_count === "number"
+                    ? like_count
+                    : Math.max(0, (p.like_count ?? 0) + (liked ? 1 : -1)),
+              }
+            : p
+        )
+      );
+    };
+    window.addEventListener("post:likeToggled", handler);
+    return () => window.removeEventListener("post:likeToggled", handler);
+  }, []);
 
   // ✅ 등록 API (PostWrite에서 onSubmit 호출 시 사용)
   const handleSubmit = async (newPost) => {
@@ -88,7 +137,14 @@ function PostList() {
     });
     if (res.ok) {
       const saved = await res.json();
-      setPosts((prev) => [saved, ...prev]);
+      setPosts((prev) => [
+        {
+          ...saved,
+          _liked: false,
+          like_count: saved.like_count ?? saved.likes ?? 0,
+        },
+        ...prev,
+      ]);
       setIsWriting(false);
     }
   };
@@ -130,9 +186,10 @@ function PostList() {
           const title = post.title ?? "";
           const body = post.content ?? post.body ?? "";
           const created = post.created_at ?? post.createdAt ?? Date.now();
-          const comments = post.comments ?? post.comment_count ?? 0;
-          const likes = post.likes ?? 0;
+          const comments = post.comment_count ?? post.comments ?? 0;
           const views = post.views ?? 0;
+          const likes = post.like_count ?? post.likes ?? 0;
+          const isLiked = !!post._liked;
 
           return (
             <div
@@ -171,8 +228,17 @@ function PostList() {
                       <i className="fa-regular fa-eye" aria-hidden="true" />
                       {views}
                     </div>
+
+                    {/* ❤️ 눌렀다는 표시(색만 변경) */}
                     <div className={styles.mkmetaItem}>
-                      <i className="fa-regular fa-heart" aria-hidden="true" />
+                      <i
+                        className={
+                          isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart"
+                        }
+                        aria-hidden="true"
+                        style={{ color: isLiked ? "#ff0505" : "inherit" }}
+                        title={isLiked ? "좋아요 누름" : "좋아요 안 누름"}
+                      />
                       {likes}
                     </div>
                   </div>
@@ -185,7 +251,7 @@ function PostList() {
         })}
       </div>
 
-      {/* 글쓰기 모달: PostWrite 자체가 오버레이/모달을 포함 */}
+      {/* 글쓰기 모달 */}
       {isWriting && (
         <PostWrite
           onSubmit={handleSubmit}
