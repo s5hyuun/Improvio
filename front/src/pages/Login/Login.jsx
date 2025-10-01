@@ -24,7 +24,7 @@ export default function Login() {
 
       if (data.success) {
         
-        // data.user 또는 data.data 등에 유저 정보가 들어있다면 여기에 맞춰 넣어야 함
+       
         const userData = {
           user_id: data.user?.user_id,
           username: data.user?.username || username,
