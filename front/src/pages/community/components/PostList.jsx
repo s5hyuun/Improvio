@@ -39,14 +39,35 @@ function PostList() {
   // 보드 메타
   const norm = (id = "") => {
     const s = String(id).toLowerCase();
-    const numMap = { 1: "free", 2: "rookie", 3: "secret", 4: "info", 5: "market", 6: "issue" };
+    const numMap = {
+      1: "free",
+      2: "rookie",
+      3: "secret",
+      4: "info",
+      5: "market",
+      6: "issue",
+    };
     if (numMap[s]) return numMap[s];
     if (["free", "자유", "자유게시판"].includes(s)) return "free";
-    if (["rookie", "newbie", "new", "junior", "신입", "신입게시판"].includes(s)) return "rookie";
-    if (["secret", "private", "비밀", "비밀게시판"].includes(s)) return "secret";
-    if (["info", "information", "tips", "정보", "정보게시판"].includes(s)) return "info";
+    if (["rookie", "newbie", "new", "junior", "신입", "신입게시판"].includes(s))
+      return "rookie";
+    if (["secret", "private", "비밀", "비밀게시판"].includes(s))
+      return "secret";
+    if (["info", "information", "tips", "정보", "정보게시판"].includes(s))
+      return "info";
     if (["market", "장터", "장터게시판"].includes(s)) return "market";
-    if (["issue", "issues", "current", "news", "시사", "시사/이슈", "이슈"].includes(s)) return "issue";
+    if (
+      [
+        "issue",
+        "issues",
+        "current",
+        "news",
+        "시사",
+        "시사/이슈",
+        "이슈",
+      ].includes(s)
+    )
+      return "issue";
     return "etc";
   };
 
@@ -73,9 +94,11 @@ function PostList() {
     fetch(`http://localhost:5000/api/posts?board_id=${boardId}`)
       .then((res) => res.json())
       .then((data) => {
+        console.log("받은 data:", data);
         if (aborted) return;
 
-        const merged = (data ?? []).map((p) => {
+        const arr = Array.isArray(data) ? data : [];
+        const merged = arr.map((p) => {
           const id = String(p.post_id);
           const d = deltas[id] || { likes: 0, views: 0, comments: 0 };
 
@@ -83,7 +106,10 @@ function PostList() {
             ...p,
             _liked: likedSet.has(id),
             like_count: getDisplayCount(p.like_count ?? p.likes, d.likes),
-            comment_count: getDisplayCount(p.comment_count ?? p.comments, d.comments),
+            comment_count: getDisplayCount(
+              p.comment_count ?? p.comments,
+              d.comments
+            ),
             views: getDisplayCount(p.views, d.views),
           };
         });
@@ -104,7 +130,11 @@ function PostList() {
       setPosts((prev) =>
         prev.map((p) =>
           String(p.post_id) === String(postId)
-            ? { ...p, _liked: !!liked, like_count: Math.max(0, like_count ?? (p.like_count ?? 0)) }
+            ? {
+                ...p,
+                _liked: !!liked,
+                like_count: Math.max(0, like_count ?? p.like_count ?? 0),
+              }
             : p
         )
       );
@@ -116,7 +146,13 @@ function PostList() {
       setPosts((prev) =>
         prev.map((p) =>
           String(p.post_id) === String(postId)
-            ? { ...p, comment_count: Math.max(0, comment_count ?? (p.comment_count ?? 0) + 1) }
+            ? {
+                ...p,
+                comment_count: Math.max(
+                  0,
+                  comment_count ?? (p.comment_count ?? 0) + 1
+                ),
+              }
             : p
         )
       );
@@ -148,7 +184,9 @@ function PostList() {
   const timeAgo = (ts) => {
     const t = new Date(ts || Date.now()).getTime();
     const diff = Date.now() - t;
-    const m = 60 * 1000, h = 60 * m, d = 24 * h;
+    const m = 60 * 1000,
+      h = 60 * m,
+      d = 24 * h;
     if (diff < m) return "방금 전";
     if (diff < h) return `${Math.floor(diff / m)}분 전`;
     if (diff < d) return `${Math.floor(diff / h)}시간 전`;
@@ -210,7 +248,9 @@ function PostList() {
           return (
             <div
               key={post.post_id}
-              className={`${styles.mkcard} ${idx === 0 ? styles.mkfirstCard : ""}`}
+              className={`${styles.mkcard} ${
+                idx === 0 ? styles.mkfirstCard : ""
+              }`}
               onClick={() => openPost(post.post_id)}
               role="button"
               tabIndex={0}
@@ -247,7 +287,9 @@ function PostList() {
                     </div>
                     <div className={styles.mkmetaItem}>
                       <i
-                        className={isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart"}
+                        className={
+                          isLiked ? "fa-solid fa-heart" : "fa-regular fa-heart"
+                        }
                         aria-hidden="true"
                         style={{ color: isLiked ? "#ff0505" : "inherit" }}
                         title={isLiked ? "좋아요 누름" : "좋아요 안 누름"}
@@ -274,7 +316,11 @@ function PostList() {
             const res = await fetch("http://localhost:5000/api/posts", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ board_id: boardId, user_id: authUser.user_id, ...newPost }),
+              body: JSON.stringify({
+                board_id: boardId,
+                user_id: authUser.user_id,
+                ...newPost,
+              }),
             });
             if (res.ok) {
               const saved = await res.json();

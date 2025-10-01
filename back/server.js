@@ -887,24 +887,37 @@ app.post("/api/login", async (req, res) => {
     res.status(500).json({ success: false, message: "서버 오류 발생" });
   }
 });
+
 // GET /api/posts?board_id=?
 app.get("/api/posts", async (req, res) => {
   try {
     const { board_id } = req.query;
+
     let query = `
-      SELECT p.post_id, p.board_id, p.title, p.content, p.user_id, p.created_at, u.username
+      SELECT 
+        p.post_id, 
+        p.board_id, 
+        p.title, 
+        p.content, 
+        p.user_id, 
+        p.created_at, 
+        u.username,
+        (SELECT COUNT(*) FROM postcomment c WHERE c.post_id = p.post_id) AS comment_count,
+        (SELECT COUNT(*) FROM post_like l WHERE l.post_id = p.post_id) AS like_count
       FROM post p
       LEFT JOIN user u ON p.user_id = u.user_id
     `;
+
     const params = [];
+
     if (board_id) {
       query += ` WHERE p.board_id = ?`;
       params.push(board_id);
     }
+
     query += ` ORDER BY p.created_at DESC`;
 
     const [posts] = await pool.query(query, params);
-
     res.json(posts);
   } catch (err) {
     console.error(err);
