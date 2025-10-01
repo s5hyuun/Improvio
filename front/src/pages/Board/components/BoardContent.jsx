@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import styles from "../../../styles/Board.module.css";
 
 /** 절대 URL 생성 (윈도우 경로 보정 포함) */
@@ -21,8 +21,7 @@ function extractImgFromHtml(html) {
     const div = document.createElement("div");
     div.innerHTML = html;
     const img = div.querySelector("img");
-    const src = img?.getAttribute("src");
-    return src || null;
+    return img?.getAttribute("src") || null;
   } catch {
     return null;
   }
@@ -32,7 +31,6 @@ function extractImgFromHtml(html) {
 function pickImageUrl(suggestion, base = "http://localhost:5000") {
   if (!suggestion || typeof suggestion !== "object") return null;
 
-  // 1. attachments 우선
   if (Array.isArray(suggestion.attachments)) {
     for (const att of suggestion.attachments) {
       const path = att.file_path || att.path;
@@ -43,7 +41,6 @@ function pickImageUrl(suggestion, base = "http://localhost:5000") {
     }
   }
 
-  // 2. HTML 내 이미지
   const fromHtml =
     extractImgFromHtml(suggestion.description) ||
     extractImgFromHtml(suggestion.body);
@@ -52,7 +49,6 @@ function pickImageUrl(suggestion, base = "http://localhost:5000") {
     if (u) return u;
   }
 
-  // 3. 평평한 필드 탐색
   const flatKeys = [
     "image_url",
     "imageUrl",
@@ -75,7 +71,6 @@ function pickImageUrl(suggestion, base = "http://localhost:5000") {
     }
   }
 
-  // 4. 배열 속 객체 탐색
   const arrayKeys = ["images", "photos", "attachments", "files", "pictures"];
   for (const key of arrayKeys) {
     const arr = suggestion[key];
@@ -113,16 +108,41 @@ function BoardContent({ suggestion, onClick }) {
     description = "",
     created_at,
     user_id,
-    vote_count = 0,
-    dislike_count = 0,
-    comment_count = 0,
     suggestion_id,
   } = suggestion;
 
-  const [votes, setVotes] = useState(vote_count);
-  const [dislikes, setDislikes] = useState(dislike_count);
+  const [votes, setVotes] = useState(0);
+  const [dislikes, setDislikes] = useState(0);
+  const [commentCount, setCommentCount] = useState(0);
 
   const imageUrl = useMemo(() => pickImageUrl(suggestion), [suggestion]);
+
+  // API에서 좋아요, 싫어요, 댓글 수 가져오기
+  useEffect(() => {
+    let mounted = true;
+
+    async function fetchCounts() {
+      try {
+        const res = await fetch(
+          `http://localhost:5000/api/suggestions/${suggestion_id}/details`
+        );
+        if (!res.ok) throw new Error("Failed to fetch suggestion details");
+        const data = await res.json();
+        if (!mounted) return;
+
+        setVotes(data.vote_count || 0);
+        setDislikes(data.dislike_count || 0);
+        setCommentCount(data.comments?.length || 0);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    fetchCounts();
+    return () => {
+      mounted = false;
+    };
+  }, [suggestion_id]);
 
   const handleVote = async (score) => {
     try {
@@ -135,8 +155,16 @@ function BoardContent({ suggestion, onClick }) {
         }
       );
       if (res.ok) {
-        if (score === 1) setVotes((v) => v + 1);
-        else if (score === -1) setDislikes((d) => d + 1);
+        // 투표 후 최신 수치 다시 가져오기
+        const detailRes = await fetch(
+          `http://localhost:5000/api/suggestions/${suggestion_id}/details`
+        );
+        if (!detailRes.ok)
+          throw new Error("Failed to fetch suggestion details");
+        const data = await detailRes.json();
+        setVotes(data.vote_count || 0);
+        setDislikes(data.dislike_count || 0);
+        setCommentCount(data.comments?.length || 0);
       }
     } catch (err) {
       console.error(err);
@@ -150,18 +178,13 @@ function BoardContent({ suggestion, onClick }) {
     <div
       className={styles.contentContainer}
       onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-      }}
+      style={{ display: "flex", alignItems: "center", gap: 12 }}
     >
       {/* 텍스트 영역 */}
       <div style={{ flex: 1, minWidth: 0 }}>
         <h3 className={styles.cardTitle} style={{ marginBottom: 6 }}>
           {title}
         </h3>
-
         <div className={styles.description} style={{ marginBottom: 8 }}>
           {shortDesc}
         </div>
@@ -196,17 +219,17 @@ function BoardContent({ suggestion, onClick }) {
             title="싫어요"
             style={{ cursor: "pointer" }}
           >
-            <i className="fa-regular fa-thumbs-down"></i> {dislikes}
+            <i className="fa-regular fa-thumbs-down"></i> {dislikes}{" "}
             &nbsp;&nbsp;&nbsp;
           </div>
 
           <div title="댓글 수">
-            <i className="fa-regular fa-comment"></i> {comment_count}
+            <i className="fa-regular fa-comment"></i> {commentCount}
           </div>
         </div>
       </div>
 
-      {/* 썸네일 이미지 (있는 경우만) */}
+      {/* 썸네일 이미지 */}
       {imageUrl && (
         <div
           style={{
