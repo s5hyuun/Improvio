@@ -302,6 +302,7 @@ export default function MarketDetail() {
             <div className={styles.mkcommentSide}>
               <button
                 className={styles.mksendBtn}
+                style={{ outline: '2px dashed hotpink' }}
                 type="button"
                 onClick={submitRootComment}
                 aria-label="댓글 등록"
