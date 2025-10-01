@@ -7,7 +7,7 @@ import BoardContent from "./components/BoardContent";
 import BoardDetail from "./BoardDetail";
 import BoardWrite from "./components/BoardWrite";
 
-const API = "http://localhost";
+const API = "http://localhost:5000";
 const STORAGE_KEY = "proposal_items_cache_v1";
 
 function toAbsoluteUrl(raw, base = "http://localhost:5000") {
