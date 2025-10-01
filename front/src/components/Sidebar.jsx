@@ -1,0 +1,384 @@
+// Sidebar.jsx
+import { useEffect, useState } from "react";
+import { NavLink, useLocation } from "react-router-dom";
+
+const STORAGE_DEPT_KEY = "selected_dept";
+const AUTH_KEY = "auth_user";
+
+const DEPT_LABEL_BY_NUM = {
+  1: "R&D",
+  2: "해외영업",
+  3: "기본설계",
+  4: "미래사업개발",
+  5: "조선설계",
+  6: "해양설계",
+  7: "PM",
+  8: "구매",
+  9: "경영지원",
+  10: "안전",
+};
+
+export default function Sidebar() {
+  const departments = [
+    { id: "rd", label: "R&D", icon: "bulb" },
+    { id: "globalSales", label: "해외영업", icon: "globe" },
+    { id: "basicDesign", label: "기본설계", icon: "doc" },
+    { id: "futureBiz", label: "미래사업개발", icon: "flag" },
+    { id: "shipDesign", label: "조선설계", icon: "triangle" },
+    { id: "marineDesign", label: "해양설계", icon: "sea" },
+    { id: "pm", label: "PM", icon: "user" },
+    { id: "purchase", label: "구매", icon: "list" },
+    { id: "ops", label: "경영지원", icon: "monitor" },
+    { id: "safety", label: "안전", icon: "shield" },
+  ];
+
+  const location = useLocation();
+  const isCommunity = location.pathname.startsWith("/community");
+  const isAuthPage = /\/(login|signup)/i.test(location.pathname); // 로그인/회원가입 페이지 감지
+
+  const readAuth = () => {
+    try {
+      const raw = localStorage.getItem(AUTH_KEY);
+      if (!raw) return null;
+      const a = JSON.parse(raw);
+
+      const roleRaw =
+        a?.role ??
+        a?.user?.role ??
+        a?.claims?.role ??
+        a?.roles?.[0] ??
+        a?.auth?.role ??
+        a?.privilege;
+
+      const role =
+        typeof roleRaw === "string"
+          ? roleRaw.toLowerCase()
+          : typeof roleRaw === "number"
+          ? roleRaw
+          : "";
+
+      const department_id =
+        a?.department_id ??
+        a?.department ??
+        a?.user?.department_id ??
+        a?.profile?.department_id ??
+        null;
+
+      const department_name =
+        a?.department_name ??
+        a?.user?.department_name ??
+        (Number.isInteger(department_id)
+          ? DEPT_LABEL_BY_NUM[department_id]
+          : null) ??
+        null;
+
+      return {
+        ...a,
+        role,
+        department_id,
+        department_name,
+        username: a.username ?? a.name ?? a.employeeId ?? "사용자",
+      };
+    } catch {
+      return null;
+    }
+  };
+
+  const [auth, setAuth] = useState(readAuth);
+  useEffect(() => {
+    const onAuthChanged = () => setAuth(readAuth());
+    window.addEventListener("auth:changed", onAuthChanged);
+    window.addEventListener("storage", onAuthChanged);
+    return () => {
+      window.removeEventListener("auth:changed", onAuthChanged);
+      window.removeEventListener("storage", onAuthChanged);
+    };
+  }, []);
+
+  const role = auth?.role ?? "";
+  const isAdmin =
+    role === "admin" ||
+    role === "manager" ||
+    (typeof role === "number" && [1, 9].includes(role));
+
+  const isLoggedIn = !!auth;
+  const showAnonProfile = !isLoggedIn || isAuthPage;
+
+  const displayName = showAnonProfile
+    ? "로그인해주세요"
+    : auth?.username || "사용자";
+
+  const deptLabelFromAuth =
+    auth?.department_name ??
+    (Number.isInteger(auth?.department_id)
+      ? DEPT_LABEL_BY_NUM[auth.department_id]
+      : null);
+
+  const deptLabelFromLocal = localStorage.getItem(STORAGE_DEPT_KEY) || null;
+
+  const profileDeptLabel =
+    deptLabelFromAuth || deptLabelFromLocal || "부서 미지정";
+
+  // ✅ 초기 선택: 저장된 값이 없으면 "선택 안 함"(null) → 전체 보기
+  const [selected, setSelected] = useState(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_DEPT_KEY);
+      const found = departments.find((d) => d.label === saved);
+      return found ? found.id : null; // 기본 'rd' 제거
+    } catch {
+      return null;
+    }
+  });
+
+  // ✅ 부서 선택 변경 시 브로드캐스트 + 저장/초기화
+  useEffect(() => {
+    if (isAuthPage) return; // 로그인/회원가입 페이지에서는 동작 안 함
+    try {
+      if (selected) {
+        const current = departments.find((d) => d.id === selected);
+        const label = current?.label ?? "";
+        localStorage.setItem(STORAGE_DEPT_KEY, label);
+        window.dispatchEvent(
+          new CustomEvent("dept:changed", { detail: { dept: label } })
+        );
+      } else {
+        // 선택 안 함 → 전체 보기
+        localStorage.removeItem(STORAGE_DEPT_KEY);
+        window.dispatchEvent(
+          new CustomEvent("dept:changed", { detail: { dept: "" } })
+        );
+      }
+    } catch {}
+  }, [selected, isAuthPage, departments]);
+
+  // ✅ Requirements 탭 클릭 시: 부서 초기화(전체 보기) 후 네비게이션
+  const onClickRequirements = () => {
+    try {
+      localStorage.removeItem(STORAGE_DEPT_KEY);
+    } catch {}
+    setSelected(null);
+    window.dispatchEvent(new CustomEvent("dept:changed", { detail: { dept: "" } }));
+    // 네비게이션은 NavLink가 처리(새로고침 불필요)
+  };
+
+  return (
+    <aside className="sidebar">
+      <div className="sidebar-inner">
+        {/* 로고 */}
+        <div className="logo-wrap">
+          <img
+            src="src/assets/logo.png"
+            alt="Company Logo"
+            className="logo-img"
+          />
+        </div>
+
+        {/* 프로필 */}
+        <section className="profile">
+          <div className="profile-name">{displayName}</div>
+
+          {!showAnonProfile && (
+            <div className="chip-row">
+              <span className="chip chip-primary">{profileDeptLabel}</span>
+              {isAdmin && <span className="chip chip-warn">관리자</span>}
+            </div>
+          )}
+        </section>
+
+        {/* 로그인/회원가입 페이지에서는 네비게이션 숨김 */}
+        {!isAuthPage && (
+          <nav className="nav">
+            <NavLink
+              to="/main"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+            >
+              <span className="ico">{icon("bars")}</span>
+              <span>Main Chart</span>
+            </NavLink>
+
+            <NavLink
+              to="/board"
+              onClick={onClickRequirements}
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+            >
+              <span className="ico">{icon("doc")}</span>
+              <span>Requirements</span>
+            </NavLink>
+
+            <NavLink
+              to="/community"
+              className={({ isActive }) => `nav-item ${isActive ? "active" : ""}`}
+            >
+              <span className="ico">{icon("chat")}</span>
+              <span>Community</span>
+            </NavLink>
+
+            {isAdmin && (
+              <NavLink
+                to="/manager"
+                className={({ isActive }) =>
+                  `nav-item ${isActive ? "active" : ""}`
+                }
+              >
+                <span className="ico">{icon("shield")}</span>
+                <span>관리자</span>
+              </NavLink>
+            )}
+          </nav>
+        )}
+
+        {/* 로그인/회원가입·커뮤니티 페이지에서는 부서 선택 숨김(기존 로직 유지) */}
+        {!isAuthPage && !isCommunity && (
+          <>
+            <div className="section-title">부서 선택</div>
+            <div className="dept-wrap">
+              <ul className="dept-list">
+                {/* ✅ 전체(선택 해제) */}
+                <li
+                  className={`dept-item ${selected === null ? "selected" : ""}`}
+                  onClick={() => setSelected(null)}
+                  title="전체 보기"
+                >
+                  <span className="ico">{icon("globe")}</span>
+                  <span>전체</span>
+                </li>
+
+                {departments.map((d) => (
+                  <li
+                    key={d.id}
+                    className={`dept-item ${selected === d.id ? "selected" : ""}`}
+                    onClick={() => setSelected(d.id)}
+                    title={`${d.label}만 보기`}
+                  >
+                    <span className="ico">{icon(d.icon)}</span>
+                    <span>{d.label}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </>
+        )}
+      </div>
+    </aside>
+  );
+}
+
+function icon(name) {
+  switch (name) {
+    case "bars":
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path
+            d="M3 21h18M7 10v8M12 5v13M17 13v5"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+      );
+    case "doc":
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path
+            d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+          <path d="M14 3v6h6" fill="none" stroke="currentColor" strokeWidth="2" />
+        </svg>
+      );
+    case "chat":
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path
+            d="M21 12a8 8 0 0 1-8 8H7l-4 3 1-5A8 8 0 1 1 21 12z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinejoin="round"
+          />
+        </svg>
+      );
+    case "shield":
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path
+            d="M12 3l7 3v6c0 5-3.5 9-7 9s-7-4-7-9V6l7-3z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+        </svg>
+      );
+    case "bulb":
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path
+            d="M12 2v4M12 18v4M4.9 4.9l2.8 2.8M16.3 16.3l2.8 2.8M2 12h4M18 12h4M4.9 19.1l2.8-2.8M16.3 7.7l2.8-2.8"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+          />
+        </svg>
+      );
+    case "globe":
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M2 12h20M12 2a15 15 0 0 1 0 20" fill="none" stroke="currentColor" strokeWidth="2" />
+        </svg>
+      );
+    case "flag":
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path d="M12 2v6l5 3-5 3v8" fill="none" stroke="currentColor" strokeWidth="2" />
+        </svg>
+      );
+    case "triangle":
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path d="M3 18l9-12 9 12H3z" fill="none" stroke="currentColor" strokeWidth="2" />
+        </svg>
+      );
+    case "sea":
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path
+            d="M2 18s4-6 10-6 10 6 10 6-4 4-10 4-10-4-10-4zm10-9a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+        </svg>
+      );
+    case "user":
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path
+            d="M12 12a5 5 0 1 0 0-10 5 5 0 0 0 0 10zM3 22c0-5 4-8 9-8s9 3  9 8"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+          />
+        </svg>
+      );
+    case "list":
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path d="M3 6h18M3 12h18M3 18h18" fill="none" stroke="currentColor" strokeWidth="2" />
+        </svg>
+      );
+    case "monitor":
+      return (
+        <svg viewBox="0 0 24 24" width="20" height="20">
+          <path d="M4 4h16v12H4z" fill="none" stroke="currentColor" strokeWidth="2" />
+          <path d="M8 20h8" stroke="currentColor" strokeWidth="2" />
+        </svg>
+      );
+    default:
+      return null;
+  }
+}

@@ -1,0 +1,630 @@
+/* ===== 공통 레이아웃 ===== */
+.commContainer {
+  display: flex;
+  gap: 12px;
+  margin: 10px;
+
+  /* 필요하면 아래 높이 규칙을 켜세요 */
+  /* height: calc(100vh - 98px); */
+
+  /* 첫 번째 CSS의 유연한 레이아웃 유지 */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.commContainer i {
+  margin-right: 6px;
+}
+.commContainer ul {
+  padding: 0;
+  list-style: none;
+}
+
+/* ===== 좌측 보드 목록 ===== */
+.commBoards {
+  flex: 0.9;
+  padding: 20px;
+  min-height: 0;
+  overflow: hidden; /* 1번 CSS 유지 */
+  border-radius: 14px; /* 카드 느낌 유지 */
+  background-color: white;
+}
+.commBoards > div {
+  font-size: 18px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #dbeafe;
+}
+.commBoards li {
+  display: flex;
+  align-items: center;
+  margin-bottom: 10px;
+  color: #4b5563;
+  padding: 12px 20px;
+  justify-content: space-between;
+  border-radius: 16px;
+  border: 1px solid transparent;
+  cursor: pointer;
+}
+.commBoards li:hover {
+  border: 1px solid #bfdbfe;
+  background-color: #eff6ff;
+  color: #1d4ed8;
+}
+.commBoards span {
+  background-color: #f3f4f6;
+  padding: 5px 10px;
+  font-size: 14px;
+  border-radius: 20px;
+}
+.commBoardsName {
+  display: flex;
+  align-items: center;
+}
+
+/* ===== 목록/우측 영역 컨테이너 ===== */
+.commPosts {
+  display: flex;
+  flex-direction: column;
+}
+.commPostsContainer {
+  flex: 3;
+  padding: 20px;
+  /* padding: 0; */
+  min-height: 0;
+  overflow: auto; /* 1번 CSS에 있던 스크롤 유지 */
+  border-radius: 14px;
+  background-color: white;
+}
+.commPostsContainer > div:first-child {
+  display: flex;
+  /* align-items: center; */
+  font-size: 20px;
+  padding-bottom: 20px;
+  color: #1e3a8a;
+}
+.commPostsContainer > div:first-child i {
+  color: #2563eb;
+}
+.commPostsContainer > div:first-child span {
+  /* margin-left: 10px; */
+  font-size: 14px;
+  color: #6b7280;
+}
+
+.commRightbar {
+  flex: 1.3;
+  min-height: 0;
+  overflow: hidden; /* 1번 CSS 유지 */
+}
+
+/* ===== 우측 HOT ===== */
+.commHot {
+  align-self: flex-start;
+  padding: 20px;
+  border-radius: 14px;
+  background-color: white;
+}
+.commHot > div:first-child {
+  font-size: 18px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid #dbeafe;
+}
+.commHotPost {
+  padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+}
+.commHotPost:hover {
+  background-color: #f3f4f6;
+}
+.commHotPost > div:first-child {
+  margin-bottom: 10px;
+}
+.commHotPost > div:last-child {
+  font-size: 12px;
+}
+.commHotPost > div:last-child span {
+  margin-right: 10px;
+  color: #6b7280;
+}
+
+/* ===== 광고 박스 ===== */
+.ad {
+  background-color: white;
+  margin-top: 10px;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* ===== 게시글 리스트 아이템 ===== */
+.postContainer {
+  display: flex;
+  flex-direction: column;
+  padding: 20px 10px;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
+  position: relative;
+}
+.postContainer:hover {
+  background-color: #f3f4f6;
+}
+.postContainer div:first-child {
+  display: flex;
+  align-items: center;
+}
+.postContainer div:first-child span {
+  background-color: tomato;
+  color: white;
+  padding: 4px 7px;
+  font-size: 10px;
+  border-radius: 6px;
+  margin-right: 10px;
+}
+.postContainer h1 {
+  margin: 0;
+  font-size: 18px;
+}
+.postContainer div {
+  margin-bottom: 6px;
+}
+.postContainer div:nth-child(2) {
+  font-size: 14px;
+}
+.postIcons span {
+  margin-right: 20px;
+  font-size: 12px;
+  color: #6b7280;
+}
+
+/* ===== 상세 ===== */
+.postDetailContainer {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+.postDetailComments {
+  width: 100%;
+  margin-top: 20px;
+}
+.postCommentContainer {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #dbeafe;
+  padding-bottom: 20px;
+}
+.backButton {
+  background: none;
+  border: none;
+  position: absolute;
+  left: 0;
+  cursor: pointer;
+}
+.postDetailContent {
+  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 20px;
+}
+.postDetailContent p {
+  color: black;
+  font-size: 16px;
+}
+.postDetailIcons {
+  display: flex;
+  align-items: center;
+  color: #6b7280;
+  font-size: 20px;
+  margin-bottom: 20px;
+  justify-content: flex-end;
+}
+.postDetailIcons > i {
+  color: #6b7280 !important;
+  margin: 0;
+  margin-right: 5px;
+  font-size: 14px;
+}
+.postDetailIcons span {
+  margin-right: 10px;
+  margin-left: 0 !important;
+}
+
+.postCommentIcons {
+  font-size: 14px;
+}
+.postCommentIcons i {
+  color: #6b7280 !important;
+}
+
+/* ===== 댓글 입력 ===== */
+.detailInput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.detailInput input[type="text"] {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.detailInput input[type="text"]:focus {
+  border-color: #2563eb;
+}
+.detailInput button {
+  padding: 10px 16px;
+  background-color: #2563eb;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.detailInput button:hover {
+  background-color: #1e40af;
+}
+
+/* ===== 글쓰기 페이지 ===== */
+.writeContainer {
+  max-width: 600px;
+  margin: 20px auto;
+  padding: 24px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+.writeContainer h2 {
+  margin-bottom: 16px;
+  font-size: 20px;
+  font-weight: bold;
+  color: #1e3a8a;
+}
+.writeForm {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.titleInput {
+  padding: 12px 14px;
+  font-size: 15px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  outline: none;
+}
+.titleInput:focus {
+  border-color: #2563eb;
+}
+.contentInput {
+  min-height: 200px;
+  padding: 12px 14px;
+  font-size: 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  resize: vertical;
+  outline: none;
+}
+.contentInput:focus {
+  border-color: #2563eb;
+}
+.buttonGroup {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+.submitBtn {
+  padding: 10px 18px;
+  background-color: #2563eb;
+  color: white;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.submitBtn:hover {
+  background-color: #1e40af;
+}
+.cancelBtn {
+  padding: 10px 18px;
+  background-color: #e5e7eb;
+  color: #374151;
+  font-weight: 600;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.cancelBtn:hover {
+  background-color: #d1d5db;
+}
+
+/* ===== 헤더(상단 바) ===== */
+.commHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+  position: sticky; /* 필요 없으면 제거 */
+  top: 0;
+  z-index: 10;
+}
+.commHeaderLeft {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 16px;
+  color: #1f2937;
+}
+.commHeaderLeft i {
+  font-size: 18px;
+  color: #2563eb;
+}
+.commHeaderTitle {
+  font-weight: 700;
+}
+.commHeaderCount {
+  color: #6b7280;
+  font-weight: 500;
+}
+.writeBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background-color: #2563eb;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  border: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, transform 0.05s ease-in-out;
+}
+.writeBtn:hover {
+  background-color: #1e40af;
+}
+.writeBtn:active {
+  transform: translateY(1px);
+}
+.writeBtn i {
+  font-size: 14px;
+}
+
+/* ===== 목록 영역(카드 모드에 맞춰 패딩만 유지) ===== */
+.commPosts {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 20px 24px;
+  background: #f9fafb;
+}
+
+/* ===== 모달 (PostWrite와 호환) ===== */
+.modalOverlay {
+  position: fixed;
+  top: 0;
+  left: 0; /* inset: 0 과 동일하게 동작 */
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5); /* 어두운 배경 */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+.modalContent {
+  background: #fff;
+  padding: 24px;
+  border-radius: 10px;
+  width: 600px;
+  max-width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.25s ease-in-out;
+}
+
+/* PostWrite 전용 레이어(내부 레이아웃 포함) */
+.modal {
+  background: #fff;
+  width: 720px;
+  max-width: calc(100% - 32px);
+  max-height: 84vh;
+  overflow-y: auto;
+  border-radius: 12px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+  padding: 0;
+}
+.modalHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e5e7eb;
+  background: #fff;
+}
+.modalTitle {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2a44;
+  margin: 0;
+}
+.modalCloseBtn {
+  border: none;
+  background: transparent;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  color: #6b7280;
+}
+.modalForm {
+  padding: 20px;
+}
+.formRow {
+  margin-bottom: 16px;
+}
+.formLabel {
+  display: block;
+  margin-bottom: 8px;
+  color: #1f2937;
+  font-weight: 600;
+}
+.required {
+  color: #e11d48;
+  margin-left: 2px;
+}
+.input {
+  width: 100%;
+  height: 44px;
+  border: 1px solid #ececef;
+  border-radius: 10px;
+  padding: 0 14px;
+  background: #f4f5f7;
+  outline: none;
+}
+.input:focus {
+  border-color: #2563eb;
+}
+.textarea {
+  width: 100%;
+  min-height: 180px;
+  border: 1px solid #ececef;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: #f4f5f7;
+  outline: none;
+  resize: vertical;
+}
+.textarea:focus {
+  border-color: #2563eb;
+}
+.dropzone {
+  border: 2px dashed #d6d9e0;
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.dropzoneActive {
+  background: #f8fafc;
+}
+.dropzoneInner {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: center;
+}
+.uploadIcon {
+  font-size: 20px;
+}
+.uploadText {
+  color: #667085;
+  font-size: 14px;
+}
+.thumbGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(88px, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+.thumbItem {
+  position: relative;
+  border: 1px solid #eee;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #fff;
+}
+.thumbImg {
+  width: 100%;
+  height: 88px;
+  object-fit: cover;
+  display: block;
+}
+.thumbRemove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  cursor: pointer;
+  line-height: 22px;
+  text-align: center;
+}
+.checkboxRow {
+  margin-top: 8px;
+}
+.checkboxLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #475467;
+  font-size: 14px;
+}
+.modalFooter {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 8px 20px 20px;
+}
+.submitBtnPrimary {
+  height: 40px;
+  padding: 0 18px;
+  border-radius: 8px;
+  border: none;
+  background: #2563eb;
+  color: #fff;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+}
+.submitBtnPrimary:hover {
+  background: #1e40af;
+}
+
+/* 모달 애니메이션 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* list */
+.activeBoard {
+  background: #dbeafe;           
+  color: #1e3a8a;                
+  border-left: 4px solid #2563eb;
+}
+
+.commBoards ul li {
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+.commBoards ul li:hover {
+  background: #e5edff;           
+}

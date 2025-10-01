@@ -1,0 +1,317 @@
+import { useEffect, useState } from "react";
+import styles from "../../styles/Board.module.css";
+import BoardComment from "./components/BoardComment";
+
+function BoardDetail({ suggestion, onClose }) {
+  const [detail, setDetail] = useState(null);
+  const [voteCount, setVoteCount] = useState(0);
+  const [dislikeCount, setDislikeCount] = useState(0);
+  const [voted, setVoted] = useState(false); // 내가 좋아요 눌렀는지
+  const [disliked, setDisliked] = useState(false); // 내가 싫어요 눌렀는지
+  const [newComment, setNewComment] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [summary, setSummary] = useState("");
+  const [loadingSummary, setLoadingSummary] = useState(false);
+  // ESC 눌러도 닫히게
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === "Escape") onClose?.();
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [onClose]);
+
+  useEffect(() => {
+  if (!suggestion) return;
+
+  const fetchData = async () => {
+    try {
+      const data = await fetch(
+        `http://localhost:4000/api/suggestions/${suggestion.suggestion_id}/details`
+      ).then((res) => res.json());
+
+      setDetail(data);
+      setVoteCount(data.vote_count || 0);
+      setDislikeCount(data.dislike_count || 0);
+      setVoted(data.votes?.some((v) => v.user_id === 1) || false);
+      setDisliked(data.dislikes?.some((d) => d.user_id === 1) || false);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  fetchData();
+}, [suggestion]);
+
+
+  if (!suggestion) return null;
+  if (!detail) return <div className={styles.overlay}>불러오는 중...</div>;
+
+  const {
+    title,
+    description,
+    created_at,
+    department_name,
+    comments,
+    status,
+    expected_effect,
+    user_id: author_id,
+  } = detail;
+
+  const authUser = JSON.parse(localStorage.getItem("auth_user"));
+  const user_id = authUser?.user_id;
+
+  // 좋아요 토글
+  const handleVote = async () => {
+    try {
+      await fetch(
+        `http://localhost:4000/api/suggestions/${suggestion.suggestion_id}/vote`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id }), // 🔹 user_id 사용
+        }
+      );
+      setVoted(!voted);
+      setVoteCount(voted ? voteCount - 1 : voteCount + 1);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 싫어요 토글
+  const handleDislike = async () => {
+    try {
+      await fetch(
+        `http://localhost:4000/api/suggestions/${suggestion.suggestion_id}/dislike`,
+        {
+          method: "PUT",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ user_id }),
+        }
+      );
+      setDisliked(!disliked);
+      setDislikeCount(disliked ? dislikeCount - 1 : dislikeCount + 1);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  // 댓글 작성
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!newComment.trim()) return;
+    setSubmitting(true);
+    try {
+      const res = await fetch("http://localhost:4000/api/comments", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          content: newComment,
+          user_id,
+          suggestion_id: suggestion.suggestion_id,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setNewComment("");
+        fetchDetail();
+      } else {
+        alert(data.error || "댓글 작성 실패");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("서버 오류");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+  const handleSummarize = async () => {
+    if (!description) return;
+    setLoadingSummary(true);
+    setSummary("");
+
+    try {
+      const res = await fetch("http://localhost:5000/api/summarize", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ description }),
+      });
+
+      const data = await res.json();
+      if (data.error) {
+        console.error(data.error);
+        setSummary("요약 실패");
+      } else {
+        setSummary(data[0]?.summary_text || "요약 실패");
+      }
+    } catch (err) {
+      console.error(err);
+      setSummary("요약 실패");
+    } finally {
+      setLoadingSummary(false);
+    }
+  };
+  return (
+    <div
+      className={styles.overlay}
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose?.();
+      }}
+    >
+      <div className={styles.modal}>
+        <div className={styles.detailIPost}>
+          <div className={styles.detailTop}>
+            <div>
+              <div className={styles.detailTopTitle}>{title}</div>
+              <div className={styles.detailTopIcons}>
+                <div>
+                  <i className="fa-regular fa-building"></i>
+                  {department_name}
+                </div>
+                <div>
+                  <i className="fa-regular fa-calendar"></i>
+                  {new Date(created_at).toLocaleDateString()}
+                </div>
+              </div>
+            </div>
+            <div>
+              <div
+                className={
+                  status === "pending"
+                    ? styles.proposal
+                    : status === "approved"
+                    ? styles.inprogress
+                    : styles.complete
+                }
+              >
+                {status === "pending"
+                  ? "Proposal"
+                  : status === "approved"
+                  ? "In progress"
+                  : "Complete"}
+              </div>
+              <button onClick={onClose}>❌</button>
+            </div>
+          </div>
+
+          <div className={styles.detailContent}>
+            <div>
+              <div>제안 내용</div>
+              {detail.attachments && detail.attachments.length > 0 && (
+                <div className={styles.detailImages}>
+                  {detail.attachments
+                    .filter((att) => {
+                      // ? 뒤에 쿼리 제거
+                      const cleanPath = att.file_path.split("?")[0];
+                      // 확장자 추출
+                      const ext = cleanPath.split(".").pop().toLowerCase();
+                      // jpg와 jpeg만 허용
+                      return ["jpg", "jpeg"].includes(ext);
+                    })
+                    .map((att) => (
+                      <img
+                        key={att.attachment_id}
+                        src={`http://localhost:5000/uploads/${encodeURIComponent(
+                          att.file_path
+                        )}`}
+                        alt="첨부 이미지"
+                        style={{ maxWidth: "70%", marginBottom: "8px" }}
+                        onError={(e) => {
+                          e.target.style.display = "none"; // 깨진 이미지 숨기기
+                        }}
+                      />
+                    ))}
+                </div>
+              )}
+
+              <div className={styles.description}>{description}</div>
+              <div className={styles.effect}>기대효과</div>
+              <div className={styles.description}>{expected_effect}</div>
+              {/* AI 요약 */}
+              <div style={{ marginTop: "12px" }}>
+                <button
+                  onClick={handleSummarize}
+                  disabled={loadingSummary || !description}
+                  style={{ padding: "6px 12px" }}
+                >
+                  {loadingSummary ? "요약 중..." : "AI 요약"}
+                </button>
+                {summary && (
+                  <div
+                    style={{
+                      marginTop: "8px",
+                      fontStyle: "italic",
+                      color: "#555",
+                    }}
+                  >
+                    {summary}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            <div className={styles.detailThumb}>
+              <button
+                onClick={handleVote}
+                style={{ cursor: "pointer", background: "none", border: 0 }}
+              >
+                <i
+                  className={`${
+                    voted ? "fa-solid" : "fa-regular"
+                  } fa-thumbs-up`}
+                  style={{ color: voted ? "#2563eb" : "#6b7280" }}
+                  aria-pressed={voted}
+                />{" "}
+                {voteCount}
+              </button>
+
+              <button
+                onClick={handleDislike}
+                style={{ cursor: "pointer", background: "none", border: 0 }}
+              >
+                <i
+                  className={`${
+                    disliked ? "fa-solid" : "fa-regular"
+                  } fa-thumbs-down`}
+                  style={{ color: disliked ? "#ef4444" : "#6b7280" }}
+                  aria-pressed={disliked}
+                />{" "}
+                {dislikeCount}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className={styles.detailComment}>
+          <div>
+            <i className="fa-regular fa-comment"></i>
+            <span>댓글 ({comments.length})</span>
+          </div>
+          <div className={styles.detailCommentList}>
+            {comments.map((c) => (
+              <BoardComment key={c.comment_id} comment={c} />
+            ))}
+          </div>
+          <form
+            className={styles.detailCommentInput}
+            onSubmit={handleCommentSubmit}
+          >
+            <input
+              type="text"
+              placeholder="Add Comment ..."
+              value={newComment}
+              onChange={(e) => setNewComment(e.target.value)}
+              disabled={submitting}
+            />
+            <input type="submit"></input>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default BoardDetail;
