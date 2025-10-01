@@ -202,25 +202,33 @@ function BoardDetail({ suggestion, onClose }) {
           <div className={styles.detailContent}>
             <div>
               <div>제안 내용</div>
-              {detail.attachments &&
-                detail.attachments.length > 0 &&
-                detail.attachments
-                  .filter((att) => {
-                    const cleanPath = att.file_path.split("?")[0];
-                    const ext = cleanPath.split(".").pop().toLowerCase();
-                    return ["jpg", "jpeg"].includes(ext);
-                  })
-                  .map((att) => (
-                    <img
-                      key={att.attachment_id}
-                      src={`http://localhost:4000/uploads/${encodeURIComponent(
-                        att.file_path
-                      )}`}
-                      alt="첨부 이미지"
-                      style={{ maxWidth: "100%", marginBottom: "8px" }}
-                      onError={(e) => (e.target.style.display = "none")}
-                    />
-                  ))}
+              {detail.attachments && detail.attachments.length > 0 && (
+                <div className={styles.detailImages}>
+                  {detail.attachments
+                    .filter((att) => {
+                      // ? 뒤에 쿼리 제거
+                      const cleanPath = att.file_path.split("?")[0];
+                      // 확장자 추출
+                      const ext = cleanPath.split(".").pop().toLowerCase();
+                      // jpg와 jpeg만 허용
+                      return ["jpg", "jpeg", "png"].includes(ext);
+                    })
+                    .map((att) => (
+                      <img
+                        key={att.attachment_id}
+                        src={`http://localhost:5000/uploads/${encodeURIComponent(
+                          att.file_path
+                        )}`}
+                        alt="첨부 이미지"
+                        style={{ maxWidth: "70%", marginBottom: "8px" }}
+                        onError={(e) => {
+                          e.target.style.display = "none"; // 깨진 이미지 숨기기
+                        }}
+                      />
+                    ))}
+                </div>
+              )}
+
               <div className={styles.description}>{description}</div>
 
               {/* AI 요약 */}

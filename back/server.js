@@ -187,7 +187,7 @@ app.get("/api/suggestions", async (req, res) => {
   try {
     const [suggestions] = await pool.query(`
       SELECT s.*,
-             u.name AS user_name, d.department_name,
+             u.name AS user_name, d.department_name, u.user_id AS author_id,
              -- 댓글 수
              (SELECT COUNT(*) 
               FROM Comment c 
@@ -1034,15 +1034,99 @@ app.get("/api/hot-posts", async (req, res) => {
     res.status(500).json({ message: "서버 오류" });
   }
 });
-app.get("*", (req, res) => {
+// POST /api/posts
+app.post("/api/posts", upload.array("images", 10), async (req, res) => {
+  const conn = await pool.getConnection();
+  try {
+    const { board_id, user_id, title, content, department_id } = req.body;
+
+    await conn.beginTransaction();
+
+    // 1. post 저장
+    const [result] = await conn.query(
+      `INSERT INTO post (board_id, user_id, title, content, department_id) 
+       VALUES (?, ?, ?, ?, ?)`,
+      [board_id, user_id, title, content, department_id]
+    );
+
+    const postId = result.insertId;
+
+    // 2. 첨부파일 저장
+    if (req.files && req.files.length > 0) {
+      const values = req.files.map((f) => [postId, `/uploads/${f.filename}`]);
+      await conn.query(
+        `INSERT INTO postattachment (post_id, file_path) VALUES ?`,
+        [values]
+      );
+    }
+
+    await conn.commit();
+    res.json({ success: true, post_id: postId });
+  } catch (err) {
+    await conn.rollback();
+    console.error("❌ Insert Error:", err);
+    res.status(500).json({ error: "DB 오류" });
+  } finally {
+    conn.release();
+  }
+});
+app.get("/api/posts/:postId/comments", async (req, res) => {
+  const { postId } = req.params;
+  try {
+    const [rows] = await pool.query(
+      `SELECT c.postcomment_id, c.content, c.created_at, u.username
+       FROM postcomment c
+       JOIN user u ON c.user_id = u.user_id
+       WHERE c.post_id = ?
+       ORDER BY c.created_at DESC`,
+      [postId]
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "댓글 불러오기 실패" });
+  }
+});
+
+app.post("/api/posts/:postId/comments", async (req, res) => {
+  const { postId } = req.params;
+  const { content, user_id } = req.body;
+
+  if (!content) {
+    return res.status(400).json({ error: "내용이 필요합니다." });
+  }
+
+  try {
+    const [result] = await pool.query(
+      `INSERT INTO postcomment (content, user_id, post_id, created_at) 
+       VALUES (?, ?, ?, NOW())`,
+      [content, user_id || null, postId]
+    );
+
+    const [newComment] = await pool.query(
+      `SELECT pc.*, u.username AS author
+       FROM postcomment pc
+       LEFT JOIN user u ON pc.user_id = u.user_id
+       WHERE pc.postcomment_id = ?`,
+      [result.insertId]
+    );
+
+    res.status(201).json(newComment[0]);
+  } catch (err) {
+    console.error("댓글 추가 오류:", err);
+    res.status(500).json({ error: "댓글 추가 실패" });
+  }
+});
+
+app.get((req, res) => {
   if (req.path.startsWith("/api")) {
     // API 요청이면 404
     return res.status(404).json({ error: "API endpoint not found" });
   }
   res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
-const PORT = 4000;
-app.listen(PORT, () => {
-    console.log(`Server running at http://localhost:${PORT}`);
-});
+// server.js
 
+app.listen(5000, () => {
+  console.log("http://localhost:5000");
+});

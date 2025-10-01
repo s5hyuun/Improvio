@@ -1,33 +1,6 @@
-// Member.jsx
-import React, { useMemo, useState } from "react";
-
-/** 탭 상단 (개요/직원/제안/공지) ------------------------------------------------ */
-function Tabs({ active = "members", onChange }) {
-  const Tab = ({ id, children }) => (
-    <button
-      onClick={() => onChange?.(id)}
-      style={{
-        padding: "10px 14px",
-        borderRadius: "10px",
-        border: "1px solid var(--border, #e5e7eb)",
-        background: active === id ? "var(--chip-bg, #eef2ff)" : "transparent",
-        color: active === id ? "var(--primary, #2d6cff)" : "var(--text, #111827)",
-        fontWeight: 600,
-        fontSize: 14,
-      }}
-    >
-      {children}
-    </button>
-  );
-  return (
-    <div style={{ display: "flex", gap: 8 }}>
-      <Tab id="overview">개요</Tab>
-      <Tab id="members">직원 관리</Tab>
-      <Tab id="proposals">제안 관리</Tab>
-      <Tab id="notices">공지 관리</Tab>
-    </div>
-  );
-}
+// Members.jsx
+import React, { useEffect, useMemo, useState } from "react";
+import styles from "../../styles/Members.module.css";
 
 /** 공용 컴포넌트 -------------------------------------------------------------- */
 const Chip = ({ label = "활성", tone = "on" }) => (
@@ -65,6 +38,35 @@ const IconButton = ({ title, onClick, children }) => (
   </button>
 );
 
+/** 탭 상단 (개요/직원/제안/공지) ----------------------------------------------- */
+function Tabs({ active = "members", onChange }) {
+  const Tab = ({ id, children }) => (
+    <button
+      onClick={() => onChange?.(id)}
+      style={{
+        padding: "10px 14px",
+        borderRadius: "10px",
+        border: "1px solid var(--border, #e5e7eb)",
+        background: active === id ? "var(--chip-bg, #eef2ff)" : "transparent",
+        color: active === id ? "var(--primary, #2d6cff)" : "var(--text, #111827)",
+        fontWeight: 600,
+        fontSize: 14,
+      }}
+    >
+      {children}
+    </button>
+  );
+
+  return (
+    <div className={styles.wrap}>
+      <Tab id="overview">개요</Tab>
+      <Tab id="members">직원</Tab>
+      <Tab id="proposals">제안</Tab>
+      <Tab id="notices">공지</Tab>
+    </div>
+  );
+}
+
 /** 더미 데이터 (백엔드 연동 전까지 사용) --------------------------------------- */
 const DEPTS = ["모든 부서", "R&D", "해외영업", "안전", "PM", "공정관리"];
 
@@ -92,7 +94,6 @@ export default function Member() {
   }, [rows, dept, q]);
 
   function handleAdd() {
-    // 실제로는 모달/폼을 여는 로직으로 대체하십시오.
     const nextId = Math.max(...rows.map((r) => r.id)) + 1;
     const sample = {
       id: nextId,
@@ -105,7 +106,6 @@ export default function Member() {
   }
 
   function handleEdit(row) {
-    // 편집 모달/페이지로 연결하는 자리입니다.
     alert(`[편집] ${row.name} (부서: ${row.dept})`);
   }
 

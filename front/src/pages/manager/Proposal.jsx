@@ -1,5 +1,5 @@
 // Proposal.jsx
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import styles from "../../styles/Proposal.module.css";
@@ -160,6 +160,15 @@ function SuggestionList() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  const [filter, setFilter] = useState("");
+  const [deptFilter, setDeptFilter] = useState(() => {
+    try {
+      return localStorage.getItem(STORAGE_DEPT_KEY) || "";
+    } catch {
+      return "";
+    }
+  });
+
   useEffect(() => {
     (async () => {
       try {
@@ -183,7 +192,21 @@ function SuggestionList() {
 
   // 상태 변경(낙관적)
   const updateStatus = async (id, next) => {
-    setItems(prev => prev.map(x => (x.id === id ? { ...x, status: next } : x)));
+    let changedItem = null;
+    setItems((prev) => {
+      const updated = prev.map((x) =>
+        x.id === id ? ((changedItem = { ...x, status: next }), changedItem) : x
+      );
+      saveToStorage(updated);
+      return updated;
+    });
+
+    window.dispatchEvent(
+      new CustomEvent("suggestion:status", {
+        detail: { id, status: next, item: changedItem },
+      })
+    );
+
     try {
       await fetch(`${API}/api/requirements/${id}/status`, {
         method: "PATCH",
@@ -209,14 +232,102 @@ function SuggestionList() {
     }
   };
 
-  if (loading) return <div className={styles.loading}>불러오는 중…</div>;
+  const viewItems = useMemo(() => {
+    let arr = items;
+
+    if (deptFilter) {
+      arr = arr.filter((x) => String(x.dept || "") === deptFilter);
+    }
+
+    if (filter) {
+      arr = arr.filter((x) => x.status === filter);
+    }
+
+    return arr.slice().sort((a, b) => {
+      if (a.urgent !== b.urgent) return a.urgent ? -1 : 1;
+      const da = new Date(a.created_at);
+      const db = new Date(b.created_at);
+      return db - da;
+    });
+  }, [items, filter, deptFilter]);
+
+  if (loading) {
+    return (
+      <div className={styles.loading} style={{ padding: 16 }}>
+        불러오는 중…
+      </div>
+    );
+  }
 
   return (
-    <div className={styles.wrap}>
-      <h2 className={styles.title}>제안 관리</h2>
+    // 페이지 루트: 헤더/사이드바 포함 레이아웃에서 내부 스크롤 확보
+    <div
+      className={styles.wrap}
+      style={{
+        display: "flex",
+        flexDirection: "column",
+        flex: "1 1 auto",
+        minHeight: 0, // ★ 중요
+      }}
+    >
+      {/* 필터 바는 고정 영역 */}
+      <div
+        style={{
+          display: "flex",
+          justifyContent: "flex-end",
+          alignItems: "center",
+          gap: 8,
+          marginBottom: 10,
+          flex: "0 0 auto",
+        }}
+      >
+        <label
+          htmlFor="statusFilter"
+          style={{ fontSize: 14, color: "#475569" }}
+        >
+          필터:
+        </label>
+        <select
+          id="statusFilter"
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          style={{
+            appearance: "none",
+            WebkitAppearance: "none",
+            MozAppearance: "none",
+            padding: "8px 12px",
+            borderRadius: 10,
+            border: "1px solid #cbd5e1",
+            background: "#fff",
+            color: "#0f172a",
+            fontSize: 14,
+            cursor: "pointer",
+          }}
+          aria-label="제안 상태 필터"
+          title="제안 상태 필터"
+        >
+          <option value="">전체 보기</option>
+          <option value="pending">{statusLabel.pending}</option>
+          <option value="approved">{statusLabel.approved}</option>
+          <option value="completed">{statusLabel.completed}</option>
+        </select>
+      </div>
 
-      <div className={styles.list}>
-        {items.map(item => (
+      {/* 스크롤 리스트 영역 */}
+      <div
+        className={styles.list}
+        role="region"
+        aria-label="제안 목록"
+        tabIndex={0}
+        style={{
+          display: "block",
+          flex: "1 1 auto",
+          minHeight: 0,             // ★ 중요
+          overflowY: "auto",        // ★ 중요
+          WebkitOverflowScrolling: "touch",
+        }}
+      >
+        {viewItems.map((item) => (
           <SuggestionCard
             key={item.id}
             item={item}
@@ -271,6 +382,84 @@ function SuggestionCard({ item, onChangeStatus, onToggleUrgent }) {
       </div>
     </article>
   );
+}
+
+function getFallback() {
+  return [
+    {
+      id: 1,
+      title: "제목",
+      body: "내용",
+      dept: "R&D",
+      author: "익명 직원",
+      created_at: "2024-01-15",
+      priority: 85,
+      status: "pending",
+      urgent: true,
+    },
+    {
+      id: 2,
+      title: "제목",
+      body: "내용",
+      dept: "경영지원",
+      author: "익명 직원",
+      created_at: "2024-01-10",
+      priority: 62,
+      status: "approved",
+      urgent: false,
+    },
+    {
+      id: 3,
+      title: "제목",
+      body: "내용",
+      dept: "안전",
+      author: "익명 직원",
+      created_at: "2023-12-20",
+      priority: 92,
+      status: "completed",
+      urgent: false,
+    },
+  ];
+}
+
+export function adaptFromDB(row) {
+  const id = row.id ?? row.suggestion_id ?? row.suggestionId;
+  const body = row.body ?? row.description ?? "";
+  const dept = row.dept ?? row.department_name ?? null;
+  const author = row.author ?? row.name ?? null;
+  const created_at =
+    row.created_at ?? row.createdAt ?? new Date().toISOString();
+
+  const priority =
+    typeof row.priority === "number"
+      ? row.priority
+      : typeof row.avg_score === "number"
+      ? row.avg_score
+      : null;
+
+  let status = row.status;
+  if (!["pending", "approved", "completed"].includes(status)) {
+    const lower = String(row.status ?? "").toLowerCase();
+    if (lower.includes("progress")) status = "approved";
+    else if (lower.includes("complete")) status = "completed";
+    else status = "pending";
+  }
+
+  const urgent =
+    typeof row.urgent === "boolean" ? row.urgent : !!row.is_urgent || false;
+
+  return {
+    id,
+    title: row.title ?? "(제목 없음)",
+    body,
+    description: row.description ?? body,
+    dept,
+    author,
+    created_at,
+    priority,
+    status,
+    urgent,
+  };
 }
 
 function formatDate(dt) {
