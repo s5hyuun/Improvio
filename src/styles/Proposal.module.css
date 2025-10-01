@@ -1,0 +1,153 @@
+.placeholder{
+  margin-bottom: 16px;
+  color: #1E3A8A;
+}
+
+.btn {
+  display: flex;
+  gap: var(--topbar-gap);
+}
+
+.button {
+  display: inline-flex; 
+  align-items: center;
+  justify-content: center;
+
+  padding: 8px 16px;
+  min-height: 40px;  
+  border-radius: 12px;
+
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+
+  border: 1px solid #93C5FD; 
+  background: transparent; 
+  color: #2563EB;   
+
+  transition: background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
+  box-shadow: none;
+}
+
+.icon {
+  width: 1em;
+  height: 1em;
+  margin-right: 8px;
+  flex-shrink: 0;
+}
+
+.button:not(.active):hover {
+  background: #DBEAFE;
+}
+
+.active {
+  background: #2563EB;
+  color: #FFFFFF;
+  border-color: #2563EB;
+}
+.active:hover {
+  background: #2563EB;
+  color: #FFFFFF;
+  border-color: #2563EB;
+}
+
+.loading {
+  color: #334155;
+  padding: 12px 0;
+}
+
+.wrap {
+  margin-top: 12px;
+}
+
+.title {
+  margin: 12px 0;
+  font-weight: 600;
+  color: #1E3A8A;
+}
+
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.card {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px;
+  border: 1px solid #bfdbfe;
+  background: #f8fbff;
+  border-radius: 12px;
+}
+
+.left {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cardTitle {
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.body {
+  color: #334155;
+}
+
+.meta {
+  display: flex;
+  gap: 14px;
+  color: #64748b;
+  font-size: 13px;
+}
+
+.chipWarn {
+  background: #ffece6;
+  color: #ff4d2e;
+  border: 1px solid #ffb4a5;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.statusSelect {
+  border: 1px solid #bfdbfe;
+  background: #eef5ff;
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: #0f172a;
+  outline: none;
+}
+
+.urgentBtn {
+  border: 1px solid #facc15;
+  background: #fff8db;
+  color: #92400e;
+  border-radius: 8px;
+  padding: 6px 10px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background .2s, color .2s, border-color .2s;
+}
+
+.urgentBtn.on {
+  border-color: #fecaca;
+  background: #ffe4e6;
+  color: #7f1d1d;
+}
