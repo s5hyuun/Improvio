@@ -3,11 +3,11 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useRef, useState } from "react";
 import styles from "../../../styles/Market.module.css";
 
-const LS_LIKED_POSTS = "liked_posts"; // Set<string(postId)>
-const LS_POST_DELTAS = "post_count_deltas"; // { [postId]: { likes: number, views: number, comments: number } }
-const SS_VIEW_KEY_PREFIX = "viewed_"; // sessionStorage 중복 조회 방지
-const AUTH_KEY = "auth_user"; // 로그인 사용자 로컬 스토리지 키
-const COMMENTS_POLL_MS = 5000; // ★ 모든 계정 동기화를 위한 폴링 주기(5s)
+const LS_LIKED_POSTS = "liked_posts"; 
+const LS_POST_DELTAS = "post_count_deltas"; 
+const SS_VIEW_KEY_PREFIX = "viewed_"; 
+const AUTH_KEY = "auth_user"; 
+const COMMENTS_POLL_MS = 5000;
 
 /** ---- 공통 유틸: 델타 저장/적용 ---- */
 function readDeltas() {
@@ -57,7 +57,10 @@ function PostDetail() {
   const [newComment, setNewComment] = useState("");
   const [liked, setLiked] = useState(false);
   const [currentUser, setCurrentUser] = useState(null);
+
   const pollTimerRef = useRef(null);
+  const isPollingBlockedRef = useRef(false); // 삭제/추가 직후 1회 폴링 스킵
+  const lastMutateAtRef = useRef(0);
 
   // 로그인 사용자 로드
   useEffect(() => {
@@ -121,6 +124,11 @@ function PostDetail() {
 
     const fetchCommentsOnly = async () => {
       try {
+        // 삭제/추가 직후 1회 폴링 스킵(낙관적 UI 깜빡임 방지)
+        if (isPollingBlockedRef.current) {
+          isPollingBlockedRef.current = false;
+          return;
+        }
         const res = await fetch(`http://localhost:5000/api/posts/${idStr}/comments`);
         const list = await res.json();
         setPost((prev) => {
@@ -138,7 +146,6 @@ function PostDetail() {
 
     // 폴링 시작
     pollTimerRef.current = window.setInterval(() => {
-      // 탭이 보일 때만 비용 소모
       if (document.visibilityState === "visible") fetchCommentsOnly();
     }, COMMENTS_POLL_MS);
 
@@ -199,6 +206,7 @@ function PostDetail() {
       });
       const saved = await res.json();
 
+      // 낙관적 반영
       setPost((prev) => ({
         ...prev,
         comments: [...(prev?.comments ?? []), saved],
@@ -219,6 +227,10 @@ function PostDetail() {
         );
       } catch {}
 
+      // 폴링 한 번 무시(깜빡임 방지)
+      isPollingBlockedRef.current = true;
+      lastMutateAtRef.current = Date.now();
+
       setNewComment("");
     } catch (err) {
       console.error("댓글 등록 실패:", err);
@@ -228,11 +240,21 @@ function PostDetail() {
   // 댓글 삭제 (확인창/alert 없음, 낙관적 UI) + 서버 반영
   const deleteComment = async (comment) => {
     const idStr = String(post.post_id ?? postId);
-    const commentId = String(comment.postcomment_id ?? comment.id);
-    if (!commentId) return;
+    const rawId = comment?.postcomment_id ?? comment?.id;
+
+    // ID 유효성 검증
+    if (rawId === undefined || rawId === null) {
+      console.warn("잘못된 commentId(없음):", comment);
+      return;
+    }
+    const commentId = String(rawId);
+    if (!/^\d+$/.test(commentId)) {
+      console.warn("잘못된 commentId(숫자 아님):", commentId, comment);
+      return;
+    }
 
     // 본인 댓글만 삭제 (무소음 처리)
-    if (!currentUser?.user_id || currentUser.user_id !== comment.user_id) return;
+    if (!currentUser?.user_id || Number(currentUser.user_id) !== Number(comment.user_id)) return;
 
     // 1) 화면에서 즉시 제거 + 카운트 감소
     setPost((prev) => {
@@ -259,15 +281,32 @@ function PostDetail() {
       );
     } catch {}
 
-    // 2) 서버 삭제 요청 (실패 시 조용히 로그만 남기고, 폴링이 다시 맞춰줌)
+    // 폴링 한 번 무시(낙관적 반영 유지)
+    isPollingBlockedRef.current = true;
+    lastMutateAtRef.current = Date.now();
+
+    // 2) 서버 삭제 요청 (실패 시 조용히 로그)
     try {
-      await fetch(`http://localhost:5000/api/posts/${idStr}/comments/${commentId}`, {
+      const r = await fetch(`http://localhost:5000/api/posts/${idStr}/comments/${commentId}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_id: currentUser.user_id }),
-      }).then((r) => {
-        if (!r.ok) throw new Error(`delete failed: ${r.status}`);
       });
+      if (!r.ok) throw new Error(`delete failed: ${r.status}`);
+
+      // 3) 서버 상태로 1회 재동기화 (낙관적 반영과 실제 상태 일치)
+      try {
+        const res = await fetch(`http://localhost:5000/api/posts/${idStr}/comments`);
+        const list = await res.json();
+        setPost((prev) => {
+          if (!prev) return prev;
+          return {
+            ...prev,
+            comments: Array.isArray(list) ? list : [],
+            comment_count: Array.isArray(list) ? list.length : (prev.comment_count ?? 0),
+          };
+        });
+      } catch {}
     } catch (err) {
       console.warn("댓글 삭제 서버 반영 실패(화면은 유지):", err);
     }
@@ -368,7 +407,7 @@ function PostDetail() {
         {/* 댓글 입력 */}
         <div className={styles.mkcommentsSection}>
           <div className={styles.mkcommentsHeader}>
-            댓글 <span className={styles.mkcommentsCount}>{totalComments / 2}</span>
+            댓글 <span className={styles.mkcommentsCount}>{totalComments}</span>
           </div>
 
           <div className={styles.mkcommentDock}>
@@ -405,8 +444,11 @@ function PostDetail() {
                 !!currentUser?.user_id &&
                 Number(currentUser.user_id) === Number(c.user_id);
 
+              // 안전한 key 적용
+              const key = String(c.postcomment_id ?? c.id ?? `${c.user_id}-${c.created_at}`);
+
               return (
-                <div key={c.postcomment_id} className={styles.mkcommentItem}>
+                <div key={key} className={styles.mkcommentItem}>
                   <div
                     className={styles.mkcommentHead}
                     style={{ display: "flex", alignItems: "center", gap: 10 }}
