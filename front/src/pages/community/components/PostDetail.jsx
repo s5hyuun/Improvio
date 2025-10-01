@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import styles from "../../../styles/Market.module.css";
 
 const LS_KEY = "liked_posts";
@@ -38,14 +38,13 @@ function PostDetail() {
         // 서버 응답에 사용자 좋아요 여부가 없다면 로컬스토리지 기준으로 결정
         const likedSet = readLikedSet();
         const isLiked =
-          data?.user_liked ??
-          likedSet.has(String(data?.post_id ?? postId));
+          data?.user_liked ?? likedSet.has(String(data?.post_id ?? postId));
         setLiked(!!isLiked);
       })
       .catch((err) => console.error(err));
   }, [postId]);
 
-  // 간단한 timeAgo (created_at 있을 때 사용)
+  // 간단한 timeAgo
   const timeAgo = (ts) => {
     if (!ts) return "";
     const t = new Date(ts).getTime();
@@ -60,8 +59,9 @@ function PostDetail() {
   };
 
   const totalComments = post?.comment_count ?? post?.comments?.length ?? 0;
+  const likeCount = post?.like_count ?? post?.likes ?? 0;
 
-  // 댓글 등록
+  // 댓글 등록 (즉시 카운트 + 브로드캐스트)
   const addComment = async () => {
     if (!newComment.trim()) return;
     try {
@@ -77,18 +77,35 @@ function PostDetail() {
         }
       );
       const saved = await res.json();
-      setPost((prev) => ({
-        ...prev,
-        comments: [...(prev?.comments ?? []), saved],
-        comment_count: (prev?.comment_count ?? prev?.comments?.length ?? 0) + 1,
-      }));
+
+      setPost((prev) => {
+        const prevList = prev?.comments ?? [];
+        const newCount = (prev?.comment_count ?? prevList.length) + 1;
+        // 목록에 즉시 반영
+        try {
+          window.dispatchEvent(
+            new CustomEvent("post:commentAdded", {
+              detail: {
+                postId: String(prev?.post_id ?? postId),
+                comment_count: newCount,
+              },
+            })
+          );
+        } catch {}
+        return {
+          ...prev,
+          comments: [...prevList, saved],
+          comment_count: newCount,
+        };
+      });
+
       setNewComment("");
     } catch (err) {
       console.error("댓글 등록 실패:", err);
     }
   };
 
-  // ❤️ 좋아요 토글 (로컬 우선 반영 + 이벤트 브로드캐스트)
+  // ❤️ 좋아요 토글 (즉시 카운트 + 브로드캐스트)
   const toggleLike = async () => {
     if (!post) return;
     const currentId = String(post.post_id ?? postId);
@@ -99,7 +116,10 @@ function PostDetail() {
     setLiked(willLike);
     setPost((prev) => ({
       ...prev,
-      like_count: Math.max(0, (prev?.like_count ?? prev?.likes ?? 0) + (willLike ? 1 : -1)),
+      like_count: Math.max(
+        0,
+        (prev?.like_count ?? prev?.likes ?? 0) + (willLike ? 1 : -1)
+      ),
     }));
 
     // 로컬스토리지 갱신
@@ -114,14 +134,12 @@ function PostDetail() {
           detail: {
             postId: currentId,
             liked: willLike,
-            like_count:
-              (post?.like_count ?? post?.likes ?? 0) + (willLike ? 1 : -1),
           },
         })
       );
     } catch {}
 
-    // (선택) 서버에 통지할 엔드포인트가 있다면 호출
+    // (선택) 서버 반영
     // try {
     //   await fetch(`http://localhost:5000/api/posts/${postId}/like`, {
     //     method: "POST",
@@ -134,8 +152,6 @@ function PostDetail() {
   };
 
   if (!post) return <div>Loading...</div>;
-
-  const likeCount = post?.like_count ?? post?.likes ?? 0;
 
   return (
     <>

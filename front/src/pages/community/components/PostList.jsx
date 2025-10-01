@@ -86,6 +86,8 @@ function PostList() {
           ...p,
           _liked: likedSet.has(String(p.post_id)),
           like_count: p.like_count ?? p.likes ?? 0,
+          comment_count: p.comment_count ?? p.comments ?? 0,
+          views: p.views ?? 0,
         }));
         setPosts(merged);
       })
@@ -95,28 +97,56 @@ function PostList() {
     };
   }, [boardId]);
 
-  // ✅ PostDetail에서 발생한 좋아요 이벤트 반영
+  // ✅ 상세에서 발생한 이벤트들을 반영
   useEffect(() => {
-    const handler = (e) => {
-      const { postId, liked, like_count } = e.detail || {};
+    const onLike = (e) => {
+      const { postId, liked } = e.detail || {};
       if (!postId) return;
       setPosts((prev) =>
         prev.map((p) =>
           String(p.post_id) === String(postId)
             ? {
                 ...p,
-                _liked: liked ?? p._liked,
-                like_count:
-                  typeof like_count === "number"
-                    ? like_count
-                    : Math.max(0, (p.like_count ?? 0) + (liked ? 1 : -1)),
+                _liked: !!liked,
+                like_count: Math.max(0, (p.like_count ?? 0) + (liked ? 1 : -1)),
               }
             : p
         )
       );
     };
-    window.addEventListener("post:likeToggled", handler);
-    return () => window.removeEventListener("post:likeToggled", handler);
+
+    const onComment = (e) => {
+      const { postId, comment_count } = e.detail || {};
+      if (!postId) return;
+      setPosts((prev) =>
+        prev.map((p) =>
+          String(p.post_id) === String(postId)
+            ? { ...p, comment_count: comment_count ?? (p.comment_count ?? 0) + 1 }
+            : p
+        )
+      );
+    };
+
+    const onView = (e) => {
+      const { postId } = e.detail || {};
+      if (!postId) return;
+      setPosts((prev) =>
+        prev.map((p) =>
+          String(p.post_id) === String(postId)
+            ? { ...p, views: (p.views ?? 0) + 1 }
+            : p
+        )
+      );
+    };
+
+    window.addEventListener("post:likeToggled", onLike);
+    window.addEventListener("post:commentAdded", onComment);
+    window.addEventListener("post:viewIncreased", onView);
+    return () => {
+      window.removeEventListener("post:likeToggled", onLike);
+      window.removeEventListener("post:commentAdded", onComment);
+      window.removeEventListener("post:viewIncreased", onView);
+    };
   }, []);
 
   // ✅ 등록 API (PostWrite에서 onSubmit 호출 시 사용)
@@ -142,6 +172,8 @@ function PostList() {
           ...saved,
           _liked: false,
           like_count: saved.like_count ?? saved.likes ?? 0,
+          comment_count: saved.comment_count ?? 0,
+          views: saved.views ?? 0,
         },
         ...prev,
       ]);
@@ -160,6 +192,23 @@ function PostList() {
     if (diff < h) return `${Math.floor(diff / m)}분 전`;
     if (diff < d) return `${Math.floor(diff / h)}시간 전`;
     return `${Math.floor(diff / d)}일 전`;
+  };
+
+  // ✅ 게시글 열기(조회수 즉시 증가 + 네비게이션)
+  const openPost = (pid) => {
+    const idStr = String(pid);
+    // 즉시 업데이트(목록에서 보이는 조회수 증가)
+    try {
+      window.dispatchEvent(
+        new CustomEvent("post:viewIncreased", { detail: { postId: idStr } })
+      );
+    } catch {}
+
+    // (선택) 서버 반영
+    // fetch(`http://localhost:5000/api/posts/${idStr}/view`, { method: "POST" })
+    //   .catch((e) => console.warn("조회수 증가 서버 반영 실패:", e));
+
+    nav(`/community/${idStr}`);
   };
 
   return (
@@ -186,24 +235,24 @@ function PostList() {
           const title = post.title ?? "";
           const body = post.content ?? post.body ?? "";
           const created = post.created_at ?? post.createdAt ?? Date.now();
-          const comments = post.comment_count ?? post.comments ?? 0;
+          const comments = post.comment_count ?? 0;
           const views = post.views ?? 0;
-          const likes = post.like_count ?? post.likes ?? 0;
+          const likes = post.like_count ?? 0;
           const isLiked = !!post._liked;
 
           return (
             <div
               key={post.post_id}
-              className={`${styles.mkcard} ${
-                idx === 0 ? styles.mkfirstCard : ""
-              }`}
-              onClick={() => nav(`/community/${post.post_id}`)}
+              className={`${styles.mkcard} ${idx === 0 ? styles.mkfirstCard : ""}`}
+              onClick={() => openPost(post.post_id)}
               role="button"
               tabIndex={0}
-              onKeyDown={(e) =>
-                (e.key === "Enter" || e.key === " ") &&
-                nav(`/community/${post.post_id}`)
-              }
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  openPost(post.post_id);
+                }
+              }}
             >
               <div className={styles.mkcardContent}>
                 <div className={styles.mktitleRow}>
