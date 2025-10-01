@@ -105,7 +105,7 @@ function PostWrite({ onSubmit, onCancel }) {
         setTitle("");
         setContent("");
         setImages([]);
-        onSubmit?.(data); // ✅ 부모에게 등록 완료 알림
+        onSubmit?.(data); 
         onCancel?.();     // ✅ 모달 닫기
 
         // ✅ 리로드 직전 URL을 루트로 교체 → 상대경로 로고 깨짐 방지
