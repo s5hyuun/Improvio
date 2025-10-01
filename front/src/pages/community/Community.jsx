@@ -79,7 +79,6 @@ function Community() {
               ))}
             </div>
 
-            <div className={styles.ad}>광고 자리</div>
           </div>
         </div>
       </div>

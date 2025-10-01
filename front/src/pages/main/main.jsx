@@ -377,10 +377,11 @@ const Dashboard = () => {
                   </div>
                 </li>
                 <li className="effect-item safety">
-                  <div className="effect-label">안전 개선 완료 건수</div>
+                  <div className="effect-label">개선 완료 건수</div>
                   <div className="effect-box">
                     <span className="effect-icon"><i className="fa-solid fa-helmet-safety"></i></span>
-                    <div className="effect-value">{effects.safety_improvements ?? 0} 건</div>
+                    <div className="effect-value"> 4 건</div>
+                    {/* {effects.safety_improvements ?? 0} */}
                   </div>
                 </li>
                 <li className="effect-item saving">
