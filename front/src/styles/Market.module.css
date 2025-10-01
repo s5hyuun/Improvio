@@ -63,9 +63,9 @@
 
 .mklist {
   margin-top: 8px;
-   flex: 1 1 auto;           /* 남은 공간을 전부 사용 */
-  min-height: 0;            /* overflow 작동 필수 조건 */
-  overflow: auto;           /* ← 가운데 영역 스크롤 주인공 */
+  flex: 1 1 auto; /* 남은 공간을 전부 사용 */
+  min-height: 0; /* overflow 작동 필수 조건 */
+  overflow: auto; /* ← 가운데 영역 스크롤 주인공 */
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -242,7 +242,7 @@
   line-height: 1.8;
   white-space: pre-wrap;
   word-break: break-word;
-  margin : 20px 0;
+  margin: 20px 0;
 }
 
 .mkimageWrap {
@@ -298,15 +298,17 @@
 }
 
 .mkcommentInputBar {
-  flex: 1 !important; 
-  height: 42px !important; 
-  border: 1px solid #e5e7eb !important; 
-  border-radius: 6px !important; 
-  padding: 0 12px !important; 
-  font-size: 15px !important; 
-  background: #fff !important; 
+  flex: 1 !important;
+  height: 42px !important;
+  border: 1px solid #e5e7eb !important;
+  border-radius: 6px !important;
+  padding: 0 12px !important;
+  font-size: 15px !important;
+  background: #fff !important;
 }
-.mkcommentInputBar::placeholder { color: #9ca3af !important; }
+.mkcommentInputBar::placeholder {
+  color: #9ca3af !important;
+}
 .mkcommentInputBar:focus {
   outline: none !important;
   border-color: #bfdbfe !important;
@@ -318,28 +320,29 @@
   gap: 8px !important;
 }
 .mksendBtn {
-  -webkit-appearance: none !important; 
-  appearance: none !important; 
-  display: inline-flex !important; 
-  align-items: center !important; 
-  justify-content: center !important; 
+  -webkit-appearance: none !important;
+  appearance: none !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 
-  width: 40px !important; 
-  height: 40px !important; 
-  flex: 0 0 auto !important; 
+  width: 40px !important;
+  height: 40px !important;
+  flex: 0 0 auto !important;
 
-  border: 1px solid #e5e7eb !important; 
-  border-radius: 8px !important; 
-  background: #2563eb !important; 
-  color: #fff !important; 
+  border: 1px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  background: #2563eb !important;
+  color: #fff !important;
 
-  cursor: pointer !important; 
-  user-select: none !important; 
+  cursor: pointer !important;
+  user-select: none !important;
 
-  font: inherit !important; 
-  line-height: 1 !important; 
+  font: inherit !important;
+  line-height: 1 !important;
 
-  transition: background-color .15s ease, box-shadow .15s ease, transform .05s ease !important; 
+  transition: background-color 0.15s ease, box-shadow 0.15s ease,
+    transform 0.05s ease !important;
 }
 .mksendBtn i {
   /* color: #2563eb !important; */
@@ -356,7 +359,7 @@
   transform: translateY(1px) !important;
 }
 .mksendBtn:disabled {
-  opacity: .6 !important;
+  opacity: 0.6 !important;
   cursor: not-allowed !important;
 }
 .mkcommentsList {
@@ -698,20 +701,18 @@ select.mkinputLike {
   opacity: 0.6;
   cursor: not-allowed;
 }
-.mkAttachmentImg{
-  width : 50%;
+.mkAttachmentImg {
+  width: 50%;
 }
-
-
 
 /* Market.module.css */
 
 .mkbackBtn {
   /* 가로로 늘어나지 않게 */
-  align-self: flex-start;  /* ⬅️ stretch 해제, 좌측 정렬 */
-  display: inline-flex;    /* 내용만큼만 너비 */
-  width: auto;             /* 안전 장치 */
-  max-width: max-content;  /* 긴 텍스트 대비 */
+  align-self: flex-start; /* ⬅️ stretch 해제, 좌측 정렬 */
+  display: inline-flex; /* 내용만큼만 너비 */
+  width: auto; /* 안전 장치 */
+  max-width: max-content; /* 긴 텍스트 대비 */
 
   /* 버튼 스타일(원하면 조정) */
   gap: 6px;

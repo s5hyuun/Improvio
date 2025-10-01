@@ -32,11 +32,11 @@
     }
   },
   "loginPage": {
-  "usernamePlaceholder": "아이디 입력",
-  "passwordPlaceholder": "비밀번호 입력",
-  "signinBtn": "로그인"
-},
- "dashboard": {
+    "usernamePlaceholder": "아이디 입력",
+    "passwordPlaceholder": "비밀번호 입력",
+    "signinBtn": "로그인"
+  },
+  "dashboard": {
     "todayCount": "오늘 건의 수",
     "totalCount": "전체 건의 수",
     "today": "오늘",
@@ -48,9 +48,13 @@
     "expectedEffects": "기대효과 (DB 기준)",
     "avgProductivity": "작업 효율성 평균",
     "safetyImprovements": "안전 개선 완료 건수",
-    "totalCostSaving": "총 원가 절감"
+    "totalCostSaving": "총 원가 절감",
+    "performanceMetrics": "실적 지표",
+    "completedImprovements": "개선 완료 건수",
+    "cases": "건",
+    "won": "원"
   },
- "signup": {
+  "signup": {
     "title": "회원가입(직원용)",
     "adminTitle": "회원가입(관리자용)",
     "termsTitle": "이용약관 동의",
@@ -60,25 +64,25 @@
     "nextBtn": "다음 단계",
     "alertTerms": "모든 약관에 동의해야 다음 단계로 진행할 수 있습니다."
   },
-  "board" :{
+  "board": {
     "title": "개선 제안 시스템",
-    "termsTitle" : "현장 직원들의 불편사항 및 개선 아이디어를 공유해주세요",
-    "writebtn" : "+ 글쓰기",
+    "termsTitle": "현장 직원들의 불편사항 및 개선 아이디어를 공유해주세요",
+    "writebtn": "+ 글쓰기",
     "alert": {
-    "saveError": "저장 중 오류가 발생했습니다."
+      "saveError": "저장 중 오류가 발생했습니다."
+    },
+    "column": {
+      "proposal": "제안",
+      "inProgress": "진행 중",
+      "complete": "완료"
+    },
+    "empty": {
+      "proposal": "등록된 제안이 없습니다.",
+      "inProgress": "진행 중인 제안이 없습니다.",
+      "complete": "완료된 제안이 없습니다."
+    }
   },
-  "column": {
-    "proposal": "제안",
-    "inProgress": "진행 중",
-    "complete": "완료"
-  },
-  "empty": {
-    "proposal": "등록된 제안이 없습니다.",
-    "inProgress": "진행 중인 제안이 없습니다.",
-    "complete": "완료된 제안이 없습니다."
-  }
-},
-"manager": {
+  "manager": {
     "title": "관리자 페이지",
     "menu": {
       "dashboard": "관리자 대시보드",
@@ -105,5 +109,5 @@
     "comment": "댓글",
     "like": "좋아요",
     "ad": "광고 자리"
-}
+  }
 }

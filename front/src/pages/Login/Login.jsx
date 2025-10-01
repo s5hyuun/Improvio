@@ -23,6 +23,20 @@ export default function Login() {
       });
       const data = await response.json();
       if (data.success) {
+        const userData = {
+          user_id: data.user?.user_id,
+          username: data.user?.username || username,
+          department_id: data.user?.department_id,
+          department_name: data.user?.department_name,
+          role: data.user?.role || "user",
+        };
+
+        // localStorage에 저장 (Sidebar가 읽을 수 있도록)
+        localStorage.setItem("auth_user", JSON.stringify(userData));
+
+        // 로그인 상태 변화를 Sidebar에 알림
+        window.dispatchEvent(new CustomEvent("auth:changed"));
+
         alert("로그인 성공!");
         navigate("/main");
       } else {
@@ -104,7 +118,9 @@ export default function Login() {
                     </div>
                   </>
                 )}
-                {tab === "signup" && <SignupAll onBack={() => setTab("signin")} />}
+                {tab === "signup" && (
+                  <SignupAll onBack={() => setTab("signin")} />
+                )}
               </div>
             </div>
 

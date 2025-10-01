@@ -1,12 +1,11 @@
 import React, { useState } from "react";
-import { useTranslation } from "react-i18next";
 import Sidebar from "../../components/Sidebar";
 import Header from "../../components/Header";
 import SignupStep5 from "./signup5";
 import SignupStep6 from "./signup6";
+import "../../styles/signup4.css";
 
 export default function Signup4() {
-  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
     terms: false,
@@ -20,7 +19,7 @@ export default function Signup4() {
 
   const handleNext = () => {
     if (!formData.terms || !formData.privacy) {
-      alert(t("signup.alertTerms"));
+      alert("모든 약관에 동의해야 다음 단계로 진행할 수 있습니다.");
       return;
     }
     setStep(2);
@@ -33,12 +32,13 @@ export default function Signup4() {
         <Header />
 
         {step === 1 && (
-          <section className="content flex justify-center items-center min-h-screen bg-gray-100">
-            <h1 className="signup-title">{t("signup.adminTitle")}</h1>
+          /* 기존: <section className="content flex justify-center items-center min-h-screen bg-gray-100"> */
+          <section className="signupcontent">
+            <h1 className="signup-title">회원가입(관리자용)</h1>
 
             <div className="big-block">
               <section className="signup-section">
-                <h2>{t("signup.termsTitle")}</h2>
+                <h2>이용약관 동의</h2>
                 <div className="signup-terms-box">
                   <p>
                     <h3>[이용약관]</h3>
@@ -119,12 +119,12 @@ export default function Signup4() {
                     checked={formData.terms}
                     onChange={handleChange}
                   />
-                  {t("signup.termsLabel")}
+                  이용약관에 동의합니다.
                 </label>
               </section>
 
               <section className="signup-section">
-                <h2>{t("signup.privacyTitle")}</h2>
+                <h2>개인정보 수집 및 이용 동의</h2>
                 <div className="signup-terms-box">
                   <p>
                     <br></br>
@@ -169,13 +169,13 @@ export default function Signup4() {
                     checked={formData.privacy}
                     onChange={handleChange}
                   />
-                  {t("signup.privacyLabel")}
+                  개인정보 수집 및 이용에 동의합니다.
                 </label>
               </section>
             </div>
 
             <button className="signup-btn" onClick={handleNext}>
-              {t("signup.nextBtn")}
+              다음 단계
             </button>
           </section>
         )}

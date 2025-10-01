@@ -1,22 +1,34 @@
+/* ===== 공통 레이아웃 ===== */
 .commContainer {
   display: flex;
   gap: 12px;
   margin: 10px;
-  /* height: 100%; */
-  height: calc(100vh - 98px);
+
+  /* 필요하면 아래 높이 규칙을 켜세요 */
+  /* height: calc(100vh - 98px); */
+
+  /* 첫 번째 CSS의 유연한 레이아웃 유지 */
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
 }
 
-i {
+.commContainer i {
   margin-right: 6px;
 }
-ul {
+.commContainer ul {
   padding: 0;
   list-style: none;
 }
+
+/* ===== 좌측 보드 목록 ===== */
 .commBoards {
   flex: 0.9;
   padding: 20px;
   min-height: 0;
+  overflow: hidden; /* 1번 CSS 유지 */
+  border-radius: 14px; /* 카드 느낌 유지 */
+  background-color: white;
 }
 .commBoards > div {
   font-size: 18px;
@@ -49,6 +61,12 @@ ul {
   display: flex;
   align-items: center;
 }
+
+/* ===== 목록/우측 영역 컨테이너 ===== */
+.commPosts {
+  display: flex;
+  flex-direction: column;
+}
 .commPostsContainer {
   flex: 3;
   padding: 20px;
@@ -57,9 +75,9 @@ ul {
   overflow: auto; /* 1번 CSS에 있던 스크롤 유지 */
   border-radius: 14px;
   background-color: white;
-  display:flex;            /* 자식(헤더/리스트) 높이 배분 */
-  flex-direction:column;
-  overflow:hidden;     
+  display: flex; /* 자식(헤더/리스트) 높이 배분 */
+  flex-direction: column;
+  overflow: hidden;
 }
 .commPostsContainer > div:first-child {
   display: flex;
@@ -76,14 +94,19 @@ ul {
   font-size: 14px;
   color: #6b7280;
 }
+
 .commRightbar {
   flex: 1.3;
   min-height: 0;
+  overflow: hidden; /* 1번 CSS 유지 */
 }
+
+/* ===== 우측 HOT ===== */
 .commHot {
-  /* height: 30%; */
   align-self: flex-start;
   padding: 20px;
+  border-radius: 14px;
+  background-color: white;
 }
 .commHot > div:first-child {
   font-size: 18px;
@@ -92,13 +115,24 @@ ul {
 }
 .commHotPost {
   padding: 10px 0;
+  border-bottom: 1px solid #f3f4f6;
+  cursor: pointer;
 }
-.commBoards,
-.commPostsContainer,
-.commHot {
-  border-radius: 14px;
-  background-color: white;
+.commHotPost:hover {
+  background-color: #f3f4f6;
 }
+.commHotPost > div:first-child {
+  margin-bottom: 10px;
+}
+.commHotPost > div:last-child {
+  font-size: 12px;
+}
+.commHotPost > div:last-child span {
+  margin-right: 10px;
+  color: #6b7280;
+}
+
+/* ===== 광고 박스 ===== */
 .ad {
   background-color: white;
   margin-top: 10px;
@@ -107,12 +141,12 @@ ul {
   justify-content: center;
   align-items: center;
 }
-/* ==========post==================== */
+
+/* ===== 게시글 리스트 아이템 ===== */
 .postContainer {
   display: flex;
   flex-direction: column;
   padding: 20px 10px;
-  /* border-radius: 10px; */
   border-bottom: 1px solid #f3f4f6;
   cursor: pointer;
   position: relative;
@@ -147,25 +181,8 @@ ul {
   font-size: 12px;
   color: #6b7280;
 }
-/* =====================hot========= */
-.commHotPost {
-  border-bottom: 1px solid #f3f4f6;
-  cursor: pointer;
-}
-.commHotPost:hover {
-  background-color: #f3f4f6;
-}
-.commHotPost > div:first-child {
-  margin-bottom: 10px;
-}
-.commHotPost > div:last-child {
-  font-size: 12px;
-}
-.commHotPost > div:last-child span {
-  margin-right: 10px;
-  color: #6b7280;
-}
-/* ==========detail========== */
+
+/* ===== 상세 ===== */
 .postDetailContainer {
   display: flex;
   flex-direction: column;
@@ -173,7 +190,6 @@ ul {
   height: 100%;
   position: relative;
 }
-
 .postDetailComments {
   width: 100%;
   margin-top: 20px;
@@ -187,7 +203,6 @@ ul {
   border-bottom: 1px solid #dbeafe;
   padding-bottom: 20px;
 }
-
 .backButton {
   background: none;
   border: none;
@@ -195,7 +210,6 @@ ul {
   left: 0;
   cursor: pointer;
 }
-
 .postDetailContent {
   height: 100%;
   flex: 1 1 auto;
@@ -205,25 +219,6 @@ ul {
 .postDetailContent p {
   color: black;
   font-size: 16px;
-}
-.postCommentContainer div:first-child {
-  display: flex;
-  align-items: center;
-  font-size: 14px;
-}
-
-.postCommentContainer div:first-child > div > span:first-child {
-  color: #2563eb;
-  margin-right: 10px;
-}
-.postAd {
-  border: 1px solid black;
-  width: 100%;
-  display: flex;
-  align-items: center;
-  height: 100px;
-  justify-content: center;
-  margin-bottom: 10px;
 }
 .postDetailIcons {
   display: flex;
@@ -239,11 +234,11 @@ ul {
   margin-right: 5px;
   font-size: 14px;
 }
-
 .postDetailIcons span {
   margin-right: 10px;
   margin-left: 0 !important;
 }
+
 .postCommentIcons {
   font-size: 14px;
 }
@@ -251,6 +246,39 @@ ul {
   color: #6b7280 !important;
 }
 
+/* ===== 댓글 입력 ===== */
+.detailInput {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+}
+.detailInput input[type="text"] {
+  flex: 1;
+  padding: 10px 14px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+.detailInput input[type="text"]:focus {
+  border-color: #2563eb;
+}
+.detailInput button {
+  padding: 10px 16px;
+  background-color: #2563eb;
+  color: white;
+  font-size: 14px;
+  font-weight: bold;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+.detailInput button:hover {
+  background-color: #1e40af;
+}
 
 /* ===== 글쓰기 페이지 ===== */
 .writeContainer {
@@ -591,8 +619,8 @@ ul {
 
 /* list */
 .activeBoard {
-  background: #dbeafe;           
-  color: #1e3a8a;                
+  background: #dbeafe;
+  color: #1e3a8a;
   border-left: 4px solid #2563eb;
 }
 
@@ -601,19 +629,19 @@ ul {
   transition: background 0.15s ease, color 0.15s ease;
 }
 .commBoards ul li:hover {
-  background: #e5edff;           
+  background: #e5edff;
 }
 /* 하.......................................... */
 /* 1) 가운데 영역이 스크롤되려면 부모가 높이 컨텍스트를 가져야 함 */
 .commContainer {
   height: calc(100vh - 110px); /* 헤더 높이에 맞춰 숫자 조정(예: 76~100px) */
-  min-height: 0;              /* 자식 스크롤 허용 */
-  overflow: hidden;           /* 페이지 전체 스크롤 금지 */
+  min-height: 0; /* 자식 스크롤 허용 */
+  overflow: hidden; /* 페이지 전체 스크롤 금지 */
 }
 
 /* 2) 중앙 컬럼 자체를 세로 플렉스로 만들고, 바깥 스크롤은 막음 */
 .commPostsContainer {
-  display: flex;  
+  display: flex;
   flex-direction: column;
   min-height: 0;
   /* 🔁 둘 중 하나만 있어야 함: 아래 auto가 살아야 가운데만 스크롤됨 */
@@ -626,6 +654,6 @@ ul {
 }
 .commPostsContainer > :not(:first-child) {
   flex: 1 1 auto; /* 남은 공간 전부 차지 */
-  min-height: 0;  /* ⬅️ 중요: 이게 있어야 overflow가 먹힘 */
+  min-height: 0; /* ⬅️ 중요: 이게 있어야 overflow가 먹힘 */
   overflow: auto; /* ⬅️ 여기서만 세로 스크롤 발생 */
 }

@@ -1,7 +1,7 @@
 import styles from "../../../styles/Board.module.css";
 import { useState, useEffect, useRef } from "react";
 
-function BoardWrite({ onClose, onSubmit }) {
+function BoardWrite({ onClose, onSubmit, user }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [expect, setExpect] = useState("");
@@ -22,30 +22,64 @@ function BoardWrite({ onClose, onSubmit }) {
     const picked = Array.from(fileList || []);
     setFiles((prev) => [...prev, ...picked]);
   };
+
   const handleFileChange = (e) => {
     addFiles(e.target.files);
     e.target.value = "";
   };
+
   const handleDrop = (e) => {
     e.preventDefault();
     setDragOver(false);
     addFiles(e.dataTransfer.files);
   };
+
   const handleDragOver = (e) => {
     e.preventDefault();
     setDragOver(true);
   };
+
   const handleDragLeave = () => setDragOver(false);
+
   const removeFile = (index) =>
     setFiles((prev) => prev.filter((_, i) => i !== index));
 
+  const isFormValid =
+    title.trim().length > 0 &&
+    description.trim().length > 0 &&
+    expect.trim().length > 0;
+
   const submit = () => {
+    if (!user || !user.user_id) {
+      alert("로그인이 필요합니다.");
+      return;
+    }
+
+    if (!isFormValid) {
+      alert("제목, 내용, 기대효과는 필수 입력 항목입니다.");
+      return;
+    }
+
     const fd = new FormData();
-    fd.append("title", title);
-    fd.append("description", description);
-    fd.append("expected_effect", expect);
+    fd.append("title", title.trim());
+    fd.append("description", description.trim());
+    fd.append("expected_effect", expect.trim());
     files.forEach((f) => fd.append("files", f));
+
     onSubmit(fd);
+  };
+
+  const DEPARTMENTS = {
+    1: "R&D",
+    2: "해외영업",
+    3: "기본설계",
+    4: "미래사업개발",
+    5: "조선설계",
+    6: "해양설계",
+    7: "PM",
+    8: "구매",
+    9: "경영지원",
+    10: "안전",
   };
 
   return (
@@ -62,20 +96,23 @@ function BoardWrite({ onClose, onSubmit }) {
             <h3>새 제안 작성</h3>
             <div className={styles.writeTopIcons}>
               <div>
-                <i className="fa-regular fa-user"></i>익명101
+                <i className="fa-regular fa-user"></i>
+                익명{user?.user_id}
               </div>
               <div>
-                <i className="fa-regular fa-building"></i>부서자리
+                <i className="fa-regular fa-building"></i>
+                {DEPARTMENTS[user?.department_id] || "부서 없음"}
               </div>
               <div>
-                <i className="fa-regular fa-calendar"></i>2025-09-25
+                <i className="fa-regular fa-calendar"></i>
+                {new Date().toISOString().slice(0, 10)}
               </div>
             </div>
           </div>
           <button onClick={onClose}>❌</button>
         </div>
 
-        {/* ✅ 가운데 스크롤 본문 */}
+        {/* 본문 */}
         <div className={styles.writeBody}>
           <div className={styles.writeTitle}>
             <div>개선 제안 제목</div>
@@ -152,9 +189,9 @@ function BoardWrite({ onClose, onSubmit }) {
           </div>
         </div>
 
-        {/* ✅ 하단 고정 버튼 (그리드 3행) */}
+        {/* 하단 버튼 */}
         <div className={styles.writeSubmit}>
-          <button onClick={submit} disabled={!title || !description || !expect}>
+          <button onClick={submit} disabled={!isFormValid}>
             등록
           </button>
         </div>

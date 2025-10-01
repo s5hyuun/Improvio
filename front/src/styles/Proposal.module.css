@@ -1,6 +1,6 @@
-.placeholder{
+.placeholder {
   margin-bottom: 16px;
-  color: #1E3A8A;
+  color: #1e3a8a;
 }
 
 .btn {
@@ -9,23 +9,24 @@
 }
 
 .button {
-  display: inline-flex; 
+  display: inline-flex;
   align-items: center;
   justify-content: center;
 
   padding: 8px 16px;
-  min-height: 40px;  
+  min-height: 40px;
   border-radius: 12px;
 
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
 
-  border: 1px solid #93C5FD; 
-  background: transparent; 
-  color: #2563EB;   
+  border: 1px solid #93c5fd;
+  background: transparent;
+  color: #2563eb;
 
-  transition: background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease;
   box-shadow: none;
 }
 
@@ -37,18 +38,18 @@
 }
 
 .button:not(.active):hover {
-  background: #DBEAFE;
+  background: #dbeafe;
 }
 
 .active {
-  background: #2563EB;
-  color: #FFFFFF;
-  border-color: #2563EB;
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
 }
 .active:hover {
-  background: #2563EB;
-  color: #FFFFFF;
-  border-color: #2563EB;
+  background: #2563eb;
+  color: #ffffff;
+  border-color: #2563eb;
 }
 
 .loading {
@@ -58,12 +59,6 @@
 
 .wrap {
   margin-top: 12px;
-}
-
-.title {
-  margin: 12px 0;
-  font-weight: 600;
-  color: #1E3A8A;
 }
 
 .list {
@@ -143,7 +138,7 @@
   padding: 6px 10px;
   font-weight: 600;
   cursor: pointer;
-  transition: background .2s, color .2s, border-color .2s;
+  transition: background 0.2s, color 0.2s, border-color 0.2s;
 }
 
 .urgentBtn.on {

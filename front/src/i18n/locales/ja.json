@@ -48,7 +48,10 @@
     "expectedEffects": "期待効果 (DB基準)",
     "avgProductivity": "作業効率平均",
     "safetyImprovements": "安全改善完了件数",
-    "totalCostSaving": "総コスト削減"
+    "totalCostSaving": "総コスト削減",
+    "completedImprovements": "完了した改善の数",
+    "cases": "件",
+    "won": ""
   },
   "signup": {
     "title": "会員登録（社員用）",
@@ -61,24 +64,24 @@
     "alertTerms": "すべての規約に同意する必要があります。"
   },
   "board": {
-  "title": "改善提案システム",
-  "termsTitle": "現場スタッフの不便事項や改善アイデアを共有してください",
-  "writebtn": "+ 投稿",
-  "alert": {
-    "saveError": "保存中にエラーが発生しました。"
+    "title": "改善提案システム",
+    "termsTitle": "現場スタッフの不便事項や改善アイデアを共有してください",
+    "writebtn": "+ 投稿",
+    "alert": {
+      "saveError": "保存中にエラーが発生しました。"
+    },
+    "column": {
+      "proposal": "提案",
+      "inProgress": "進行中",
+      "complete": "完了"
+    },
+    "empty": {
+      "proposal": "登録された提案はありません。",
+      "inProgress": "進行中の提案はありません。",
+      "complete": "完了した提案はありません。"
+    }
   },
-  "column": {
-    "proposal": "提案",
-    "inProgress": "進行中",
-    "complete": "完了"
-  },
-  "empty": {
-    "proposal": "登録された提案はありません。",
-    "inProgress": "進行中の提案はありません。",
-    "complete": "完了した提案はありません。"
-  }
-},
-"manager": {
+  "manager": {
     "title": "管理者ページ",
     "menu": {
       "dashboard": "管理者ダッシュボード",
@@ -95,15 +98,15 @@
     "dashboardLabel": "ダッシュボード統計"
   },
   "community": {
-      "boardList": "掲示板一覧",
-      "hotPosts": "🔥人気の投稿",
-      "adArea": "広告スペース"
-},
-"postDetail": {
-  "loading": "読み込み中...",
-  "back": "掲示板一覧へ戻る",
-  "comment": "コメント",
-  "like": "いいね",
-  "ad": "広告スペース"
-}
+    "boardList": "掲示板一覧",
+    "hotPosts": "🔥人気の投稿",
+    "adArea": "広告スペース"
+  },
+  "postDetail": {
+    "loading": "読み込み中...",
+    "back": "掲示板一覧へ戻る",
+    "comment": "コメント",
+    "like": "いいね",
+    "ad": "広告スペース"
+  }
 }

@@ -34,9 +34,9 @@
   "loginPage": {
     "usernamePlaceholder": "Enter username",
     "passwordPlaceholder": "Enter password",
-    "signinBtn": "Login"  
+    "signinBtn": "Login"
   },
-   "dashboard": {
+  "dashboard": {
     "todayCount": "Suggestions Today",
     "totalCount": "Total Suggestions",
     "today": "Today",
@@ -48,9 +48,13 @@
     "expectedEffects": "Expected Effects (DB Based)",
     "avgProductivity": "Average Productivity",
     "safetyImprovements": "Safety Improvements Completed",
-    "totalCostSaving": "Total Cost Saving"
+    "totalCostSaving": "Total Cost Saving",
+    "performanceMetrics": "Performance Metrics",
+    "completedImprovements": "Completed Improvements",
+    "cases": "cases",
+    "won": ""
   },
- "signup": {
+  "signup": {
     "title": "Sign Up (Employee)",
     "adminTitle": "Sign Up (Admin)",
     "termsTitle": "Terms of Service Agreement",
@@ -60,25 +64,25 @@
     "nextBtn": "Next Step",
     "alertTerms": "You must agree to all terms to proceed to the next step."
   },
-  "board" :{
+  "board": {
     "title": "Improvement Proposition System",
-    "termsTitle" : "Please share the inconvenience and improvement ideas of the field staff",
-    "writebtn" : "+ Writing",
-     "alert": {
-    "saveError": "An error occurred while saving."
+    "termsTitle": "Please share the inconvenience and improvement ideas of the field staff",
+    "writebtn": "+ Writing",
+    "alert": {
+      "saveError": "An error occurred while saving."
+    },
+    "column": {
+      "proposal": "Proposal",
+      "inProgress": "In Progress",
+      "complete": "Completed"
+    },
+    "empty": {
+      "proposal": "No proposals have been registered.",
+      "inProgress": "No suggestions are in progress.",
+      "complete": "No completed suggestions."
+    }
   },
-  "column": {
-    "proposal": "Proposal",
-    "inProgress": "In Progress",
-    "complete": "Completed"
-  },
-  "empty": {
-    "proposal": "No proposals have been registered.",
-    "inProgress": "No suggestions are in progress.",
-    "complete": "No completed suggestions."
-  }
-},
-"manager": {
+  "manager": {
     "title": "Manager Page",
     "menu": {
       "dashboard": "Manager Dashboard",
@@ -98,12 +102,12 @@
     "boardList": "Board List",
     "hotPosts": "🔥HOT Posts",
     "adArea": "Advertisement"
-},
-"postDetail": {
-  "loading": "Loading...",
-  "back": "Back to Board List",
-  "comment": "Comments",
-  "like": "Likes",
-  "ad": "Advertisement"
-}
+  },
+  "postDetail": {
+    "loading": "Loading...",
+    "back": "Back to Board List",
+    "comment": "Comments",
+    "like": "Likes",
+    "ad": "Advertisement"
+  }
 }

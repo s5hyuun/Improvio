@@ -1,57 +1,132 @@
-.placeholder {
-  margin-bottom: 16px;
-}
-
+/* 공통 버튼 그룹 */
 .btn {
   display: flex;
   gap: var(--topbar-gap);
 }
 
+/* 일반 버튼 */
 .button {
-  display: inline-flex; 
-  align-items: center; 
+  display: inline-flex;
+  align-items: center;
   padding: 10px 16px;
   border-radius: 12px;
   font-size: 15px;
   cursor: pointer;
-
-  background: transparent; 
-  color: #2563EB;
-  border: 1px solid #93C5FD;
-
+  background: transparent;
+  color: #2563eb;
+  border: 1px solid #93c5fd;
   box-shadow: none;
   outline: none;
-
-  transition: background .2s ease, color .2s ease, border-color .2s ease, box-shadow .2s ease;
+  transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease,
+    box-shadow 0.2s ease;
 }
-
 .button:not(.active):hover {
-  background: #DBEAFE; 
+  background: #dbeafe;
 }
-
 .button:focus-visible {
-  box-shadow: 0 0 0 2px rgba(37, 99, 235, .35);
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.35);
 }
 
-.active {
-  background: #2563EB;
-  color: #fff;
-  border-color: #BFDBFE;
-  border-radius: 12px;
-  box-shadow: none; 
-  cursor: default;
-}
-
+/* 활성 버튼 */
+.active,
 .active:hover {
-  background: #2563EB;
+  background: #2563eb;
   color: #fff;
-  border-color: #2563EB;
+  border-radius: 12px;
   box-shadow: none;
 }
+.active {
+  border-color: #bfdbfe;
+  cursor: default;
+}
+.active:hover {
+  border-color: #2563eb;
+}
 
+/* 아이콘 */
 .icon {
-  width: 1em; 
-  height: 1em; 
-  margin-right: 6px; 
+  width: 1em;
+  height: 1em;
+  margin-right: 6px;
   flex-shrink: 0;
+}
+
+/* 긴급 패널 */
+.urgentPanel {
+  margin-top: 20px;
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 0;
+  overflow: hidden;
+}
+
+.urgentPanelHeader {
+  font-weight: 700;
+  color: #7c2d12;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #fdead7;
+}
+
+/* 긴급 카드 묶음 */
+.urgentCards {
+  display: grid;
+  gap: 12px;
+  padding: 12px 12px 16px;
+}
+
+/* 긴급 카드 */
+.urgentCard {
+  background: #fff7ed;
+  border: 1px solid #fed7aa;
+  border-radius: 12px;
+  padding: 14px 16px;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 14px;
+  color: #374151;
+}
+
+/* 긴급 카드 버튼 */
+.urgentRowBtn {
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: 1px solid #fed7aa;
+  background: #fff7ed;
+  font-size: 13px;
+  color: #c2410c;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+.urgentRowBtn:hover {
+  background: #ffedd5;
+}
+
+/* 긴급 카드 내부 텍스트 */
+.urgentCardText {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.rowTitle {
+  color: #7c2d12;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.rowMeta {
+  color: #c2410c;
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+/* 긴급 공지 리스트 전용 간격 */
+.noticeGap {
+  display: grid; /* 카드들을 그리드로 배치 */
+  gap: 16px; /* 카드 사이 간격 (원하는 값으로 12~20px 조절 가능) */
 }

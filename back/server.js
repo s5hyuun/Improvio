@@ -2,7 +2,7 @@ import express from "express";
 import mysql from "mysql2/promise";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import {pool} from "./db.js";
+import { pool } from "./db.js";
 import cors from "cors";
 import multer from "multer";
 import path from "path";
@@ -10,7 +10,7 @@ import fs from "fs";
 import mime from "mime"; // npm install mime
 import { fileURLToPath } from "url";
 import performanceRouter from "./routes/performance.js";
-import fetch from "node-fetch"; 
+import fetch from "node-fetch";
 import axios from "axios";
 import dotenv from "dotenv";
 dotenv.config();
@@ -25,9 +25,11 @@ const DEEPL_API_KEY = process.env.DEEPL_API_KEY;
 const app = express();
 
 // CORS 설정
-app.use(cors({
-    origin: "http://localhost:5173"
-}));
+app.use(
+  cors({
+    origin: "http://localhost:5173",
+  })
+);
 
 // JSON 파싱
 app.use(express.json());
@@ -48,7 +50,6 @@ if (!fs.existsSync(uploadDir)) {
   fs.mkdirSync(uploadDir);
 }
 
-
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
     cb(null, uploadDir);
@@ -65,7 +66,8 @@ app.post("/api/summarize", async (req, res) => {
   try {
     const { description } = req.body; // 클라이언트에서 보내는 description
 
-    if (!description) return res.status(400).json({ error: "description required" });
+    if (!description)
+      return res.status(400).json({ error: "description required" });
 
     const response = await fetch(
       "https://api-inference.huggingface.co/models/EbanLee/kobart-summary-v3",
@@ -73,10 +75,10 @@ app.post("/api/summarize", async (req, res) => {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer ${HF_API_TOKEN}`
+          Authorization: `Bearer ${HF_API_TOKEN}`,
         },
         body: JSON.stringify({
-          inputs: description
+          inputs: description,
         }),
       }
     );
@@ -91,7 +93,7 @@ app.post("/api/summarize", async (req, res) => {
   }
 });
 
-// 번역 api 
+// 번역 api
 app.post("/api/translate", async (req, res) => {
   try {
     const { text, targetLang } = req.body;
@@ -128,17 +130,14 @@ app.post("/api/translate", async (req, res) => {
     );
 
     res.json({ translatedText });
-
   } catch (err) {
     console.error("DeepL 번역 에러 전체:", err.response?.data || err);
     res.status(500).json({
       error: "번역 실패",
-      deepl_error: err.response?.data || err.message
+      deepl_error: err.response?.data || err.message,
     });
   }
 });
-
-
 
 // POST /api/suggestions (제안 + 첨부파일)
 app.post("/api/suggestions", upload.array("files"), async (req, res) => {
