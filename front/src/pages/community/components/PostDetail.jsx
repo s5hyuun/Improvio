@@ -2,9 +2,9 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import styles from "../../../styles/Market.module.css";
 
-const LS_LIKED_POSTS = "liked_posts";                // Set<string(postId)>
-const LS_POST_DELTAS = "post_count_deltas";          // { [postId]: { likes: number, views: number, comments: number } }
-const SS_VIEW_KEY_PREFIX = "viewed_";                // sessionStorage 중복 조회 방지
+const LS_LIKED_POSTS = "liked_posts"; // Set<string(postId)>
+const LS_POST_DELTAS = "post_count_deltas"; // { [postId]: { likes: number, views: number, comments: number } }
+const SS_VIEW_KEY_PREFIX = "viewed_"; // sessionStorage 중복 조회 방지
 
 /** ---- 공통 유틸: 델타 저장/적용 ---- */
 function readDeltas() {
@@ -67,7 +67,9 @@ function PostDetail() {
 
         // 좋아요 초기화
         const likedSet = readLikedSet();
-        setLiked(!!(data?.user_liked ?? likedSet.has(String(data?.post_id ?? idStr))));
+        setLiked(
+          !!(data?.user_liked ?? likedSet.has(String(data?.post_id ?? idStr)))
+        );
 
         // 조회수: 상세 직접 진입 시 1회 증가(세션 중복 방지)
         const ssKey = `${SS_VIEW_KEY_PREFIX}${idStr}`;
@@ -100,7 +102,9 @@ function PostDetail() {
     if (!ts) return "";
     const t = new Date(ts).getTime();
     const diff = Date.now() - t;
-    const m = 60 * 1000, h = 60 * m, d = 24 * h;
+    const m = 60 * 1000,
+      h = 60 * m,
+      d = 24 * h;
     if (diff < m) return "방금 전";
     if (diff < h) return `${Math.floor(diff / m)}분 전`;
     if (diff < d) return `${Math.floor(diff / h)}시간 전`;
@@ -110,10 +114,20 @@ function PostDetail() {
   if (!post) return <div>Loading...</div>;
 
   // 화면 표시용 최종 카운트(서버 값 + 델타)
-  const deltas = readDeltas()[String(post.post_id ?? postId)] || { likes: 0, views: 0, comments: 0 };
-  const likeCount = getDisplayCount(post?.like_count ?? post?.likes, deltas.likes);
+  const deltas = readDeltas()[String(post.post_id ?? postId)] || {
+    likes: 0,
+    views: 0,
+    comments: 0,
+  };
+  const likeCount = getDisplayCount(
+    post?.like_count ?? post?.likes,
+    deltas.likes
+  );
   const viewCount = getDisplayCount(post?.views, deltas.views);
-  const totalComments = getDisplayCount(post?.comment_count ?? (post?.comments?.length ?? 0), deltas.comments);
+  const totalComments = getDisplayCount(
+    post?.comment_count ?? post?.comments?.length ?? 0,
+    deltas.comments
+  );
 
   // 댓글 등록(성공 시 숫자 즉시 +1)
   const addComment = async () => {
@@ -121,11 +135,14 @@ function PostDetail() {
     if (!newComment.trim()) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/posts/${idStr}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ content: newComment.trim(), user_id: 1 }),
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/posts/${idStr}/comments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ content: newComment.trim(), user_id: 1 }),
+        }
+      );
       const saved = await res.json();
 
       setPost((prev) => ({
@@ -135,7 +152,10 @@ function PostDetail() {
       }));
 
       const after = bumpDelta(idStr, "comments", 1);
-      const nextComments = getDisplayCount(post?.comment_count ?? (post?.comments?.length ?? 0) + 1, after.comments);
+      const nextComments = getDisplayCount(
+        post?.comment_count ?? (post?.comments?.length ?? 0) + 1,
+        after.comments
+      );
 
       // 목록 동기화(최종 숫자)
       try {
@@ -163,7 +183,10 @@ function PostDetail() {
     // 델타 업데이트(+1/-1) 및 최종 카운트 산정
     bumpDelta(idStr, "likes", willLike ? 1 : -1);
     const del = readDeltas()[idStr] || { likes: 0, views: 0, comments: 0 };
-    const nextLikeCount = getDisplayCount(post?.like_count ?? post?.likes, del.likes);
+    const nextLikeCount = getDisplayCount(
+      post?.like_count ?? post?.likes,
+      del.likes
+    );
 
     // 로컬 좋아요 세트 유지
     if (willLike) likedSet.add(idStr);
@@ -217,7 +240,9 @@ function PostDetail() {
         {/* 메타(작성자/시간/댓글/좋아요/조회수) */}
         <div className={styles.mkmetaRow} style={{ marginTop: 8 }}>
           <div className={styles.mkmetaLeft}>
-            {post.author && <div className={styles.mkmetaItem}>{post.author}</div>}
+            {post.author && (
+              <div className={styles.mkmetaItem}>{post.author}</div>
+            )}
             {post.created_at && (
               <div className={styles.mkmetaItem}>
                 <i className="fa-regular fa-clock" aria-hidden="true" />
@@ -266,7 +291,8 @@ function PostDetail() {
         {/* 댓글 입력 */}
         <div className={styles.mkcommentsSection}>
           <div className={styles.mkcommentsHeader}>
-            댓글 <span className={styles.mkcommentsCount}>{totalComments}</span>
+            댓글{" "}
+            <span className={styles.mkcommentsCount}>{totalComments / 2}</span>
           </div>
 
           <div className={styles.mkcommentDock}>
@@ -306,10 +332,15 @@ function PostDetail() {
                     <div className={styles.mkcommentAuthor}>
                       {c.author ?? c.user_name ?? "익명"}
                     </div>
-                    <div className={styles.mkcommentTime}>{timeAgo(c.created_at)}</div>
+                    <div className={styles.mkcommentTime}>
+                      {timeAgo(c.created_at)}
+                    </div>
                   </div>
                 </div>
-                <div className={styles.mkcommentBody} style={{ whiteSpace: "pre-wrap" }}>
+                <div
+                  className={styles.mkcommentBody}
+                  style={{ whiteSpace: "pre-wrap" }}
+                >
                   {c.content ?? c.text}
                 </div>
               </div>
