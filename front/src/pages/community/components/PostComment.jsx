@@ -1,4 +1,3 @@
-// PostComment.jsx 
 import { useEffect, useState } from "react";
 import styles from "../../../styles/Community.module.css";
 
@@ -27,7 +26,9 @@ function PostComment({ postId, currentUser }) {
   // 댓글 불러오기(초기 좋아요 상태 적용)
   const fetchComments = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/posts/${postId}/comments`);
+      const res = await fetch(
+        `http://localhost:5000/api/posts/${postId}/comments`
+      );
       const data = await res.json();
       const withLikeState = (data || []).map((c) => ({
         ...c,
@@ -57,25 +58,34 @@ function PostComment({ postId, currentUser }) {
 
     setSubmitting(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/posts/${postId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_id: currentUser.user_id,
-          content: newComment.trim(),
-        }),
-      });
+      const res = await fetch(
+        `http://localhost:5000/api/posts/${postId}/comments`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            user_id: currentUser.user_id,
+            content: newComment.trim(),
+          }),
+        }
+      );
 
       const data = await res.json();
       if (res.ok && data) {
-        const inserted = { ...data, _liked: false, like_count: data.like_count ?? 0 };
+        const inserted = {
+          ...data,
+          _liked: false,
+          like_count: data.like_count ?? 0,
+        };
         setComments((prev) => [inserted, ...prev]);
         setNewComment("");
 
         // 상세/목록 댓글수 동기화(최종 숫자는 상세에서 델타로 다시 계산)
         try {
           window.dispatchEvent(
-            new CustomEvent("post:commentAdded", { detail: { postId: String(postId) } })
+            new CustomEvent("post:commentAdded", {
+              detail: { postId: String(postId) },
+            })
           );
         } catch {}
       } else {
@@ -89,44 +99,6 @@ function PostComment({ postId, currentUser }) {
     }
   };
 
-  // 댓글 삭제 ★추가
-  const handleDelete = async (comment) => {
-    const commentId = String(comment.postcomment_id ?? comment.id);
-    if (!commentId) return;
-
-    // 권한 체크(클라이언트 단)
-    if (!currentUser?.user_id || Number(currentUser.user_id) !== Number(comment.user_id)) {
-      alert("본인이 작성한 댓글만 삭제할 수 있습니다.");
-      return;
-    }
-
-    const ok = window.confirm("해당 댓글을 삭제하시겠습니까?");
-    if (!ok) return;
-
-    try {
-      const res = await fetch(`http://localhost:5000/api/comments/${commentId}`, {
-        method: "DELETE",
-      });
-      if (!res.ok) {
-        const j = await res.json().catch(() => ({}));
-        alert(j?.error || "댓글 삭제에 실패했습니다.");
-        return;
-      }
-
-      setComments((prev) => prev.filter((c) => String(c.postcomment_id) !== commentId));
-
-      // 상세/목록과 숫자 동기화 이벤트
-      try {
-        window.dispatchEvent(
-          new CustomEvent("post:commentDeleted", { detail: { postId: String(postId) } })
-        );
-      } catch {}
-    } catch (err) {
-      console.error("댓글 삭제 실패:", err);
-      alert("서버 오류가 발생했습니다.");
-    }
-  };
-
   // 댓글 좋아요 토글
   const toggleCommentLike = async (commentId) => {
     const idStr = String(commentId);
@@ -135,7 +107,14 @@ function PostComment({ postId, currentUser }) {
     setComments((prev) =>
       prev.map((c) =>
         String(c.postcomment_id) === idStr
-          ? { ...c, _liked: willLike, like_count: Math.max(0, (c.like_count ?? 0) + (willLike ? 1 : -1)) }
+          ? {
+              ...c,
+              _liked: willLike,
+              like_count: Math.max(
+                0,
+                (c.like_count ?? 0) + (willLike ? 1 : -1)
+              ),
+            }
           : c
       )
     );
@@ -171,73 +150,47 @@ function PostComment({ postId, currentUser }) {
       </form>
 
       {/* 댓글 목록 */}
-      {comments.map((c) => {
-        const isOwner =
-          !!currentUser?.user_id && Number(currentUser.user_id) === Number(c.user_id);
-
-        return (
-          <div key={c.postcomment_id} className={styles.postCommentContainer}>
-            <div className={styles.postCommentLeft}>
-              <i className="fa-regular fa-user"></i>
-              <div>
-                <span>{c.user_name || `익명${c.user_id}`}</span>
-                <span>{formatDate(c.created_at)}</span>
-              </div>
-            </div>
-
-            <div className={styles.postCommentRight}>
-              <div className={styles.postCommentContent}>{c.content}</div>
-
-              <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-                {/* 좋아요 */}
-                <button
-                  type="button"
-                  className={styles.commentLikeBtn}
-                  onClick={() => toggleCommentLike(c.postcomment_id)}
-                  aria-label={c._liked ? "댓글 좋아요 취소" : "댓글 좋아요"}
-                  title={c._liked ? "좋아요 취소" : "좋아요"}
-                  style={{
-                    display: "inline-flex",
-                    gap: 6,
-                    alignItems: "center",
-                    background: "transparent",
-                    border: 0,
-                    cursor: "pointer",
-                    padding: 0,
-                  }}
-                >
-                  <i
-                    className={c._liked ? "fa-solid fa-heart" : "fa-regular fa-heart"}
-                    aria-hidden="true"
-                    style={{ color: c._liked ? "#ff0505" : "inherit" }}
-                  />
-                  <span>{c.like_count ?? 0}</span>
-                </button>
-
-                {/* 삭제 버튼(본인 댓글만) ★추가 */}
-                {isOwner && (
-                  <button
-                    type="button"
-                    onClick={() => handleDelete(c)}
-                    className={styles.commentDeleteBtn}
-                    aria-label="댓글 삭제"
-                    title="댓글 삭제"
-                    style={{
-                      background: "transparent",
-                      border: "1px solid #ddd",
-                      borderRadius: 6,
-                      padding: "4px 8px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    <i className="fa-regular fa-trash-can" /> 삭제
-                  </button>
-                )}
-              </div>
+      {comments.map((c) => (
+        <div key={c.postcomment_id} className={styles.postCommentContainer}>
+          <div className={styles.postCommentLeft}>
+            <i className="fa-regular fa-user"></i>
+            <div>
+              <span>{c.user_name || `익명${c.user_id}`}</span>
+              <span>{formatDate(c.created_at)}</span>
             </div>
           </div>
-        );
-      })}
+
+          <div className={styles.postCommentRight}>
+            <div className={styles.postCommentContent}>{c.content}</div>
+
+            <button
+              type="button"
+              className={styles.commentLikeBtn}
+              onClick={() => toggleCommentLike(c.postcomment_id)}
+              aria-label={c._liked ? "댓글 좋아요 취소" : "댓글 좋아요"}
+              title={c._liked ? "좋아요 취소" : "좋아요"}
+              style={{
+                display: "inline-flex",
+                gap: 6,
+                alignItems: "center",
+                background: "transparent",
+                border: 0,
+                cursor: "pointer",
+                padding: 0,
+              }}
+            >
+              <i
+                className={
+                  c._liked ? "fa-solid fa-heart" : "fa-regular fa-heart"
+                }
+                aria-hidden="true"
+                style={{ color: c._liked ? "#ff0505" : "inherit" }}
+              />
+              <span>{c.like_count ?? 0}</span>
+            </button>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
